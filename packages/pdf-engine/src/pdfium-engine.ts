@@ -28,7 +28,7 @@ import type {
   MemoryStats,
   LeakReport
 } from './index';
-import { PdfError } from './index';
+import { PdfError, mapPdfiumErrorCode } from './index';
 import { loadPdfiumWasm, type WasmLoaderOptions } from './wasm-loader';
 
 interface EmscriptenRuntimeModule {
@@ -151,6 +151,10 @@ export class PdfiumEngine implements PdfEngine {
 
       fnPtr = this.emscripten.addFunction(getBlock, 'iiiii');
       accessPtr = this.emscripten.wasmExports.malloc(12);
+      if (!accessPtr) {
+        if (fnPtr) this.emscripten.removeFunction(fnPtr);
+        throw new PdfError('OutOfMemory', 'Failed to allocate memory for PDF access structure');
+      }
 
       const dv = new DataView(this.emscripten.HEAPU8.buffer);
       dv.setUint32(accessPtr + 0, totalLen, true);
@@ -161,6 +165,12 @@ export class PdfiumEngine implements PdfEngine {
     } else {
       const u8 = new Uint8Array(data as ArrayBuffer);
       memPtr = this.emscripten.wasmExports.malloc(u8.length);
+      if (!memPtr) {
+        throw new PdfError(
+          'OutOfMemory',
+          `Failed to allocate ${u8.length} bytes in WebAssembly heap`
+        );
+      }
       this.emscripten.HEAPU8.set(u8, memPtr);
       docPtr = this.pdfium.FPDF_LoadMemDocument(memPtr, u8.length, password);
     }
@@ -171,25 +181,8 @@ export class PdfiumEngine implements PdfEngine {
       if (memPtr) this.emscripten.wasmExports.free(memPtr);
 
       const lastError = this.pdfium.FPDF_GetLastError();
-      switch (lastError) {
-        case 4: // FPDF_ERR_PASSWORD
-          if (opts?.password !== undefined && opts.password !== '') {
-            throw new PdfError('WrongPassword', 'Incorrect password for protected PDF');
-          } else {
-            throw new PdfError(
-              'PasswordRequired',
-              'Password is required to open this protected PDF'
-            );
-          }
-        case 3: // FPDF_ERR_FORMAT
-          throw new PdfError('Corrupt', 'Document format is invalid or corrupt');
-        case 2: // FPDF_ERR_FILE
-          throw new PdfError('IO', 'Unable to read PDF document data');
-        case 5: // FPDF_ERR_SECURITY
-          throw new PdfError('Unsupported', 'Unsupported encryption or security handler');
-        default:
-          throw new PdfError('Corrupt', `Failed to open PDF document (error code: ${lastError})`);
-      }
+      const hasPassword = Boolean(opts?.password !== undefined && opts.password !== '');
+      throw mapPdfiumErrorCode(lastError, hasPassword);
     }
 
     const isEncrypted =

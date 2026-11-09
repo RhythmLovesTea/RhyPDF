@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 2
-CURRENT TASK  : 2.14
+CURRENT TASK  : 2.15
 LAST UPDATED  : 2026-11-10
-NOTES         : Task 2.13 complete (Memory management: explicit close for documents and pages, dev-mode leak detector, WASM heap monitoring, and auto-restart of worker above heap threshold). Moving to Task 2.14 (Error model: PdfError union mapped from engine errors across worker RPC).
+NOTES         : Task 2.14 complete (Error model: PdfError union, mapPdfiumErrorCode, mapToPdfError, isPdfError type guard, and worker RPC error reconstitution). Moving to Task 2.15 (Integration tests on 10-PDF sample set validating open, render, enumerate, mutate, and save).
 ```
 
 ---
@@ -376,7 +376,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **2.11** Mutation API: `removeObject`, `insertTextObject`, `insertImageObject`, `insertPathObject`, `setMatrix`, `setColor`, `reorderObject`, `setTextRenderMode`, then `generateContent`. _Done when:_ mutations apply, regenerate the page content and update the object list.
 - [x] **2.12** Save: write a **new** file (never mutate the source bytes); full and incremental options; stream to OPFS / `Blob`. _Done when:_ the original bytes are unchanged and the saved file opens in 3 other viewers.
 - [x] **2.13** Memory management: explicit `close()` for documents / pages / bitmaps, a dev-mode leak detector, heap monitoring, auto-restart of the worker above a heap threshold.
-- [ ] **2.14** Error model: `PdfError` union (Corrupt, WrongPassword, Unsupported, OutOfMemory, IO, Cancelled) mapped from engine errors.
+- [x] **2.14** Error model: `PdfError` union (Corrupt, WrongPassword, Unsupported, OutOfMemory, IO, Cancelled) mapped from engine errors.
 - [ ] **2.15** Integration tests on the **10-PDF sample set** (Appendix A) plus validators in CI (`qpdf --check`, `pdfcpu validate`, and a headless PDF.js open). _Done when:_ the suite opens, renders, enumerates, mutates, saves and re-validates every sample.
 
 **Done when:** a test page can open any sample PDF, render all pages, list objects, apply one mutation and save a valid file that opens in other viewers.
@@ -796,7 +796,8 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-10 | 2.10    | Form XObject traversal: enumerate and edit objects inside forms    | `P2.10` | 2D affine composition for form child objects, UTF-16 fix, FPDFFormObj_RemoveObject verified on engine & mock |
 | 2026-11-10 | 2.11    | Mutation API: text, image & path insertion, transforms & reorder   | `P2.11` | removeObject, insertText, insertImage, insertPath, setMatrix, setColor, reorder & renderMode                 |
 | 2026-11-10 | 2.12    | Save: new file, source immutability, full, incremental & streaming | `P2.12` | Verified bit-for-bit source immutability, FPDF_SaveAsCopy incremental/full, versions & stream                |
-| 2026-11-10 | 2.13    | Memory management: explicit close, leak detector & heap monitoring  | `P2.13` | closePage handle lifecycle, dev-mode leak detector, getMemoryStats & worker auto-restart on heap threshold     |
+| 2026-11-10 | 2.13    | Memory management: explicit close, leak detector & heap monitoring | `P2.13` | closePage handle lifecycle, dev-mode leak detector, getMemoryStats & worker auto-restart on heap threshold   |
+| 2026-11-10 | 2.14    | Error model: PdfError union mapped from engine errors across worker | `P2.14` | PdfError codes, mapPdfiumErrorCode, mapToPdfError, isPdfError guard & worker RPC error reconstitution        |
 
 ---
 

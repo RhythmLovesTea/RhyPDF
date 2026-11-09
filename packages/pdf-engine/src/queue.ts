@@ -112,6 +112,9 @@ export class SerializedQueue {
       }
     } catch (err) {
       if (!item.cancelled) {
+        if (err instanceof PdfError) {
+          err.name = `PdfError:${err.code}`;
+        }
         item.reject(err);
       }
     } finally {

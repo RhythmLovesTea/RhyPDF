@@ -15,7 +15,7 @@ import type {
   SaveOptions,
   MemoryStats
 } from '../index';
-import { PdfError } from '../index';
+import { PdfError, mapToPdfError } from '../index';
 import type { PdfEngineWorkerApi } from '../protocol';
 
 export interface WorkerPdfEngineOptions {
@@ -45,37 +45,46 @@ export class WorkerPdfEngine implements PdfEngine {
     return `${prefix}-${Date.now()}-${this.idCounter}`;
   }
 
+  private async wrap<T>(fn: () => Promise<T>): Promise<T> {
+    try {
+      return await fn();
+    } catch (err) {
+      throw mapToPdfError(err);
+    }
+  }
+
   async init(): Promise<boolean> {
-    return this.remote.init();
+    return this.wrap(() => this.remote.init());
   }
 
   async open(data: ArrayBuffer | Blob, opts?: { password?: string }): Promise<DocumentHandle> {
     const buffer = data instanceof Blob ? await data.arrayBuffer() : data;
     const reqId = this.nextId('open');
 
-    // Transfer buffer to worker to avoid memory copies
-    return this.remote.open(reqId, Comlink.transfer(buffer, [buffer]), opts);
+    return this.wrap(() => this.remote.open(reqId, Comlink.transfer(buffer, [buffer]), opts));
   }
 
   async close(doc: DocumentHandle): Promise<void> {
     const reqId = this.nextId('close');
-    await this.remote.close(reqId, doc);
-    await this.checkAndRestartWorkerIfThresholdExceeded();
+    return this.wrap(async () => {
+      await this.remote.close(reqId, doc);
+      await this.checkAndRestartWorkerIfThresholdExceeded();
+    });
   }
 
   async closePage(doc: DocumentHandle, page: number): Promise<void> {
     const reqId = this.nextId('closePage');
-    return this.remote.closePage(reqId, doc, page);
+    return this.wrap(() => this.remote.closePage(reqId, doc, page));
   }
 
   async pageCount(doc: DocumentHandle): Promise<number> {
     const reqId = this.nextId('count');
-    return this.remote.pageCount(reqId, doc);
+    return this.wrap(() => this.remote.pageCount(reqId, doc));
   }
 
   async pageInfo(doc: DocumentHandle, page: number): Promise<PageInfo> {
     const reqId = this.nextId('info');
-    return this.remote.pageInfo(reqId, doc, page);
+    return this.wrap(() => this.remote.pageInfo(reqId, doc, page));
   }
 
   async renderPage(
@@ -103,7 +112,7 @@ export class WorkerPdfEngine implements PdfEngine {
     });
 
     try {
-      const renderPromise = this.remote.renderPage(reqId, doc, page, opts);
+      const renderPromise = this.wrap(() => this.remote.renderPage(reqId, doc, page, opts));
       return await Promise.race([renderPromise, abortPromise]);
     } finally {
       if (signal && abortListener) {
@@ -114,23 +123,23 @@ export class WorkerPdfEngine implements PdfEngine {
 
   async getPageObjects(doc: DocumentHandle, page: number): Promise<PageObject[]> {
     const reqId = this.nextId('objects');
-    return this.remote.getPageObjects(reqId, doc, page);
+    return this.wrap(() => this.remote.getPageObjects(reqId, doc, page));
   }
 
   async extractText(doc: DocumentHandle, page: number): Promise<TextRun[]> {
     const reqId = this.nextId('text');
-    return this.remote.extractText(reqId, doc, page);
+    return this.wrap(() => this.remote.extractText(reqId, doc, page));
   }
 
   async mutate(doc: DocumentHandle, page: number, ops: PageMutation[]): Promise<MutationResult> {
     const reqId = this.nextId('mutate');
-    return this.remote.mutate(reqId, doc, page, ops);
+    return this.wrap(() => this.remote.mutate(reqId, doc, page, ops));
   }
 
   async save(doc: DocumentHandle, opts?: SaveOptions): Promise<Blob> {
     const reqId = this.nextId('save');
     const { destination, ...remoteOpts } = opts || {};
-    const buffer = await this.remote.save(reqId, doc, remoteOpts);
+    const buffer = await this.wrap(() => this.remote.save(reqId, doc, remoteOpts));
     if (destination) {
       const streamWriter = destination.getWriter();
       const u8 = new Uint8Array(buffer);
@@ -149,7 +158,7 @@ export class WorkerPdfEngine implements PdfEngine {
 
   async getMemoryStats(): Promise<MemoryStats> {
     const reqId = this.nextId('memoryStats');
-    return this.remote.getMemoryStats(reqId);
+    return this.wrap(() => this.remote.getMemoryStats(reqId));
   }
 
   async checkAndRestartWorkerIfThresholdExceeded(): Promise<boolean> {

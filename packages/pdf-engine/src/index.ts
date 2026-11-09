@@ -121,11 +121,90 @@ export type PdfErrorCode =
 export class PdfError extends Error {
   constructor(
     public readonly code: PdfErrorCode,
-    message: string
+    message: string,
+    cause?: unknown
   ) {
-    super(message);
+    super(message, cause !== undefined ? { cause } : undefined);
     this.name = 'PdfError';
+    Object.setPrototypeOf(this, PdfError.prototype);
   }
+}
+
+export function isPdfError(err: unknown, code?: PdfErrorCode): err is PdfError {
+  if (!(err instanceof Error)) return false;
+  const isErr =
+    err instanceof PdfError || err.name === 'PdfError' || err.name.startsWith('PdfError:');
+  if (!isErr) return false;
+  const pdfErr = err as PdfError;
+  const actualCode =
+    pdfErr.code ??
+    (err.name.startsWith('PdfError:') ? (err.name.slice(9) as PdfErrorCode) : undefined);
+  return code === undefined || actualCode === code;
+}
+
+export function mapPdfiumErrorCode(
+  errorCode: number,
+  passwordProvided = false,
+  customMsg?: string
+): PdfError {
+  switch (errorCode) {
+    case 4: // FPDF_ERR_PASSWORD
+      return passwordProvided
+        ? new PdfError('WrongPassword', customMsg ?? 'Incorrect password for protected PDF')
+        : new PdfError(
+            'PasswordRequired',
+            customMsg ?? 'Password is required to open this protected PDF'
+          );
+    case 3: // FPDF_ERR_FORMAT
+      return new PdfError('Corrupt', customMsg ?? 'Document format is invalid or corrupt');
+    case 2: // FPDF_ERR_FILE
+      return new PdfError('IO', customMsg ?? 'Unable to read PDF document data');
+    case 5: // FPDF_ERR_SECURITY
+      return new PdfError('Unsupported', customMsg ?? 'Unsupported encryption or security handler');
+    case 6: // FPDF_ERR_PAGE
+      return new PdfError('Unsupported', customMsg ?? 'Page not found or invalid page structure');
+    default:
+      return new PdfError(
+        'Unknown',
+        customMsg ?? `PDF operation failed with engine error code: ${errorCode}`
+      );
+  }
+}
+
+export function mapToPdfError(err: unknown, defaultCode: PdfErrorCode = 'Unknown'): PdfError {
+  if (err instanceof PdfError) {
+    return err;
+  }
+  if (
+    err &&
+    typeof err === 'object' &&
+    'name' in err &&
+    typeof (err as { name: unknown }).name === 'string'
+  ) {
+    const raw = err as { name: string; code?: PdfErrorCode; message?: string; cause?: unknown };
+    let extractedCode = raw.code;
+    if (!extractedCode && raw.name.startsWith('PdfError:')) {
+      extractedCode = raw.name.slice(9) as PdfErrorCode;
+    }
+    if (raw.name === 'PdfError' || raw.name.startsWith('PdfError:')) {
+      return new PdfError(
+        extractedCode ?? defaultCode,
+        raw.message ?? 'Unknown PDF error',
+        raw.cause
+      );
+    }
+  }
+  if (err instanceof Error) {
+    const msg = err.message || '';
+    if (msg.includes('aborted') || msg.includes('cancelled') || err.name === 'AbortError') {
+      return new PdfError('Cancelled', msg, err);
+    }
+    if (msg.includes('Out of Memory') || msg.includes('OOM') || msg.includes('allocation failed')) {
+      return new PdfError('OutOfMemory', msg, err);
+    }
+    return new PdfError(defaultCode, msg, err);
+  }
+  return new PdfError(defaultCode, String(err));
 }
 
 export interface PdfEngine {
