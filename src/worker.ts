@@ -585,6 +585,68 @@ self.onmessage = async (e: MessageEvent) => {
       return;
     }
 
+    if (type === 'TEST_ENCRYPTION') {
+      if (!pdfiumModule) throw new Error('PDFium not initialized');
+      const { encBytes, correctPassword = 'secret123' } = payload;
+      const heap = getHeap(pdfiumModule);
+
+      const pData = pdfiumModule.pdfium.wasmExports.malloc(encBytes.byteLength);
+      new Uint8Array(heap.buffer, pData, encBytes.byteLength).set(new Uint8Array(encBytes));
+
+      // 1. Try wrong password
+      const wrongDoc = pdfiumModule.FPDF_LoadMemDocument(pData, encBytes.byteLength, 'wrong-pwd');
+      const wrongErrorCode = pdfiumModule.FPDF_GetLastError();
+
+      // 2. Open with correct password
+      const rightDoc = pdfiumModule.FPDF_LoadMemDocument(pData, encBytes.byteLength, correctPassword);
+      if (!rightDoc) {
+        pdfiumModule.pdfium.wasmExports.free(pData);
+        throw new Error('Failed to open with correct password');
+      }
+
+      // 3. Remove encryption
+      let removeOk = false;
+      if (pdfiumModule.EPDF_RemoveEncryption) {
+        removeOk = pdfiumModule.EPDF_RemoveEncryption(rightDoc);
+      }
+
+      // 4. Save decrypted copy
+      const writer = pdfiumModule.PDFiumExt_OpenFileWriter();
+      pdfiumModule.PDFiumExt_SaveAsCopy(rightDoc, writer);
+      const decSize = pdfiumModule.PDFiumExt_GetFileWriterSize(writer);
+
+      const pOut = pdfiumModule.pdfium.wasmExports.malloc(decSize);
+      pdfiumModule.PDFiumExt_GetFileWriterData(writer, pOut, decSize);
+      const decBytes = new Uint8Array(heap.buffer, pOut, decSize).slice();
+
+      pdfiumModule.pdfium.wasmExports.free(pOut);
+      pdfiumModule.PDFiumExt_CloseFileWriter(writer);
+      pdfiumModule.FPDF_CloseDocument(rightDoc);
+      pdfiumModule.pdfium.wasmExports.free(pData);
+
+      // 5. Verify saved copy opens with NO password
+      const pDec = pdfiumModule.pdfium.wasmExports.malloc(decBytes.byteLength);
+      new Uint8Array(heap.buffer, pDec, decBytes.byteLength).set(decBytes);
+      const docNoPass = pdfiumModule.FPDF_LoadMemDocument(pDec, decBytes.byteLength, '');
+      const opensWithoutPassword = !!docNoPass;
+      if (docNoPass) pdfiumModule.FPDF_CloseDocument(docNoPass);
+      pdfiumModule.pdfium.wasmExports.free(pDec);
+
+      self.postMessage({
+        id,
+        type: 'TEST_ENCRYPTION_SUCCESS',
+        result: {
+          wrongPasswordRejected: !wrongDoc,
+          wrongErrorCode,
+          rightPasswordAccepted: true,
+          removeEncryptionCalled: removeOk,
+          savedDecryptedSize: decSize,
+          opensWithoutPassword
+        }
+      });
+      return;
+    }
+
     throw new Error(`Unknown command type: ${type}`);
   } catch (err: any) {
     self.postMessage({ id, type: 'ERROR', error: err.message || String(err) });

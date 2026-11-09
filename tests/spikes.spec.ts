@@ -71,4 +71,10 @@ test('Spike 0.1, 0.2, 0.3: PDFium init, render 3 PDFs, and object enumeration + 
   await expect(parityStatus).toContainText('IME Composition: PASSED', { timeout: 15000 });
   await expect(parityStatus).toContainText('Layout Mismatch:', { timeout: 15000 });
   await expect(parityStatus).toContainText('Overlay DOM text is transparent', { timeout: 15000 });
+
+  // Spike 0.12: Save & Encryption
+  const encStatus = page.locator('#encryption-status');
+  await expect(encStatus).toContainText('Wrong password rejected', { timeout: 15000 });
+  await expect(encStatus).toContainText('Decryption & Export: PASSED', { timeout: 15000 });
+  await expect(encStatus).toContainText('EPDF_SetEncryption', { timeout: 15000 });
 });

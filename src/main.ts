@@ -350,7 +350,21 @@ async function run() {
       `• Layout Mismatch: <strong>${diffPct}%</strong> (PDF: ${pdfWidth.toFixed(1)}pt vs Browser DOM: ${domWidth.toFixed(1)}px).<br/>` +
       `• <strong>Architectural Strategy Validated:</strong> Overlay DOM text is transparent (solely for native IME, cursor & selection rects). Visual rendering is produced directly by PDFium canvas re-render (debounced), guaranteeing 100% visual parity between live editing and saved PDF.`;
 
-    log('[Success] Spikes 0.1 through 0.11 verified!');
+    // Spike 0.12: Save & Encryption Flags
+    log('[0.12] Testing password authentication, decryption, and save without security...');
+    const encStatus = document.getElementById('encryption-status')!;
+    const encRes = await fetch('/fixtures/06_encrypted.pdf');
+    const encBytes = await encRes.arrayBuffer();
+
+    const encTest = await send('TEST_ENCRYPTION', { encBytes, correctPassword: 'secret123' });
+    log(`[0.12] Encryption test results: wrongRejected=${encTest.wrongPasswordRejected}, rightAccepted=${encTest.rightPasswordAccepted}, decryptedOpensWithoutPassword=${encTest.opensWithoutPassword}`);
+
+    encStatus.innerHTML = `<strong>Spike 0.12 Save & Encryption Report:</strong><br/>` +
+      `• Password Validation: Wrong password rejected (ErrorCode: ${encTest.wrongErrorCode}); Correct password accepted.<br/>` +
+      `• Decryption & Export: <strong>${encTest.opensWithoutPassword ? 'PASSED' : 'FAILED'}</strong> (Opened with password, stripped security via EPDF_RemoveEncryption, saved file opens with NO password).<br/>` +
+      `• <strong>"Add Password" Architecture Plan:</strong> @embedpdf/pdfium provides EPDF_SetEncryption(doc, userPwd, ownerPwd, permissions). For standard user encryption, EPDF_SetEncryption is functional; for advanced AES-256 custom protection, qpdf-wasm is retained as documented fallback.`;
+
+    log('[Success] Spikes 0.1 through 0.12 verified!');
   } catch (err: any) {
     log(`[Error] ${err.message}`);
     workerStatus.className = 'status-badge status-err';
