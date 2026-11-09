@@ -7,7 +7,16 @@
  */
 
 import type { WrappedPdfiumModule } from '@embedpdf/pdfium';
-import type { PageInfo, PageObject, TextRun, CharBox, Rect, Matrix2D } from '@rhypdf/pdf-model';
+import type {
+  PageInfo,
+  PageObject,
+  TextRun,
+  CharBox,
+  Rect,
+  Matrix2D,
+  ColorRGBA,
+  TextRenderMode
+} from '@rhypdf/pdf-model';
 import type {
   PdfEngine,
   DocumentHandle,
@@ -400,6 +409,7 @@ export class PdfiumEngine implements PdfEngine {
   async getPageObjects(docHandle: DocumentHandle, pageIndex: number): Promise<PageObject[]> {
     const doc = this.getDocument(docHandle);
     const pagePtr = this.loadPage(doc, pageIndex);
+    const textPagePtr = this.pdfium.FPDFText_LoadPage(pagePtr);
     const count = this.pdfium.FPDFPage_CountObjects(pagePtr);
     const objects: PageObject[] = [];
 
@@ -411,12 +421,23 @@ export class PdfiumEngine implements PdfEngine {
         const objPtr = this.pdfium.FPDFPage_GetObject(pagePtr, i);
         if (!objPtr) continue;
 
-        const obj = this.extractObjectFromPtr(pagePtr, objPtr, i, pageIndex, boundsPtr, matPtr);
+        const obj = this.extractObjectFromPtr(
+          pagePtr,
+          textPagePtr,
+          objPtr,
+          i,
+          pageIndex,
+          boundsPtr,
+          matPtr
+        );
         if (obj) {
           objects.push(obj);
         }
       }
     } finally {
+      if (textPagePtr) {
+        this.pdfium.FPDFText_ClosePage(textPagePtr);
+      }
       this.emscripten.wasmExports.free(boundsPtr);
       this.emscripten.wasmExports.free(matPtr);
     }
@@ -426,6 +447,7 @@ export class PdfiumEngine implements PdfEngine {
 
   private extractObjectFromPtr(
     pagePtr: number,
+    textPagePtr: number,
     objPtr: number,
     zIndex: number,
     pageIndex: number,
@@ -482,6 +504,115 @@ export class PdfiumEngine implements PdfEngine {
 
     if (type === 1) {
       // Text object
+      let fontName = 'Helvetica';
+      let fontSize = 12;
+      let text = '';
+      let flags = 0;
+      let weight = 400;
+      let isEmbedded = false;
+      let isSubset = false;
+      let subsetTag: string | undefined;
+
+      const font = this.pdfium.FPDFTextObj_GetFont(objPtr);
+      if (font) {
+        const fnBuf = this.emscripten.wasmExports.malloc(128);
+        const fnLen = this.pdfium.FPDFFont_GetBaseFontName(font, fnBuf, 128);
+        if (fnLen > 0) {
+          const raw = new TextDecoder().decode(
+            new Uint8Array(this.emscripten.HEAPU8.buffer, fnBuf, fnLen)
+          );
+          fontName = raw.replace(/\0.*$/, '').trim() || 'Helvetica';
+        }
+        this.emscripten.wasmExports.free(fnBuf);
+
+        flags = this.pdfium.FPDFFont_GetFlags(font);
+        weight = this.pdfium.FPDFFont_GetWeight(font) || 400;
+        const emb = this.pdfium.FPDFFont_GetIsEmbedded(font);
+        isEmbedded = emb === 1;
+
+        const subsetMatch = fontName.match(/^([A-Z]{6})\+(.+)$/);
+        if (subsetMatch && subsetMatch[1] && subsetMatch[2]) {
+          isSubset = true;
+          subsetTag = subsetMatch[1];
+          fontName = subsetMatch[2];
+        }
+      }
+
+      const fsPtr = this.emscripten.wasmExports.malloc(4);
+      if (this.pdfium.FPDFTextObj_GetFontSize(objPtr, fsPtr)) {
+        fontSize = new DataView(this.emscripten.HEAPU8.buffer).getFloat32(fsPtr, true);
+      }
+      this.emscripten.wasmExports.free(fsPtr);
+
+      // Render mode
+      const rawMode = this.pdfium.FPDFTextObj_GetTextRenderMode(objPtr);
+      const renderModes: TextRenderMode[] = [
+        'fill',
+        'stroke',
+        'fillThenStroke',
+        'invisible',
+        'fillClip',
+        'strokeClip',
+        'fillStrokeClip',
+        'clip'
+      ];
+      const renderMode: TextRenderMode = renderModes[rawMode] ?? 'fill';
+
+      // Colors
+      const colorPtr = this.emscripten.wasmExports.malloc(16);
+      let fillColor: ColorRGBA = { r: 0, g: 0, b: 0, a: 255 };
+      if (
+        this.pdfium.FPDFPageObj_GetFillColor(
+          objPtr,
+          colorPtr,
+          colorPtr + 4,
+          colorPtr + 8,
+          colorPtr + 12
+        )
+      ) {
+        const dvC = new DataView(this.emscripten.HEAPU8.buffer, colorPtr, 16);
+        fillColor = {
+          r: dvC.getUint32(0, true),
+          g: dvC.getUint32(4, true),
+          b: dvC.getUint32(8, true),
+          a: dvC.getUint32(12, true)
+        };
+      }
+
+      let strokeColor: ColorRGBA | undefined;
+      if (
+        this.pdfium.FPDFPageObj_GetStrokeColor(
+          objPtr,
+          colorPtr,
+          colorPtr + 4,
+          colorPtr + 8,
+          colorPtr + 12
+        )
+      ) {
+        const dvS = new DataView(this.emscripten.HEAPU8.buffer, colorPtr, 16);
+        strokeColor = {
+          r: dvS.getUint32(0, true),
+          g: dvS.getUint32(4, true),
+          b: dvS.getUint32(8, true),
+          a: dvS.getUint32(12, true)
+        };
+      }
+      this.emscripten.wasmExports.free(colorPtr);
+
+      // Text string
+      if (textPagePtr) {
+        const textBuf = this.emscripten.wasmExports.malloc(512);
+        const textLen = this.pdfium.FPDFTextObj_GetText(objPtr, textPagePtr, textBuf, 512);
+        if (textLen > 1) {
+          const u16 = new Uint16Array(this.emscripten.HEAPU8.buffer, textBuf, textLen - 1);
+          text = String.fromCharCode(...u16);
+        }
+        this.emscripten.wasmExports.free(textBuf);
+      }
+
+      const rotation = Math.round((Math.atan2(matrix[1], matrix[0]) * 180) / Math.PI);
+      const horizontalScale = Math.hypot(matrix[0], matrix[1]);
+
       return {
         id,
         type: 'text',
@@ -489,11 +620,24 @@ export class PdfiumEngine implements PdfEngine {
         matrix,
         zIndex,
         parentFormChain: parentChain,
-        text: '',
-        fontName: 'Helvetica',
-        fontSize: 12,
-        fillColor: { r: 0, g: 0, b: 0, a: 255 },
-        isEmbeddedSubset: false
+        text,
+        fontName,
+        fontSize,
+        fillColor,
+        strokeColor,
+        renderMode,
+        rotation,
+        horizontalScale,
+        isEmbeddedSubset: isSubset,
+        fontInfo: {
+          isEmbedded,
+          isSubset,
+          subsetTag,
+          flags,
+          weight,
+          isItalic: (flags & 64) !== 0,
+          isBold: weight >= 700 || (flags & (1 << 18)) !== 0
+        }
       };
     } else if (type === 3) {
       // Image object
@@ -533,6 +677,7 @@ export class PdfiumEngine implements PdfEngine {
           if (subObjPtr) {
             const sub = this.extractObjectFromPtr(
               pagePtr,
+              textPagePtr,
               subObjPtr,
               s,
               pageIndex,

@@ -63,6 +63,26 @@ export interface CharBox {
   box: Rect;
 }
 
+export type TextRenderMode =
+  | 'fill'
+  | 'stroke'
+  | 'fillThenStroke'
+  | 'invisible'
+  | 'fillClip'
+  | 'strokeClip'
+  | 'fillStrokeClip'
+  | 'clip';
+
+export interface EmbeddedFontInfo {
+  isEmbedded: boolean;
+  isSubset: boolean;
+  subsetTag?: string;
+  flags?: number;
+  weight?: number;
+  isItalic?: boolean;
+  isBold?: boolean;
+}
+
 export interface TextRun extends BasePageObject {
   type: 'text';
   text: string;
@@ -70,7 +90,13 @@ export interface TextRun extends BasePageObject {
   fontSize: number;
   fillColor: ColorRGBA;
   strokeColor?: ColorRGBA;
+  renderMode?: TextRenderMode;
+  charSpacing?: number;
+  wordSpacing?: number;
+  horizontalScale?: number;
+  rotation?: number;
   isEmbeddedSubset: boolean;
+  fontInfo?: EmbeddedFontInfo;
   charBoxes?: CharBox[];
 }
 
