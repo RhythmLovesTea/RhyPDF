@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 2
-CURRENT TASK  : 2.10
+CURRENT TASK  : 2.11
 LAST UPDATED  : 2026-11-10
-NOTES         : Task 2.9 complete (Path-object details: vector shapes bounds, segments with moveTo/lineTo/bezierCurveTo/closePath, lineWidth, strokeColor, fillColor, draw modes, and dash pattern). Moving to Task 2.10 (Form XObject traversal: enumerate and edit objects inside forms with correct transform composition).
+NOTES         : Task 2.10 complete (Form XObject traversal: enumerate and edit objects inside forms with transform composition, UTF-16 character fix, sub-object search, and FPDFFormObj_RemoveObject). Moving to Task 2.11 (Mutation API: removeObject, insertTextObject, insertImageObject, insertPathObject, setMatrix, setColor, reorderObject, setTextRenderMode, generateContent).
 ```
 
 ---
@@ -372,7 +372,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **2.7** Text-object details: string, font name, size, fill / stroke color, render mode, char boxes, character / word spacing, horizontal scale, rotation, embedded-font info (subset, full, not embedded, flags, weight).
 - [x] **2.8** Image-object details: bitmap preview, pixel size, bounds, matrix, filters, color space, mask / soft-mask info, effective DPI.
 - [x] **2.9** Path-object details (vector shapes): bounds, segments, stroke, fill, width, dash.
-- [ ] **2.10** Form XObject traversal: enumerate and edit objects inside forms with correct transform composition. _Done when:_ text inside a form XObject can be listed and removed.
+- [x] **2.10** Form XObject traversal: enumerate and edit objects inside forms with correct transform composition. _Done when:_ text inside a form XObject can be listed and removed.
 - [ ] **2.11** Mutation API: `removeObject`, `insertTextObject`, `insertImageObject`, `insertPathObject`, `setMatrix`, `setColor`, `reorderObject`, `setTextRenderMode`, then `generateContent`. _Done when:_ mutations apply, regenerate the page content and update the object list.
 - [ ] **2.12** Save: write a **new** file (never mutate the source bytes); full and incremental options; stream to OPFS / `Blob`. _Done when:_ the original bytes are unchanged and the saved file opens in 3 other viewers.
 - [ ] **2.13** Memory management: explicit `close()` for documents / pages / bitmaps, a dev-mode leak detector, heap monitoring, auto-restart of the worker above a heap threshold.
@@ -792,7 +792,8 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-10 | 2.6     | Page-object enumeration with type, bounds, matrix & z-index        | `P2.6`  | Verified object enumeration (text, image, path, form) & matrix composition across sample set                |
 | 2026-11-10 | 2.7     | Text-object details: string, font, size, colors & render mode      | `P2.7`  | Query FPDFFont (flags, weight, embedded, subset), font size, fill/stroke color & render modes               |
 | 2026-11-10 | 2.8     | Image-object details: preview, pixel size, filters, DPI & masks    | `P2.8`  | Extracted FPDFImageObj metadata, decoded RGBA preview bitmap, colorSpace & alpha mask detection             |
-| 2026-11-10 | 2.9     | Path-object details: vector shapes, segments, stroke, fill & dash  | `P2.9`  | Extracted path segments (moveTo, lineTo, bezier, close), stroke width, stroke/fill color & dash array        |
+| 2026-11-10 | 2.9     | Path-object details: vector shapes, segments, stroke, fill & dash  | `P2.9`  | Extracted path segments (moveTo, lineTo, bezier, close), stroke width, stroke/fill color & dash array       |
+| 2026-11-10 | 2.10    | Form XObject traversal: enumerate and edit objects inside forms    | `P2.10` | 2D affine composition for form child objects, UTF-16 fix, FPDFFormObj_RemoveObject verified on engine & mock|
 
 ---
 

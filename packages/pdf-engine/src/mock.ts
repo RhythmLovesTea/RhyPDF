@@ -162,6 +162,28 @@ export class MockPdfEngine implements PdfEngine {
             { type: 'lineTo', points: [{ x: 72, y: 450 }] },
             { type: 'closePath', points: [], close: true }
           ]
+        },
+        {
+          id: 'form-1',
+          type: 'form',
+          bounds: { left: 100, bottom: 200, right: 300, top: 300 },
+          matrix: [1, 0, 0, 1, 100, 200],
+          zIndex: 2,
+          subObjects: [
+            {
+              id: 'form-1-text-1',
+              type: 'text',
+              bounds: { left: 110, bottom: 230, right: 250, top: 244 },
+              matrix: [1, 0, 0, 1, 110, 230],
+              zIndex: 0,
+              parentFormChain: ['form-1'],
+              text: 'Form XObject Inner Text',
+              fontName: 'Helvetica',
+              fontSize: 12,
+              fillColor: { r: 0, g: 0, b: 0, a: 255 },
+              isEmbeddedSubset: false
+            }
+          ]
         }
       ]
     };
@@ -273,7 +295,17 @@ export class MockPdfEngine implements PdfEngine {
     for (const op of ops) {
       switch (op.type) {
         case 'removeObject': {
-          pageState.objects = pageState.objects.filter((o) => o.id !== op.objectId);
+          pageState.objects = pageState.objects
+            .filter((o) => o.id !== op.objectId)
+            .map((o) => {
+              if (o.type === 'form') {
+                return {
+                  ...o,
+                  subObjects: o.subObjects.filter((sub) => sub.id !== op.objectId)
+                };
+              }
+              return o;
+            });
           break;
         }
         case 'insertText': {

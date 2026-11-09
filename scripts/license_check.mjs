@@ -39,7 +39,12 @@ for (const [license, packages] of Object.entries(licenseMap)) {
   for (const pkg of packages) {
     totalPackages++;
     const isForbidden = FORBIDDEN_PATTERNS.some((pat) => pat.test(license));
-    const isAllowed = ALLOWED_LICENSES.has(license);
+    const parts = license
+      .replace(/[()]/g, '')
+      .split(/\s+(?:AND|OR)\s+/i)
+      .map((s) => s.trim());
+    const isAllowed =
+      ALLOWED_LICENSES.has(license) || parts.every((p) => ALLOWED_LICENSES.has(p));
 
     if (isForbidden || !isAllowed) {
       violations.push({ name: pkg.name, version: pkg.versions?.[0], license });

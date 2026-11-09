@@ -19,5 +19,8 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "pdf-lib": "^1.17.1"
   }
 }

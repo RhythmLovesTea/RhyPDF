@@ -470,7 +470,7 @@ export class PdfiumEngine implements PdfEngine {
     );
 
     const dvB = new DataView(this.emscripten.HEAPU8.buffer, boundsPtr, 16);
-    const bounds: Rect = {
+    let bounds: Rect = {
       left: dvB.getFloat32(0, true),
       bottom: dvB.getFloat32(4, true),
       right: dvB.getFloat32(8, true),
@@ -500,6 +500,23 @@ export class PdfiumEngine implements PdfEngine {
         parentMatrix[0] * matrix[4] + parentMatrix[2] * matrix[5] + parentMatrix[4],
         parentMatrix[1] * matrix[4] + parentMatrix[3] * matrix[5] + parentMatrix[5]
       ];
+
+      const corners = [
+        { x: bounds.left, y: bounds.bottom },
+        { x: bounds.right, y: bounds.bottom },
+        { x: bounds.left, y: bounds.top },
+        { x: bounds.right, y: bounds.top }
+      ];
+      const txCorners = corners.map((c) => ({
+        x: parentMatrix[0] * c.x + parentMatrix[2] * c.y + parentMatrix[4],
+        y: parentMatrix[1] * c.x + parentMatrix[3] * c.y + parentMatrix[5]
+      }));
+      bounds = {
+        left: Math.min(...txCorners.map((c) => c.x)),
+        bottom: Math.min(...txCorners.map((c) => c.y)),
+        right: Math.max(...txCorners.map((c) => c.x)),
+        top: Math.max(...txCorners.map((c) => c.y))
+      };
     }
 
     const idPrefix = parentChain && parentChain.length > 0 ? `${parentChain.join('-')}-` : '';
@@ -607,7 +624,8 @@ export class PdfiumEngine implements PdfEngine {
         const textBuf = this.emscripten.wasmExports.malloc(512);
         const textLen = this.pdfium.FPDFTextObj_GetText(objPtr, textPagePtr, textBuf, 512);
         if (textLen > 1) {
-          const u16 = new Uint16Array(this.emscripten.HEAPU8.buffer, textBuf, textLen - 1);
+          const charCount = Math.max(0, Math.floor(textLen / 2) - 1);
+          const u16 = new Uint16Array(this.emscripten.HEAPU8.buffer, textBuf, charCount);
           text = String.fromCharCode(...u16);
         }
         this.emscripten.wasmExports.free(textBuf);
@@ -1064,7 +1082,7 @@ export class PdfiumEngine implements PdfEngine {
         dashArray,
         dashPhase
       };
-    } else if (type === 6) {
+    } else if (type === 5) {
       // Form XObject
       const subObjects: PageObject[] = [];
       const formChain = parentChain ? [...parentChain, id] : [id];
@@ -1172,6 +1190,48 @@ export class PdfiumEngine implements PdfEngine {
     }
   }
 
+  private findPageObjectByPath(
+    pagePtr: number,
+    pageIndex: number,
+    targetId: string
+  ): { objPtr: number; parentFormPtr?: number } | null {
+    const searchObjects = (
+      containerPtr: number,
+      isForm: boolean,
+      parentChain: string[]
+    ): { objPtr: number; parentFormPtr?: number } | null => {
+      const numObjs = isForm
+        ? this.pdfium.FPDFFormObj_CountObjects(containerPtr)
+        : this.pdfium.FPDFPage_CountObjects(containerPtr);
+
+      for (let i = 0; i < numObjs; i++) {
+        const childPtr = isForm
+          ? this.pdfium.FPDFFormObj_GetObject(containerPtr, i)
+          : this.pdfium.FPDFPage_GetObject(containerPtr, i);
+        if (!childPtr) continue;
+
+        const idPrefix = parentChain.length > 0 ? `${parentChain.join('-')}-` : '';
+        const currentId = `${idPrefix}obj-${pageIndex}-${i}`;
+
+        if (currentId === targetId) {
+          return {
+            objPtr: childPtr,
+            parentFormPtr: isForm ? containerPtr : undefined
+          };
+        }
+
+        const type = this.pdfium.FPDFPageObj_GetType(childPtr);
+        if (type === 5 && typeof this.pdfium.FPDFFormObj_CountObjects === 'function') {
+          const res = searchObjects(childPtr, true, [...parentChain, currentId]);
+          if (res) return res;
+        }
+      }
+      return null;
+    };
+
+    return searchObjects(pagePtr, false, []);
+  }
+
   async mutate(
     docHandle: DocumentHandle,
     pageIndex: number,
@@ -1182,11 +1242,26 @@ export class PdfiumEngine implements PdfEngine {
 
     for (const op of ops) {
       if (op.type === 'removeObject') {
-        const count = this.pdfium.FPDFPage_CountObjects(pagePtr);
-        if (count > 0) {
-          const obj = this.pdfium.FPDFPage_GetObject(pagePtr, 0);
-          if (obj) {
-            this.pdfium.FPDFPage_RemoveObject(pagePtr, obj);
+        const found = this.findPageObjectByPath(pagePtr, pageIndex, op.objectId);
+        if (found) {
+          if (found.parentFormPtr && typeof this.pdfium.FPDFFormObj_RemoveObject === 'function') {
+            this.pdfium.FPDFFormObj_RemoveObject(found.parentFormPtr, found.objPtr);
+          } else {
+            this.pdfium.FPDFPage_RemoveObject(pagePtr, found.objPtr);
+          }
+          if (typeof this.pdfium.FPDFPageObj_Destroy === 'function') {
+            this.pdfium.FPDFPageObj_Destroy(found.objPtr);
+          }
+        } else {
+          const count = this.pdfium.FPDFPage_CountObjects(pagePtr);
+          if (count > 0) {
+            const fallbackObj = this.pdfium.FPDFPage_GetObject(pagePtr, 0);
+            if (fallbackObj) {
+              this.pdfium.FPDFPage_RemoveObject(pagePtr, fallbackObj);
+              if (typeof this.pdfium.FPDFPageObj_Destroy === 'function') {
+                this.pdfium.FPDFPageObj_Destroy(fallbackObj);
+              }
+            }
           }
         }
       }
