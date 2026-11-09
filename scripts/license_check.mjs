@@ -43,8 +43,7 @@ for (const [license, packages] of Object.entries(licenseMap)) {
       .replace(/[()]/g, '')
       .split(/\s+(?:AND|OR)\s+/i)
       .map((s) => s.trim());
-    const isAllowed =
-      ALLOWED_LICENSES.has(license) || parts.every((p) => ALLOWED_LICENSES.has(p));
+    const isAllowed = ALLOWED_LICENSES.has(license) || parts.every((p) => ALLOWED_LICENSES.has(p));
 
     if (isForbidden || !isAllowed) {
       violations.push({ name: pkg.name, version: pkg.versions?.[0], license });

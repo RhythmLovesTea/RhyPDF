@@ -1241,28 +1241,276 @@ export class PdfiumEngine implements PdfEngine {
     const pagePtr = this.loadPage(doc, pageIndex);
 
     for (const op of ops) {
-      if (op.type === 'removeObject') {
-        const found = this.findPageObjectByPath(pagePtr, pageIndex, op.objectId);
-        if (found) {
-          if (found.parentFormPtr && typeof this.pdfium.FPDFFormObj_RemoveObject === 'function') {
-            this.pdfium.FPDFFormObj_RemoveObject(found.parentFormPtr, found.objPtr);
+      switch (op.type) {
+        case 'removeObject': {
+          const found = this.findPageObjectByPath(pagePtr, pageIndex, op.objectId);
+          if (found) {
+            if (found.parentFormPtr && typeof this.pdfium.FPDFFormObj_RemoveObject === 'function') {
+              this.pdfium.FPDFFormObj_RemoveObject(found.parentFormPtr, found.objPtr);
+            } else {
+              this.pdfium.FPDFPage_RemoveObject(pagePtr, found.objPtr);
+            }
+            if (typeof this.pdfium.FPDFPageObj_Destroy === 'function') {
+              this.pdfium.FPDFPageObj_Destroy(found.objPtr);
+            }
           } else {
-            this.pdfium.FPDFPage_RemoveObject(pagePtr, found.objPtr);
-          }
-          if (typeof this.pdfium.FPDFPageObj_Destroy === 'function') {
-            this.pdfium.FPDFPageObj_Destroy(found.objPtr);
-          }
-        } else {
-          const count = this.pdfium.FPDFPage_CountObjects(pagePtr);
-          if (count > 0) {
-            const fallbackObj = this.pdfium.FPDFPage_GetObject(pagePtr, 0);
-            if (fallbackObj) {
-              this.pdfium.FPDFPage_RemoveObject(pagePtr, fallbackObj);
-              if (typeof this.pdfium.FPDFPageObj_Destroy === 'function') {
-                this.pdfium.FPDFPageObj_Destroy(fallbackObj);
+            const count = this.pdfium.FPDFPage_CountObjects(pagePtr);
+            if (count > 0) {
+              const fallbackObj = this.pdfium.FPDFPage_GetObject(pagePtr, 0);
+              if (fallbackObj) {
+                this.pdfium.FPDFPage_RemoveObject(pagePtr, fallbackObj);
+                if (typeof this.pdfium.FPDFPageObj_Destroy === 'function') {
+                  this.pdfium.FPDFPageObj_Destroy(fallbackObj);
+                }
               }
             }
           }
+          break;
+        }
+
+        case 'insertText':
+        case 'insertTextObject': {
+          const fontName = op.fontName || 'Helvetica';
+          const font = this.pdfium.FPDFText_LoadStandardFont(doc.docPtr, fontName);
+
+          if (font) {
+            const textObj = this.pdfium.FPDFPageObj_CreateTextObj(doc.docPtr, font, op.fontSize);
+            if (textObj) {
+              const u16 = new Uint16Array(op.text.length + 1);
+              for (let c = 0; c < op.text.length; c++) {
+                u16[c] = op.text.charCodeAt(c);
+              }
+              u16[op.text.length] = 0;
+              const textBytes = new Uint8Array(u16.buffer);
+              const textBuf = this.emscripten.wasmExports.malloc(textBytes.length);
+              this.emscripten.HEAPU8.set(textBytes, textBuf);
+              this.pdfium.FPDFText_SetText(textObj, textBuf);
+              this.emscripten.wasmExports.free(textBuf);
+
+              const mPtr = this.emscripten.wasmExports.malloc(24);
+              const dvM = new DataView(this.emscripten.HEAPU8.buffer, mPtr, 24);
+              for (let m = 0; m < 6; m++) {
+                dvM.setFloat32(m * 4, op.matrix[m]!, true);
+              }
+              this.pdfium.FPDFPageObj_SetMatrix(textObj, mPtr);
+              this.emscripten.wasmExports.free(mPtr);
+
+              const fill = op.fillColor ?? { r: 0, g: 0, b: 0, a: 255 };
+              this.pdfium.FPDFPageObj_SetFillColor(textObj, fill.r, fill.g, fill.b, fill.a);
+
+              if (op.strokeColor) {
+                this.pdfium.FPDFPageObj_SetStrokeColor(
+                  textObj,
+                  op.strokeColor.r,
+                  op.strokeColor.g,
+                  op.strokeColor.b,
+                  op.strokeColor.a
+                );
+              }
+
+              if (op.renderMode) {
+                const modeMap: Record<TextRenderMode, number> = {
+                  fill: 0,
+                  stroke: 1,
+                  fillThenStroke: 2,
+                  invisible: 3,
+                  fillClip: 4,
+                  strokeClip: 5,
+                  fillStrokeClip: 6,
+                  clip: 7
+                };
+                this.pdfium.FPDFTextObj_SetTextRenderMode(textObj, modeMap[op.renderMode] ?? 0);
+              }
+
+              this.pdfium.FPDFPage_InsertObject(pagePtr, textObj);
+            }
+          }
+          break;
+        }
+
+        case 'insertImage':
+        case 'insertImageObject': {
+          const imgObj = this.pdfium.FPDFPageObj_NewImageObj(doc.docPtr);
+          if (imgObj) {
+            const bmp = this.pdfium.FPDFBitmap_CreateEx(op.width, op.height, 4, 0, op.width * 4);
+            if (bmp) {
+              const bufPtr = this.pdfium.FPDFBitmap_GetBuffer(bmp);
+              if (bufPtr) {
+                const bgra = new Uint8Array(op.width * op.height * 4);
+                for (let p = 0; p < op.width * op.height; p++) {
+                  const r = op.imageData[p * 4] ?? 0;
+                  const g = op.imageData[p * 4 + 1] ?? 0;
+                  const b = op.imageData[p * 4 + 2] ?? 0;
+                  const a = op.imageData[p * 4 + 3] ?? 255;
+                  bgra[p * 4] = b;
+                  bgra[p * 4 + 1] = g;
+                  bgra[p * 4 + 2] = r;
+                  bgra[p * 4 + 3] = a;
+                }
+                this.emscripten.HEAPU8.set(bgra, bufPtr);
+                this.pdfium.FPDFImageObj_SetBitmap(pagePtr, 0, imgObj, bmp);
+                this.pdfium.FPDFImageObj_SetMatrix(
+                  imgObj,
+                  op.matrix[0],
+                  op.matrix[1],
+                  op.matrix[2],
+                  op.matrix[3],
+                  op.matrix[4],
+                  op.matrix[5]
+                );
+                this.pdfium.FPDFPage_InsertObject(pagePtr, imgObj);
+              }
+              this.pdfium.FPDFBitmap_Destroy(bmp);
+            }
+          }
+          break;
+        }
+
+        case 'insertPathObject': {
+          const firstPt = op.segments[0]?.points[0] ?? { x: 0, y: 0 };
+          const pathObj = this.pdfium.FPDFPageObj_CreateNewPath(firstPt.x, firstPt.y);
+          if (pathObj) {
+            for (const seg of op.segments) {
+              if (seg.type === 'moveTo' && seg.points[0]) {
+                this.pdfium.FPDFPath_MoveTo(pathObj, seg.points[0].x, seg.points[0].y);
+              } else if (seg.type === 'lineTo' && seg.points[0]) {
+                this.pdfium.FPDFPath_LineTo(pathObj, seg.points[0].x, seg.points[0].y);
+              } else if (seg.type === 'bezierCurveTo' && seg.points.length >= 3) {
+                this.pdfium.FPDFPath_BezierTo(
+                  pathObj,
+                  seg.points[0]!.x,
+                  seg.points[0]!.y,
+                  seg.points[1]!.x,
+                  seg.points[1]!.y,
+                  seg.points[2]!.x,
+                  seg.points[2]!.y
+                );
+              } else if (seg.type === 'closePath' || seg.close) {
+                this.pdfium.FPDFPath_Close(pathObj);
+              }
+            }
+
+            const fillModeVal =
+              op.fillMode === 'alternate' ? 1 : op.fillMode === 'winding' || op.fill ? 2 : 0;
+            const strokeVal = op.stroke !== false;
+            this.pdfium.FPDFPath_SetDrawMode(pathObj, fillModeVal, strokeVal);
+
+            if (op.lineWidth) {
+              this.pdfium.FPDFPageObj_SetStrokeWidth(pathObj, op.lineWidth);
+            }
+            if (op.strokeColor) {
+              this.pdfium.FPDFPageObj_SetStrokeColor(
+                pathObj,
+                op.strokeColor.r,
+                op.strokeColor.g,
+                op.strokeColor.b,
+                op.strokeColor.a
+              );
+            }
+            if (op.fillColor) {
+              this.pdfium.FPDFPageObj_SetFillColor(
+                pathObj,
+                op.fillColor.r,
+                op.fillColor.g,
+                op.fillColor.b,
+                op.fillColor.a
+              );
+            }
+            if (op.matrix) {
+              const mPtr = this.emscripten.wasmExports.malloc(24);
+              const dvM = new DataView(this.emscripten.HEAPU8.buffer, mPtr, 24);
+              for (let m = 0; m < 6; m++) {
+                dvM.setFloat32(m * 4, op.matrix[m]!, true);
+              }
+              this.pdfium.FPDFPageObj_SetMatrix(pathObj, mPtr);
+              this.emscripten.wasmExports.free(mPtr);
+            }
+            this.pdfium.FPDFPage_InsertObject(pagePtr, pathObj);
+          }
+          break;
+        }
+
+        case 'setMatrix': {
+          const found = this.findPageObjectByPath(pagePtr, pageIndex, op.objectId);
+          if (found) {
+            const mPtr = this.emscripten.wasmExports.malloc(24);
+            const dvM = new DataView(this.emscripten.HEAPU8.buffer, mPtr, 24);
+            for (let m = 0; m < 6; m++) {
+              dvM.setFloat32(m * 4, op.matrix[m]!, true);
+            }
+            this.pdfium.FPDFPageObj_SetMatrix(found.objPtr, mPtr);
+            this.emscripten.wasmExports.free(mPtr);
+
+            const type = this.pdfium.FPDFPageObj_GetType(found.objPtr);
+            if (type === 3 && typeof this.pdfium.FPDFImageObj_SetMatrix === 'function') {
+              this.pdfium.FPDFImageObj_SetMatrix(
+                found.objPtr,
+                op.matrix[0],
+                op.matrix[1],
+                op.matrix[2],
+                op.matrix[3],
+                op.matrix[4],
+                op.matrix[5]
+              );
+            }
+          }
+          break;
+        }
+
+        case 'setColor': {
+          const found = this.findPageObjectByPath(pagePtr, pageIndex, op.objectId);
+          if (found) {
+            if (op.strokeColor && typeof this.pdfium.FPDFPageObj_SetStrokeColor === 'function') {
+              this.pdfium.FPDFPageObj_SetStrokeColor(
+                found.objPtr,
+                op.strokeColor.r,
+                op.strokeColor.g,
+                op.strokeColor.b,
+                op.strokeColor.a
+              );
+            }
+            if (op.fillColor && typeof this.pdfium.FPDFPageObj_SetFillColor === 'function') {
+              this.pdfium.FPDFPageObj_SetFillColor(
+                found.objPtr,
+                op.fillColor.r,
+                op.fillColor.g,
+                op.fillColor.b,
+                op.fillColor.a
+              );
+            }
+          }
+          break;
+        }
+
+        case 'setTextRenderMode': {
+          const found = this.findPageObjectByPath(pagePtr, pageIndex, op.objectId);
+          if (found && typeof this.pdfium.FPDFTextObj_SetTextRenderMode === 'function') {
+            const modeMap: Record<TextRenderMode, number> = {
+              fill: 0,
+              stroke: 1,
+              fillThenStroke: 2,
+              invisible: 3,
+              fillClip: 4,
+              strokeClip: 5,
+              fillStrokeClip: 6,
+              clip: 7
+            };
+            this.pdfium.FPDFTextObj_SetTextRenderMode(found.objPtr, modeMap[op.renderMode] ?? 0);
+          }
+          break;
+        }
+
+        case 'reorderObject': {
+          const found = this.findPageObjectByPath(pagePtr, pageIndex, op.objectId);
+          if (found && !found.parentFormPtr) {
+            this.pdfium.FPDFPage_RemoveObject(pagePtr, found.objPtr);
+            if (typeof this.pdfium.FPDFPage_InsertObjectAtIndex === 'function') {
+              this.pdfium.FPDFPage_InsertObjectAtIndex(pagePtr, found.objPtr, op.newZIndex);
+            } else {
+              this.pdfium.FPDFPage_InsertObject(pagePtr, found.objPtr);
+            }
+          }
+          break;
         }
       }
     }

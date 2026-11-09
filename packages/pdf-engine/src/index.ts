@@ -4,7 +4,16 @@
  * Strictly no PDFium types leak outside this package.
  */
 
-import type { PageInfo, PageObject, TextRun, Matrix2D, Rect, ColorRGBA } from '@rhypdf/pdf-model';
+import type {
+  PageInfo,
+  PageObject,
+  TextRun,
+  Matrix2D,
+  Rect,
+  ColorRGBA,
+  TextRenderMode,
+  PathSegment
+} from '@rhypdf/pdf-model';
 
 export type DocumentHandle = string;
 
@@ -22,20 +31,33 @@ export type PageMutation =
       objectId: string;
     }
   | {
-      type: 'insertText';
+      type: 'insertText' | 'insertTextObject';
       text: string;
-      fontName: string;
+      fontName?: string;
       fontSize: number;
-      fillColor: ColorRGBA;
+      fillColor?: ColorRGBA;
+      strokeColor?: ColorRGBA;
       matrix: Matrix2D;
+      renderMode?: TextRenderMode;
     }
   | {
-      type: 'insertImage';
+      type: 'insertImage' | 'insertImageObject';
       imageData: Uint8Array;
       width: number;
       height: number;
       matrix: Matrix2D;
-      format: 'rgba' | 'jpeg';
+      format?: 'rgba' | 'jpeg';
+    }
+  | {
+      type: 'insertPathObject';
+      segments: PathSegment[];
+      lineWidth?: number;
+      strokeColor?: ColorRGBA;
+      fillColor?: ColorRGBA;
+      fillMode?: 'none' | 'alternate' | 'winding';
+      stroke?: boolean;
+      fill?: boolean;
+      matrix?: Matrix2D;
     }
   | {
       type: 'setMatrix';
@@ -43,9 +65,20 @@ export type PageMutation =
       matrix: Matrix2D;
     }
   | {
+      type: 'setColor';
+      objectId: string;
+      strokeColor?: ColorRGBA;
+      fillColor?: ColorRGBA;
+    }
+  | {
       type: 'reorderObject';
       objectId: string;
       newZIndex: number;
+    }
+  | {
+      type: 'setTextRenderMode';
+      objectId: string;
+      renderMode: TextRenderMode;
     };
 
 export interface MutationResult {

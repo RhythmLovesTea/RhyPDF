@@ -4,7 +4,14 @@
  * Zero PDFium leaks.
  */
 
-import type { PageInfo, PageObject, TextRun, ImageObject, Rect } from '@rhypdf/pdf-model';
+import type {
+  PageInfo,
+  PageObject,
+  TextRun,
+  ImageObject,
+  PathObject,
+  Rect
+} from '@rhypdf/pdf-model';
 import { CoordinateMapper } from '@rhypdf/pdf-model';
 import type {
   PdfEngine,
@@ -308,7 +315,8 @@ export class MockPdfEngine implements PdfEngine {
             });
           break;
         }
-        case 'insertText': {
+        case 'insertText':
+        case 'insertTextObject': {
           const newId = `text-inserted-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
           const textObj: TextRun = {
             id: newId,
@@ -322,33 +330,71 @@ export class MockPdfEngine implements PdfEngine {
             matrix: op.matrix,
             zIndex: pageState.objects.length,
             text: op.text,
-            fontName: op.fontName,
+            fontName: op.fontName ?? 'Helvetica',
             fontSize: op.fontSize,
-            fillColor: op.fillColor,
+            fillColor: op.fillColor ?? { r: 0, g: 0, b: 0, a: 255 },
+            strokeColor: op.strokeColor,
+            renderMode: op.renderMode ?? 'fill',
             isEmbeddedSubset: false
           };
           pageState.objects.push(textObj);
           break;
         }
-        case 'insertImage': {
+        case 'insertImage':
+        case 'insertImageObject': {
           const newId = `img-inserted-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+          const scaleX = Math.hypot(op.matrix[0], op.matrix[1]) || 100;
+          const scaleY = Math.hypot(op.matrix[2], op.matrix[3]) || 100;
           const imgObj: ImageObject = {
             id: newId,
             type: 'image',
             bounds: {
               left: op.matrix[4],
               bottom: op.matrix[5],
-              right: op.matrix[4] + op.width,
-              top: op.matrix[5] + op.height
+              right: op.matrix[4] + scaleX,
+              top: op.matrix[5] + scaleY
             },
             matrix: op.matrix,
             zIndex: pageState.objects.length,
             pixelWidth: op.width,
             pixelHeight: op.height,
-            effectiveDpi: { x: 72, y: 72 },
-            format: op.format === 'rgba' ? 'raw' : 'jpeg'
+            effectiveDpi: {
+              x: Math.round((op.width / (scaleX / 72)) * 10) / 10,
+              y: Math.round((op.height / (scaleY / 72)) * 10) / 10
+            },
+            format: op.format === 'rgba' ? 'png' : 'jpeg',
+            colorSpace: 'DeviceRGB',
+            bitsPerPixel: 24,
+            hasMask: false,
+            hasSoftMask: false
           };
           pageState.objects.push(imgObj);
+          break;
+        }
+        case 'insertPathObject': {
+          const newId = `path-inserted-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+          const mat = op.matrix ?? [1, 0, 0, 1, 0, 0];
+          const allPts = op.segments.flatMap((s) => s.points);
+          const left = allPts.length > 0 ? Math.min(...allPts.map((p) => p.x)) : 0;
+          const bottom = allPts.length > 0 ? Math.min(...allPts.map((p) => p.y)) : 0;
+          const right = allPts.length > 0 ? Math.max(...allPts.map((p) => p.x)) : 100;
+          const top = allPts.length > 0 ? Math.max(...allPts.map((p) => p.y)) : 100;
+
+          const pathObj: PathObject = {
+            id: newId,
+            type: 'path',
+            bounds: { left, bottom, right, top },
+            matrix: mat,
+            zIndex: pageState.objects.length,
+            segments: op.segments,
+            lineWidth: op.lineWidth ?? 1,
+            strokeColor: op.strokeColor,
+            fillColor: op.fillColor,
+            stroke: op.stroke ?? op.strokeColor !== undefined,
+            fill: op.fill ?? op.fillColor !== undefined,
+            fillMode: op.fillMode ?? 'winding'
+          };
+          pageState.objects.push(pathObj);
           break;
         }
         case 'setMatrix': {
@@ -358,11 +404,34 @@ export class MockPdfEngine implements PdfEngine {
           }
           break;
         }
+        case 'setColor': {
+          const target = pageState.objects.find((o) => o.id === op.objectId);
+          if (target) {
+            if (target.type === 'text') {
+              if (op.fillColor) target.fillColor = op.fillColor;
+              if (op.strokeColor) target.strokeColor = op.strokeColor;
+            } else if (target.type === 'path') {
+              if (op.fillColor) target.fillColor = op.fillColor;
+              if (op.strokeColor) target.strokeColor = op.strokeColor;
+            }
+          }
+          break;
+        }
+        case 'setTextRenderMode': {
+          const target = pageState.objects.find((o) => o.id === op.objectId);
+          if (target && target.type === 'text') {
+            target.renderMode = op.renderMode;
+          }
+          break;
+        }
         case 'reorderObject': {
           const target = pageState.objects.find((o) => o.id === op.objectId);
           if (target) {
             target.zIndex = op.newZIndex;
             pageState.objects.sort((a, b) => a.zIndex - b.zIndex);
+            pageState.objects.forEach((o, i) => {
+              o.zIndex = i;
+            });
           }
           break;
         }
