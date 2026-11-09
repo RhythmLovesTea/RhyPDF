@@ -20,7 +20,10 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "allowUnreachableCode": false,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true
   }
 }
