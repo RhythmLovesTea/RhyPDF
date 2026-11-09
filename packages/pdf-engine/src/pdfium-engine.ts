@@ -7,7 +7,7 @@
  */
 
 import type { WrappedPdfiumModule } from '@embedpdf/pdfium';
-import type { PageInfo, PageObject, TextRun, CharBox, Rect } from '@rhypdf/pdf-model';
+import type { PageInfo, PageObject, TextRun, CharBox, Rect, Matrix2D } from '@rhypdf/pdf-model';
 import type {
   PdfEngine,
   DocumentHandle,
@@ -404,73 +404,159 @@ export class PdfiumEngine implements PdfEngine {
     const objects: PageObject[] = [];
 
     const boundsPtr = this.emscripten.wasmExports.malloc(16); // 4 floats: left, bottom, right, top
+    const matPtr = this.emscripten.wasmExports.malloc(24); // 6 floats: a, b, c, d, e, f
 
     try {
       for (let i = 0; i < count; i++) {
         const objPtr = this.pdfium.FPDFPage_GetObject(pagePtr, i);
         if (!objPtr) continue;
 
-        const type = this.pdfium.FPDFPageObj_GetType(objPtr);
-        this.pdfium.FPDFPageObj_GetBounds(
-          objPtr,
-          boundsPtr,
-          boundsPtr + 4,
-          boundsPtr + 8,
-          boundsPtr + 12
-        );
-
-        const dv = new DataView(this.emscripten.HEAPU8.buffer, boundsPtr, 16);
-        const bounds: Rect = {
-          left: dv.getFloat32(0, true),
-          bottom: dv.getFloat32(4, true),
-          right: dv.getFloat32(8, true),
-          top: dv.getFloat32(12, true)
-        };
-
-        if (type === 1) {
-          // Text object
-          objects.push({
-            id: `obj-${pageIndex}-${i}`,
-            type: 'text',
-            bounds,
-            matrix: [1, 0, 0, 1, bounds.left, bounds.bottom],
-            zIndex: i,
-            text: '',
-            fontName: 'Helvetica',
-            fontSize: 12,
-            fillColor: { r: 0, g: 0, b: 0, a: 255 },
-            isEmbeddedSubset: false
-          });
-        } else if (type === 3) {
-          // Image object
-          objects.push({
-            id: `obj-${pageIndex}-${i}`,
-            type: 'image',
-            bounds,
-            matrix: [1, 0, 0, 1, bounds.left, bounds.bottom],
-            zIndex: i,
-            pixelWidth: Math.round(bounds.right - bounds.left),
-            pixelHeight: Math.round(bounds.top - bounds.bottom),
-            effectiveDpi: { x: 72, y: 72 }
-          });
-        } else if (type === 2) {
-          // Path object
-          objects.push({
-            id: `obj-${pageIndex}-${i}`,
-            type: 'path',
-            bounds,
-            matrix: [1, 0, 0, 1, bounds.left, bounds.bottom],
-            zIndex: i,
-            segments: [],
-            lineWidth: 1
-          });
+        const obj = this.extractObjectFromPtr(pagePtr, objPtr, i, pageIndex, boundsPtr, matPtr);
+        if (obj) {
+          objects.push(obj);
         }
       }
     } finally {
       this.emscripten.wasmExports.free(boundsPtr);
+      this.emscripten.wasmExports.free(matPtr);
     }
 
     return objects;
+  }
+
+  private extractObjectFromPtr(
+    pagePtr: number,
+    objPtr: number,
+    zIndex: number,
+    pageIndex: number,
+    boundsPtr: number,
+    matPtr: number,
+    parentChain?: string[],
+    parentMatrix?: Matrix2D
+  ): PageObject | null {
+    const type = this.pdfium.FPDFPageObj_GetType(objPtr);
+
+    this.pdfium.FPDFPageObj_GetBounds(
+      objPtr,
+      boundsPtr,
+      boundsPtr + 4,
+      boundsPtr + 8,
+      boundsPtr + 12
+    );
+
+    const dvB = new DataView(this.emscripten.HEAPU8.buffer, boundsPtr, 16);
+    const bounds: Rect = {
+      left: dvB.getFloat32(0, true),
+      bottom: dvB.getFloat32(4, true),
+      right: dvB.getFloat32(8, true),
+      top: dvB.getFloat32(12, true)
+    };
+
+    let matrix: Matrix2D = [1, 0, 0, 1, bounds.left, bounds.bottom];
+    const hasMat = this.pdfium.FPDFPageObj_GetMatrix(objPtr, matPtr);
+    if (hasMat) {
+      const dvM = new DataView(this.emscripten.HEAPU8.buffer, matPtr, 24);
+      matrix = [
+        dvM.getFloat32(0, true),
+        dvM.getFloat32(4, true),
+        dvM.getFloat32(8, true),
+        dvM.getFloat32(12, true),
+        dvM.getFloat32(16, true),
+        dvM.getFloat32(20, true)
+      ];
+    }
+
+    if (parentMatrix) {
+      matrix = [
+        parentMatrix[0] * matrix[0] + parentMatrix[2] * matrix[1],
+        parentMatrix[1] * matrix[0] + parentMatrix[3] * matrix[1],
+        parentMatrix[0] * matrix[2] + parentMatrix[2] * matrix[3],
+        parentMatrix[1] * matrix[2] + parentMatrix[3] * matrix[3],
+        parentMatrix[0] * matrix[4] + parentMatrix[2] * matrix[5] + parentMatrix[4],
+        parentMatrix[1] * matrix[4] + parentMatrix[3] * matrix[5] + parentMatrix[5]
+      ];
+    }
+
+    const idPrefix = parentChain && parentChain.length > 0 ? `${parentChain.join('-')}-` : '';
+    const id = `${idPrefix}obj-${pageIndex}-${zIndex}`;
+
+    if (type === 1) {
+      // Text object
+      return {
+        id,
+        type: 'text',
+        bounds,
+        matrix,
+        zIndex,
+        parentFormChain: parentChain,
+        text: '',
+        fontName: 'Helvetica',
+        fontSize: 12,
+        fillColor: { r: 0, g: 0, b: 0, a: 255 },
+        isEmbeddedSubset: false
+      };
+    } else if (type === 3) {
+      // Image object
+      const pixelWidth = Math.max(1, Math.round(bounds.right - bounds.left));
+      const pixelHeight = Math.max(1, Math.round(bounds.top - bounds.bottom));
+      return {
+        id,
+        type: 'image',
+        bounds,
+        matrix,
+        zIndex,
+        parentFormChain: parentChain,
+        pixelWidth,
+        pixelHeight,
+        effectiveDpi: { x: 72, y: 72 }
+      };
+    } else if (type === 2 || type === 4) {
+      // Path object
+      return {
+        id,
+        type: 'path',
+        bounds,
+        matrix,
+        zIndex,
+        parentFormChain: parentChain,
+        segments: [],
+        lineWidth: 1
+      };
+    } else if (type === 6) {
+      // Form XObject
+      const subObjects: PageObject[] = [];
+      const formChain = parentChain ? [...parentChain, id] : [id];
+      if (typeof this.pdfium.FPDFFormObj_CountObjects === 'function') {
+        const subCount = this.pdfium.FPDFFormObj_CountObjects(objPtr);
+        for (let s = 0; s < subCount; s++) {
+          const subObjPtr = this.pdfium.FPDFFormObj_GetObject(objPtr, s);
+          if (subObjPtr) {
+            const sub = this.extractObjectFromPtr(
+              pagePtr,
+              subObjPtr,
+              s,
+              pageIndex,
+              boundsPtr,
+              matPtr,
+              formChain,
+              matrix
+            );
+            if (sub) subObjects.push(sub);
+          }
+        }
+      }
+      return {
+        id,
+        type: 'form',
+        bounds,
+        matrix,
+        zIndex,
+        parentFormChain: parentChain,
+        subObjects
+      };
+    }
+
+    return null;
   }
 
   async extractText(docHandle: DocumentHandle, pageIndex: number): Promise<TextRun[]> {

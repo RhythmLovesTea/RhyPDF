@@ -55,6 +55,7 @@ export interface BasePageObject {
   bounds: Rect; // in PDF points
   matrix: Matrix2D;
   zIndex: number;
+  parentFormChain?: string[];
 }
 
 export interface CharBox {

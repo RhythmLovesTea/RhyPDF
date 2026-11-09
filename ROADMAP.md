@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 2
-CURRENT TASK  : 2.6
-LAST UPDATED  : 2026-11-09
-NOTES         : Task 2.5 complete (Page render to ImageBitmap with options: arbitrary scale, devicePixelRatio, clipRect sub-region tiles, 4-angle rotation 0/90/180/270 with aspect ratio dimension swapping, annotations on/off, AbortSignal cancellation; copy WASM BGRA buffer to ImageData and transfer ImageBitmap without OffscreenCanvas dependency). Moving to Task 2.6 (Page-object enumeration returning PageObject models).
+CURRENT TASK  : 2.7
+LAST UPDATED  : 2026-11-10
+NOTES         : Task 2.6 complete (Page-object enumeration returning PageObject models with type, bounds, matrix, z-index, and parentFormChain recursive traversal; verified across sample set for text, image, and path objects). Moving to Task 2.7 (Text-object details: string, font name, size, fill/stroke color, char boxes, spacing, horizontal scale, rotation, embedded-font info).
 ```
 
 ---
@@ -368,7 +368,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **2.3** WASM loading strategy: lazy load, streaming compile, cached by the service worker, loading progress UI. _Done when:_ second visit starts the engine from cache, offline.
 - [x] **2.4** Open a document from `ArrayBuffer` / `Blob` with optional password; chunked reads for big files (per Task 0.9). _Done when:_ wrong password returns `WrongPassword` and a 100 MB file opens within the limits.
 - [x] **2.5** Page render to `ImageBitmap` with options: scale, `devicePixelRatio`, clip rect (for tiles), rotation, annotations on / off. PDFium renders into a WASM bitmap buffer; copy it to `ImageData` and transfer an `ImageBitmap` (no `OffscreenCanvas` dependency). _Done when:_ arbitrary scale, tiles and rotation render correctly in all 3 browser engines.
-- [ ] **2.6** Page-object enumeration returning `PageObject` models (type, bounds, matrix, z-index, parent form chain). _Done when:_ objects match the Task 0.3 overlay on the sample set.
+- [x] **2.6** Page-object enumeration returning `PageObject` models (type, bounds, matrix, z-index, parent form chain). _Done when:_ objects match the Task 0.3 overlay on the sample set.
 - [ ] **2.7** Text-object details: string, font name, size, fill / stroke color, render mode, char boxes, character / word spacing, horizontal scale, rotation, embedded-font info (subset, full, not embedded, flags, weight).
 - [ ] **2.8** Image-object details: bitmap preview, pixel size, bounds, matrix, filters, color space, mask / soft-mask info, effective DPI.
 - [ ] **2.9** Path-object details (vector shapes): bounds, segments, stroke, fill, width, dash.
@@ -788,7 +788,8 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-09 | 2.2     | Worker host + Comlink RPC, serialized queue & cancellation         | `P2.2`  | SerializedQueue, WorkerPdfEngine, Comlink transferables, 100 concurrent calls verified                      |
 | 2026-11-09 | 2.3     | WASM loading strategy: lazy load, progress UI & offline cache      | `P2.3`  | loadPdfiumWasm with streaming progress, loading UI bar, offline start verified                              |
 | 2026-11-09 | 2.4     | Open doc from ArrayBuffer/Blob, password handling & 100MB chunked  | `P2.4`  | FPDF_LoadCustomDocument chunked access, PasswordRequired/WrongPassword, 100MB file opens within heap limits |
-| 2026-11-09 | 2.5     | Page render to ImageBitmap with scale, DPR, tiles & rotation       | `P2.5`  | Arbitrary scale, DPR, clipRect tile sub-regions, 0/90/180/270 rotation & annotations verified                 |
+| 2026-11-09 | 2.5     | Page render to ImageBitmap with scale, DPR, tiles & rotation       | `P2.5`  | Arbitrary scale, DPR, clipRect tile sub-regions, 0/90/180/270 rotation & annotations verified               |
+| 2026-11-10 | 2.6     | Page-object enumeration with type, bounds, matrix & z-index        | `P2.6`  | Verified object enumeration (text, image, path, form) & matrix composition across sample set                 |
 
 ---
 
