@@ -43,9 +43,21 @@ export class MockPdfEngine implements PdfEngine {
       throw new PdfError('Corrupt', 'Document buffer is empty');
     }
 
-    // Inspect if caller is asking for encrypted doc simulation (e.g. password 'secret123')
-    const simulatedEncrypted =
-      opts?.password === 'wrong_password' || opts?.password === 'secret123';
+    // Inspect if caller is asking for encrypted doc simulation
+    const isEncryptedSim =
+      (typeof data === 'object' &&
+        data !== null &&
+        '__encrypted' in data &&
+        Boolean(data.__encrypted)) ||
+      opts?.password === 'wrong_password' ||
+      opts?.password === 'secret123';
+
+    if (isEncryptedSim && (!opts?.password || opts.password === '')) {
+      throw new PdfError(
+        'PasswordRequired',
+        'Password is required to open this protected document'
+      );
+    }
     if (opts?.password === 'wrong_password') {
       throw new PdfError('WrongPassword', 'The provided password was incorrect');
     }
@@ -130,7 +142,7 @@ export class MockPdfEngine implements PdfEngine {
     this.documents.set(handle, {
       id: handle,
       password: opts?.password,
-      isEncrypted: simulatedEncrypted,
+      isEncrypted: isEncryptedSim,
       pages: [defaultPage, secondPage]
     });
 
