@@ -4,12 +4,16 @@ import { initI18n } from '@rhypdf/i18n';
 import { App } from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { setupGlobalErrorHandlers } from './lib/recovery';
+import { registerServiceWorker } from './registerServiceWorker';
 
 // Initialize i18n engine and document direction
 initI18n();
 
 // Initialize global error and unhandled rejection listeners
 setupGlobalErrorHandlers();
+
+// Register Service Worker for offline PWA shell and WASM caching
+registerServiceWorker();
 
 const rootElement = document.getElementById('root');
 if (rootElement) {

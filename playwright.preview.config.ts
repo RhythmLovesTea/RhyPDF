@@ -7,7 +7,8 @@ export default defineConfig({
     '**/styleguide.spec.ts',
     '**/routing.spec.ts',
     '**/error-handling.spec.ts',
-    '**/i18n.spec.ts'
+    '**/i18n.spec.ts',
+    '**/security-pwa.spec.ts'
   ],
   timeout: 60000,
   workers: 1,

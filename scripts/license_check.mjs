@@ -22,7 +22,10 @@ console.log('Running automated license compliance check...');
 
 let rawJson = '';
 try {
-  rawJson = execSync('pnpm licenses list --json', { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 });
+  rawJson = execSync('pnpm licenses list --json', {
+    encoding: 'utf-8',
+    maxBuffer: 10 * 1024 * 1024
+  });
 } catch (err) {
   console.error('Failed to run pnpm licenses list:', err.message);
   process.exit(1);
@@ -50,5 +53,7 @@ if (violations.length > 0) {
   process.exit(1);
 }
 
-console.log(`License check PASSED: All ${totalPackages} packages adhere to approved permissive licenses.`);
+console.log(
+  `License check PASSED: All ${totalPackages} packages adhere to approved permissive licenses.`
+);
 process.exit(0);

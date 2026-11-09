@@ -47,6 +47,9 @@ jobs:
       - name: Audit dependency licenses
         run: pnpm license:check
 
+      - name: Audit production dependencies for vulnerabilities
+        run: pnpm audit --prod
+
       - name: Verify bundle size budgets
         run: pnpm size:check
 

@@ -2,6 +2,23 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
+const PROD_SECURITY_HEADERS = {
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Embedder-Policy': 'require-corp',
+  'Content-Security-Policy':
+    "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';",
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY'
+};
+
+const DEV_SECURITY_HEADERS = {
+  ...PROD_SECURITY_HEADERS,
+  'Content-Security-Policy':
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data: ws: wss:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
+};
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -22,16 +39,10 @@ export default defineConfig({
     hmr: {
       overlay: false
     },
-    headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp'
-    }
+    headers: DEV_SECURITY_HEADERS
   },
   preview: {
-    headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp'
-    }
+    headers: PROD_SECURITY_HEADERS
   },
   worker: {
     format: 'es'
