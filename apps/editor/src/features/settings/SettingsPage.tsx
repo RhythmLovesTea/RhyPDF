@@ -8,6 +8,11 @@ export default function SettingsPage(): React.JSX.Element {
   const [ocrAuto, setOcrAuto] = useState(true);
   const [memoryWarningThreshold, setMemoryWarningThreshold] = useState(50);
   const [saved, setSaved] = useState(false);
+  const [shouldCrash, setShouldCrash] = useState(false);
+
+  if (shouldCrash) {
+    throw new Error('Intentional crash test triggered for ErrorBoundary verification');
+  }
 
   const handleSave = () => {
     setSaved(true);
@@ -77,6 +82,13 @@ export default function SettingsPage(): React.JSX.Element {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
           <Button data-testid="btn-save-settings" variant="primary" onClick={handleSave}>
             Save Preferences
+          </Button>
+          <Button
+            data-testid="btn-crash-trigger"
+            variant="destructive"
+            onClick={() => setShouldCrash(true)}
+          >
+            Simulate Crash Error
           </Button>
           {saved && <span style={{ color: '#16a34a', fontSize: 14, fontWeight: 500 }}>Saved!</span>}
         </div>
