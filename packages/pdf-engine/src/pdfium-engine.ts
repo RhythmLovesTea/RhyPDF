@@ -421,7 +421,8 @@ export class PdfiumEngine implements PdfEngine {
         const objPtr = this.pdfium.FPDFPage_GetObject(pagePtr, i);
         if (!objPtr) continue;
 
-        const obj = this.extractObjectFromPtr(
+        const obj = await this.extractObjectFromPtr(
+          doc,
           pagePtr,
           textPagePtr,
           objPtr,
@@ -445,7 +446,8 @@ export class PdfiumEngine implements PdfEngine {
     return objects;
   }
 
-  private extractObjectFromPtr(
+  private async extractObjectFromPtr(
+    doc: ActiveDocument,
     pagePtr: number,
     textPagePtr: number,
     objPtr: number,
@@ -455,7 +457,7 @@ export class PdfiumEngine implements PdfEngine {
     matPtr: number,
     parentChain?: string[],
     parentMatrix?: Matrix2D
-  ): PageObject | null {
+  ): Promise<PageObject | null> {
     const type = this.pdfium.FPDFPageObj_GetType(objPtr);
 
     this.pdfium.FPDFPageObj_GetBounds(
@@ -641,8 +643,210 @@ export class PdfiumEngine implements PdfEngine {
       };
     } else if (type === 3) {
       // Image object
-      const pixelWidth = Math.max(1, Math.round(bounds.right - bounds.left));
-      const pixelHeight = Math.max(1, Math.round(bounds.top - bounds.bottom));
+      let pixelWidth = Math.max(1, Math.round(Math.abs(bounds.right - bounds.left)));
+      let pixelHeight = Math.max(1, Math.round(Math.abs(bounds.top - bounds.bottom)));
+      let bitsPerPixel = 24;
+      let colorSpace: 'DeviceGray' | 'DeviceRGB' | 'DeviceCMYK' | 'DeviceLab' | 'Unknown' =
+        'DeviceRGB';
+      const filters: string[] = [];
+      let hasMask = false;
+      let hasSoftMask = false;
+      let previewBitmap: ImageBitmap | undefined;
+
+      // 1. Pixel dimensions from FPDFImageObj_GetImagePixelSize
+      if (typeof this.pdfium.FPDFImageObj_GetImagePixelSize === 'function') {
+        const sizePtr = this.emscripten.wasmExports.malloc(8);
+        if (this.pdfium.FPDFImageObj_GetImagePixelSize(objPtr, sizePtr, sizePtr + 4)) {
+          const dvS = new DataView(this.emscripten.HEAPU8.buffer, sizePtr, 8);
+          const pw = dvS.getUint32(0, true);
+          const ph = dvS.getUint32(4, true);
+          if (pw > 0 && ph > 0) {
+            pixelWidth = pw;
+            pixelHeight = ph;
+          }
+        }
+        this.emscripten.wasmExports.free(sizePtr);
+      }
+
+      // 2. Metadata via FPDFImageObj_GetImageMetadata
+      if (typeof this.pdfium.FPDFImageObj_GetImageMetadata === 'function') {
+        const metaPtr = this.emscripten.wasmExports.malloc(28);
+        if (this.pdfium.FPDFImageObj_GetImageMetadata(objPtr, pagePtr, metaPtr)) {
+          const dvM = new DataView(this.emscripten.HEAPU8.buffer, metaPtr, 28);
+          const metaW = dvM.getUint32(0, true);
+          const metaH = dvM.getUint32(4, true);
+          if (metaW > 0 && metaH > 0) {
+            pixelWidth = metaW;
+            pixelHeight = metaH;
+          }
+          const bpp = dvM.getUint32(16, true);
+          if (bpp > 0) {
+            bitsPerPixel = bpp;
+          }
+          const cs = dvM.getInt32(20, true);
+          switch (cs) {
+            case 1:
+              colorSpace = 'DeviceGray';
+              break;
+            case 2:
+              colorSpace = 'DeviceRGB';
+              break;
+            case 3:
+              colorSpace = 'DeviceCMYK';
+              break;
+            case 6:
+              colorSpace = 'DeviceLab';
+              break;
+            default:
+              colorSpace = 'Unknown';
+              break;
+          }
+        }
+        this.emscripten.wasmExports.free(metaPtr);
+      }
+
+      // 3. Filters via FPDFImageObj_GetImageFilterCount / FPDFImageObj_GetImageFilter
+      if (
+        typeof this.pdfium.FPDFImageObj_GetImageFilterCount === 'function' &&
+        typeof this.pdfium.FPDFImageObj_GetImageFilter === 'function'
+      ) {
+        const filterCount = this.pdfium.FPDFImageObj_GetImageFilterCount(objPtr);
+        if (filterCount > 0) {
+          const filterBuf = this.emscripten.wasmExports.malloc(64);
+          for (let f = 0; f < filterCount; f++) {
+            const filterLen = this.pdfium.FPDFImageObj_GetImageFilter(objPtr, f, filterBuf, 64);
+            if (filterLen > 0) {
+              const rawFilter = new TextDecoder().decode(
+                new Uint8Array(this.emscripten.HEAPU8.buffer, filterBuf, filterLen)
+              );
+              const filterName = rawFilter.replace(/\0.*$/, '').trim();
+              if (filterName) {
+                filters.push(filterName);
+              }
+            }
+          }
+          this.emscripten.wasmExports.free(filterBuf);
+        }
+      }
+
+      // 4. Calculate effective DPI
+      const scaleX = Math.hypot(matrix[0], matrix[1]) || Math.abs(bounds.right - bounds.left) || 72;
+      const scaleY = Math.hypot(matrix[2], matrix[3]) || Math.abs(bounds.top - bounds.bottom) || 72;
+      const effectiveDpi = {
+        x: Math.round((pixelWidth / (scaleX / 72)) * 10) / 10,
+        y: Math.round((pixelHeight / (scaleY / 72)) * 10) / 10
+      };
+
+      // 5. Bitmap preview and mask / soft-mask info
+      let bitmapPtr = 0;
+      if (typeof this.pdfium.FPDFImageObj_GetBitmap === 'function') {
+        bitmapPtr = this.pdfium.FPDFImageObj_GetBitmap(objPtr);
+      }
+      if (!bitmapPtr && typeof this.pdfium.FPDFImageObj_GetRenderedBitmap === 'function') {
+        bitmapPtr = this.pdfium.FPDFImageObj_GetRenderedBitmap(doc.docPtr, pagePtr, objPtr);
+      }
+
+      if (bitmapPtr) {
+        try {
+          const bmpW = this.pdfium.FPDFBitmap_GetWidth(bitmapPtr);
+          const bmpH = this.pdfium.FPDFBitmap_GetHeight(bitmapPtr);
+          const bmpFormat = this.pdfium.FPDFBitmap_GetFormat(bitmapPtr);
+          const bmpStride = this.pdfium.FPDFBitmap_GetStride(bitmapPtr);
+          const bmpBufPtr = this.pdfium.FPDFBitmap_GetBuffer(bitmapPtr);
+
+          if (bmpW > 0 && bmpH > 0 && bmpBufPtr) {
+            const srcU8 = new Uint8Array(
+              this.emscripten.HEAPU8.buffer,
+              bmpBufPtr,
+              bmpStride * bmpH
+            );
+            const rgba = new Uint8ClampedArray(bmpW * bmpH * 4);
+
+            if (bmpFormat === 4) {
+              let hasSemiTransparent = false;
+              let hasFullyTransparent = false;
+
+              for (let y = 0; y < bmpH; y++) {
+                const srcRow = y * bmpStride;
+                const dstRow = y * bmpW * 4;
+                for (let x = 0; x < bmpW; x++) {
+                  const b = srcU8[srcRow + x * 4]!;
+                  const g = srcU8[srcRow + x * 4 + 1]!;
+                  const r = srcU8[srcRow + x * 4 + 2]!;
+                  const a = srcU8[srcRow + x * 4 + 3]!;
+
+                  rgba[dstRow + x * 4] = r;
+                  rgba[dstRow + x * 4 + 1] = g;
+                  rgba[dstRow + x * 4 + 2] = b;
+                  rgba[dstRow + x * 4 + 3] = a;
+
+                  if (a < 255) {
+                    if (a === 0) {
+                      hasFullyTransparent = true;
+                    } else {
+                      hasSemiTransparent = true;
+                    }
+                  }
+                }
+              }
+
+              if (hasSemiTransparent) {
+                hasSoftMask = true;
+              }
+              if (hasFullyTransparent) {
+                hasMask = true;
+              }
+            } else if (bmpFormat === 1) {
+              for (let y = 0; y < bmpH; y++) {
+                const srcRow = y * bmpStride;
+                const dstRow = y * bmpW * 4;
+                for (let x = 0; x < bmpW; x++) {
+                  const g = srcU8[srcRow + x]!;
+                  rgba[dstRow + x * 4] = g;
+                  rgba[dstRow + x * 4 + 1] = g;
+                  rgba[dstRow + x * 4 + 2] = g;
+                  rgba[dstRow + x * 4 + 3] = 255;
+                }
+              }
+            } else {
+              for (let y = 0; y < bmpH; y++) {
+                const srcRow = y * bmpStride;
+                const dstRow = y * bmpW * 4;
+                for (let x = 0; x < bmpW; x++) {
+                  const srcIdx = srcRow + x * (bmpFormat === 3 ? 4 : 3);
+                  rgba[dstRow + x * 4] = srcU8[srcIdx + 2]!;
+                  rgba[dstRow + x * 4 + 1] = srcU8[srcIdx + 1]!;
+                  rgba[dstRow + x * 4 + 2] = srcU8[srcIdx]!;
+                  rgba[dstRow + x * 4 + 3] = 255;
+                }
+              }
+            }
+
+            const globalScope = globalThis as unknown as {
+              createImageBitmap?: (data: ImageData) => Promise<ImageBitmap>;
+              ImageData?: new (data: Uint8ClampedArray, sw: number, sh: number) => ImageData;
+            };
+
+            if (
+              typeof globalScope.createImageBitmap === 'function' &&
+              typeof globalScope.ImageData === 'function'
+            ) {
+              const imageData = new globalScope.ImageData(rgba, bmpW, bmpH);
+              previewBitmap = await globalScope.createImageBitmap(imageData);
+            } else {
+              previewBitmap = {
+                width: bmpW,
+                height: bmpH,
+                data: rgba,
+                close: () => {}
+              } as unknown as ImageBitmap;
+            }
+          }
+        } finally {
+          this.pdfium.FPDFBitmap_Destroy(bitmapPtr);
+        }
+      }
+
       return {
         id,
         type: 'image',
@@ -652,7 +856,13 @@ export class PdfiumEngine implements PdfEngine {
         parentFormChain: parentChain,
         pixelWidth,
         pixelHeight,
-        effectiveDpi: { x: 72, y: 72 }
+        effectiveDpi,
+        filters,
+        colorSpace,
+        bitsPerPixel,
+        hasMask,
+        hasSoftMask,
+        previewBitmap
       };
     } else if (type === 2 || type === 4) {
       // Path object
@@ -675,7 +885,8 @@ export class PdfiumEngine implements PdfEngine {
         for (let s = 0; s < subCount; s++) {
           const subObjPtr = this.pdfium.FPDFFormObj_GetObject(objPtr, s);
           if (subObjPtr) {
-            const sub = this.extractObjectFromPtr(
+            const sub = await this.extractObjectFromPtr(
+              doc,
               pagePtr,
               textPagePtr,
               subObjPtr,

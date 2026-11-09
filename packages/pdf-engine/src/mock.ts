@@ -111,7 +111,12 @@ export class MockPdfEngine implements PdfEngine {
           pixelWidth: 800,
           pixelHeight: 600,
           effectiveDpi: { x: 288, y: 288 },
-          format: 'png'
+          format: 'png',
+          filters: ['FlateDecode'],
+          colorSpace: 'DeviceRGB',
+          bitsPerPixel: 24,
+          hasMask: false,
+          hasSoftMask: false
         }
       ]
     };

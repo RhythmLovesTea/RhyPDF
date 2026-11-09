@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 2
-CURRENT TASK  : 2.8
+CURRENT TASK  : 2.9
 LAST UPDATED  : 2026-11-10
-NOTES         : Task 2.7 complete (Text-object details: string, font name, size, fill/stroke color, render mode, rotation, horizontal scale, and embedded-font info including subset, full, not embedded, flags, and weight; verified across sample set). Moving to Task 2.8 (Image-object details: bitmap preview, pixel size, bounds, matrix, filters, color space, mask/soft-mask info, effective DPI).
+NOTES         : Task 2.8 complete (Image-object details: bitmap preview, pixel size, bounds, matrix, filters, color space, mask/soft-mask info, effective DPI; verified with PDFium and mock engine). Moving to Task 2.9 (Path-object details: vector shapes bounds, segments, stroke, fill, width, dash).
 ```
 
 ---
@@ -370,7 +370,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **2.5** Page render to `ImageBitmap` with options: scale, `devicePixelRatio`, clip rect (for tiles), rotation, annotations on / off. PDFium renders into a WASM bitmap buffer; copy it to `ImageData` and transfer an `ImageBitmap` (no `OffscreenCanvas` dependency). _Done when:_ arbitrary scale, tiles and rotation render correctly in all 3 browser engines.
 - [x] **2.6** Page-object enumeration returning `PageObject` models (type, bounds, matrix, z-index, parent form chain). _Done when:_ objects match the Task 0.3 overlay on the sample set.
 - [x] **2.7** Text-object details: string, font name, size, fill / stroke color, render mode, char boxes, character / word spacing, horizontal scale, rotation, embedded-font info (subset, full, not embedded, flags, weight).
-- [ ] **2.8** Image-object details: bitmap preview, pixel size, bounds, matrix, filters, color space, mask / soft-mask info, effective DPI.
+- [x] **2.8** Image-object details: bitmap preview, pixel size, bounds, matrix, filters, color space, mask / soft-mask info, effective DPI.
 - [ ] **2.9** Path-object details (vector shapes): bounds, segments, stroke, fill, width, dash.
 - [ ] **2.10** Form XObject traversal: enumerate and edit objects inside forms with correct transform composition. _Done when:_ text inside a form XObject can be listed and removed.
 - [ ] **2.11** Mutation API: `removeObject`, `insertTextObject`, `insertImageObject`, `insertPathObject`, `setMatrix`, `setColor`, `reorderObject`, `setTextRenderMode`, then `generateContent`. _Done when:_ mutations apply, regenerate the page content and update the object list.
@@ -790,7 +790,8 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-09 | 2.4     | Open doc from ArrayBuffer/Blob, password handling & 100MB chunked  | `P2.4`  | FPDF_LoadCustomDocument chunked access, PasswordRequired/WrongPassword, 100MB file opens within heap limits |
 | 2026-11-09 | 2.5     | Page render to ImageBitmap with scale, DPR, tiles & rotation       | `P2.5`  | Arbitrary scale, DPR, clipRect tile sub-regions, 0/90/180/270 rotation & annotations verified               |
 | 2026-11-10 | 2.6     | Page-object enumeration with type, bounds, matrix & z-index        | `P2.6`  | Verified object enumeration (text, image, path, form) & matrix composition across sample set                |
-| 2026-11-10 | 2.7     | Text-object details: string, font, size, colors & render mode      | `P2.7`  | Query FPDFFont (flags, weight, embedded, subset), font size, fill/stroke color & render modes                |
+| 2026-11-10 | 2.7     | Text-object details: string, font, size, colors & render mode      | `P2.7`  | Query FPDFFont (flags, weight, embedded, subset), font size, fill/stroke color & render modes               |
+| 2026-11-10 | 2.8     | Image-object details: preview, pixel size, filters, DPI & masks    | `P2.8`  | Extracted FPDFImageObj metadata, decoded RGBA preview bitmap, colorSpace & alpha mask detection             |
 
 ---
 

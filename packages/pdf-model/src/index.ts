@@ -106,6 +106,12 @@ export interface ImageObject extends BasePageObject {
   pixelHeight: number;
   effectiveDpi: { x: number; y: number };
   format?: 'png' | 'jpeg' | 'raw';
+  filters?: string[];
+  colorSpace?: 'DeviceGray' | 'DeviceRGB' | 'DeviceCMYK' | 'DeviceLab' | 'Unknown';
+  bitsPerPixel?: number;
+  hasMask?: boolean;
+  hasSoftMask?: boolean;
+  previewBitmap?: ImageBitmap;
 }
 
 export interface PathSegment {
