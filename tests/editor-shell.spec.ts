@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 
-test('Editor app shell initializes with code-split chunks and worker WASM plumbing', async ({ page }) => {
+test('Editor app shell initializes with code-split chunks and worker WASM plumbing', async ({
+  page
+}) => {
   await page.goto('/');
 
   // Verify page title

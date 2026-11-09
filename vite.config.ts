@@ -2,25 +2,25 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   esbuild: {
-    target: 'esnext',
+    target: 'esnext'
   },
   build: {
-    target: 'esnext',
+    target: 'esnext'
   },
   server: {
     port: 5173,
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-    },
+      'Cross-Origin-Embedder-Policy': 'require-corp'
+    }
   },
   optimizeDeps: {
     esbuildOptions: {
-      target: 'esnext',
+      target: 'esnext'
     },
-    exclude: ['@embedpdf/pdfium', 'harfbuzzjs'],
+    exclude: ['@embedpdf/pdfium', 'harfbuzzjs']
   },
   worker: {
-    format: 'es',
-  },
+    format: 'es'
+  }
 });

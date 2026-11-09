@@ -34,7 +34,13 @@ export default function ViewerSkeleton({ wasmStatus }: ViewerSkeletonProps): Rea
           textAlign: 'center'
         }}
       >
-        <div style={{ fontWeight: 600, fontSize: THEME_TOKENS.typography.typeScale.lg, marginBottom: 8 }}>
+        <div
+          style={{
+            fontWeight: 600,
+            fontSize: THEME_TOKENS.typography.typeScale.lg,
+            marginBottom: 8
+          }}
+        >
           PDF Page Canvas Viewport
         </div>
         <p style={{ color: '#64748b', fontSize: THEME_TOKENS.typography.typeScale.sm, margin: 0 }}>

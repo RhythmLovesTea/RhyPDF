@@ -7,7 +7,9 @@ const SidebarSkeleton = lazy(() => import('./components/SidebarSkeleton'));
 const ViewerSkeleton = lazy(() => import('./components/ViewerSkeleton'));
 
 export function App(): React.JSX.Element {
-  const [workerStatus, setWorkerStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
+  const [workerStatus, setWorkerStatus] = useState<'connecting' | 'connected' | 'error'>(
+    'connecting'
+  );
   const [wasmStatus, setWasmStatus] = useState<string>('loading');
   const [latency, setLatency] = useState<number | null>(null);
 
@@ -71,7 +73,9 @@ export function App(): React.JSX.Element {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <h1 style={{ fontSize: THEME_TOKENS.typography.typeScale.base, fontWeight: 700, margin: 0 }}>
+          <h1
+            style={{ fontSize: THEME_TOKENS.typography.typeScale.base, fontWeight: 700, margin: 0 }}
+          >
             RhyPDF Editor
           </h1>
           <span
@@ -104,7 +108,9 @@ export function App(): React.JSX.Element {
       </Suspense>
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <Suspense fallback={<div style={{ width: 240, padding: 8, fontSize: 12 }}>Loading sidebar...</div>}>
+        <Suspense
+          fallback={<div style={{ width: 240, padding: 8, fontSize: 12 }}>Loading sidebar...</div>}
+        >
           <SidebarSkeleton />
         </Suspense>
 

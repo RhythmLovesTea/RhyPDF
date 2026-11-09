@@ -1,6 +1,6 @@
 # PDF EDITOR FOR THE WEB — MASTER BUILD ROADMAP
 
-> **Goal:** A fast, modern website where a user opens a PDF in the browser and edits it the way they would in Adobe Acrobat's *Edit PDF* tool: click any text and change it in place (any language), choose fonts and formatting, move / resize / rotate / replace / delete images, add new text and images, detect text in scanned PDFs and pictures with **OCR**, manage pages, annotate, fill forms, sign, and save. Everything runs **inside the browser** (WebAssembly), so documents never leave the user's device. Installable as an offline-capable PWA. Clean, modern, free-feeling UI.
+> **Goal:** A fast, modern website where a user opens a PDF in the browser and edits it the way they would in Adobe Acrobat's _Edit PDF_ tool: click any text and change it in place (any language), choose fonts and formatting, move / resize / rotate / replace / delete images, add new text and images, detect text in scanned PDFs and pictures with **OCR**, manage pages, annotate, fill forms, sign, and save. Everything runs **inside the browser** (WebAssembly), so documents never leave the user's device. Installable as an offline-capable PWA. Clean, modern, free-feeling UI.
 
 > **Origin:** This file replaces the Android build checklist. The core idea is the same (PDFium engine + HarfBuzz text shaping + OCR + command-based undo/redo). Only the platform changes: Kotlin/NDK becomes TypeScript/WebAssembly. Your architecture, hard-problem strategies and test ideas carry over.
 
@@ -47,21 +47,21 @@ Do not invent features.
 
 ## WHAT CHANGED FROM THE ANDROID PLAN
 
-| Android plan | Web plan |
-|---|---|
-| Kotlin + Jetpack Compose + Material 3 | TypeScript + React + Vite + Tailwind/shadcn (own design tokens) |
-| PDFium via NDK / JNI | PDFium compiled to **WebAssembly**, running in a **Web Worker** |
-| ML Kit OCR (+ Tesseract fallback) | Tesseract.js (WASM) baseline + optional PaddleOCR (ONNX Runtime Web); OpenCV.js for preprocessing |
-| HarfBuzz through NDK / `TextRunShaper` | `harfbuzzjs` (HarfBuzz compiled to WASM) |
-| ICU (`android.icu`) | `Intl.Segmenter` + a UAX #9 bidi library + a UAX #14 line-break library |
-| Room / DataStore | IndexedDB (Dexie) and OPFS |
-| Storage Access Framework | File picker, drag and drop, File System Access API (Chromium), OPFS working copies |
-| Hilt | Plain TypeScript modules + React context |
-| Coroutines / Flow | `async/await`, Web Workers, Comlink RPC, Zustand |
-| `PrintManager`, `FileProvider` share | `window.print()` on a PDF blob, Web Share API, download |
-| Play Store, 16 KB alignment, APK size | Static hosting + CDN, security headers, bundle-size budgets |
-| Intents (`ACTION_VIEW` / `SEND`) | PWA file handlers, drag and drop, optional Web Share Target |
-| Instrumented device tests | Playwright on Chromium + Firefox + WebKit |
+| Android plan                           | Web plan                                                                                          |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Kotlin + Jetpack Compose + Material 3  | TypeScript + React + Vite + Tailwind/shadcn (own design tokens)                                   |
+| PDFium via NDK / JNI                   | PDFium compiled to **WebAssembly**, running in a **Web Worker**                                   |
+| ML Kit OCR (+ Tesseract fallback)      | Tesseract.js (WASM) baseline + optional PaddleOCR (ONNX Runtime Web); OpenCV.js for preprocessing |
+| HarfBuzz through NDK / `TextRunShaper` | `harfbuzzjs` (HarfBuzz compiled to WASM)                                                          |
+| ICU (`android.icu`)                    | `Intl.Segmenter` + a UAX #9 bidi library + a UAX #14 line-break library                           |
+| Room / DataStore                       | IndexedDB (Dexie) and OPFS                                                                        |
+| Storage Access Framework               | File picker, drag and drop, File System Access API (Chromium), OPFS working copies                |
+| Hilt                                   | Plain TypeScript modules + React context                                                          |
+| Coroutines / Flow                      | `async/await`, Web Workers, Comlink RPC, Zustand                                                  |
+| `PrintManager`, `FileProvider` share   | `window.print()` on a PDF blob, Web Share API, download                                           |
+| Play Store, 16 KB alignment, APK size  | Static hosting + CDN, security headers, bundle-size budgets                                       |
+| Intents (`ACTION_VIEW` / `SEND`)       | PWA file handlers, drag and drop, optional Web Share Target                                       |
+| Instrumented device tests              | Playwright on Chromium + Firefox + WebKit                                                         |
 
 ---
 
@@ -99,37 +99,37 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 1
-CURRENT TASK  : 1.4
+CURRENT TASK  : 1.5
 LAST UPDATED  : 2026-11-09
-NOTES         : Task 1.3 complete (Vite + React app shell with code splitting and worker/WASM plumbing verified in dev and prod build). Moving to Task 1.4 (Lint + format tooling).
+NOTES         : Task 1.4 complete (ESLint flat config + Prettier; verified failure on bad file and 0-error pass on repo). Moving to Task 1.5 (Design-system package: tokens as CSS variables for light + dark, Tailwind theme, base components).
 ```
 
 ---
 
 ## ROADMAP AT A GLANCE
 
-| Phase | Name | What you get | Effort* |
-|---|---|---|---|
-| 0 | Feasibility spikes | Proof that editing, fonts and OCR work in the browser | M |
-| 1 | Project setup | Repo, CI, design system, preview deploys | M |
-| 2 | PDF engine layer | Worker-based PDFium wrapper | L |
-| 3 | Viewer | Fast open, zoom, search, thumbnails | L |
-| 4 | App shell and files | Home, recents, autosave, crash recovery | M |
-| 5 | Edit model | Select, move, resize, undo / redo | L |
-| 6 | Image editing | Detect, move, resize, replace, delete images | M |
-| 7 | Text editing | Click-to-edit text in place | XL |
-| 8 | Fonts and typography | Font picker, styles, subsetting | L |
-| 9 | Multi-language | Arabic, Hebrew, Indic, Thai, CJK | L |
-| 10 | OCR | Scanned PDFs and images become searchable / editable | L |
-| 11 | Add-content tools | Shapes, drawing, tables, headers, watermarks | M |
-| 12 | Annotate, sign, forms | Highlights, comments, signatures, form filling | L |
-| 13 | Page management | Reorder, merge, split, extract | M |
-| 14 | Save and export | Save, download, print, share | M |
-| 15 | Security | Redaction, passwords, metadata | M |
-| 16 | Performance | Budgets, memory, robustness | M |
-| 17 | Testing and QA | E2E, golden images, interop | L |
-| 18 | Polish and accessibility | WCAG, shortcuts, translations | M |
-| 19 | Launch | Hosting, legal, SEO, rollout | M |
+| Phase | Name                     | What you get                                          | Effort* |
+| ----- | ------------------------ | ----------------------------------------------------- | ------- |
+| 0     | Feasibility spikes       | Proof that editing, fonts and OCR work in the browser | M       |
+| 1     | Project setup            | Repo, CI, design system, preview deploys              | M       |
+| 2     | PDF engine layer         | Worker-based PDFium wrapper                           | L       |
+| 3     | Viewer                   | Fast open, zoom, search, thumbnails                   | L       |
+| 4     | App shell and files      | Home, recents, autosave, crash recovery               | M       |
+| 5     | Edit model               | Select, move, resize, undo / redo                     | L       |
+| 6     | Image editing            | Detect, move, resize, replace, delete images          | M       |
+| 7     | Text editing             | Click-to-edit text in place                           | XL      |
+| 8     | Fonts and typography     | Font picker, styles, subsetting                       | L       |
+| 9     | Multi-language           | Arabic, Hebrew, Indic, Thai, CJK                      | L       |
+| 10    | OCR                      | Scanned PDFs and images become searchable / editable  | L       |
+| 11    | Add-content tools        | Shapes, drawing, tables, headers, watermarks          | M       |
+| 12    | Annotate, sign, forms    | Highlights, comments, signatures, form filling        | L       |
+| 13    | Page management          | Reorder, merge, split, extract                        | M       |
+| 14    | Save and export          | Save, download, print, share                          | M       |
+| 15    | Security                 | Redaction, passwords, metadata                        | M       |
+| 16    | Performance              | Budgets, memory, robustness                           | M       |
+| 17    | Testing and QA           | E2E, golden images, interop                           | L       |
+| 18    | Polish and accessibility | WCAG, shortcuts, translations                         | M       |
+| 19    | Launch                   | Hosting, legal, SEO, rollout                          | M       |
 
 \*Effort is relative (S < M < L < XL), not calendar time.
 
@@ -149,6 +149,7 @@ NOTES         : Task 1.3 complete (Vite + React app shell with code splitting an
 ## 1. PRODUCT SCOPE (WHAT "DONE" LOOKS LIKE)
 
 **Must have (v1.0):**
+
 - Open a PDF by file picker, drag and drop, paste, or "Open with" (installed PWA). No upload.
 - Smooth viewing: scroll, pinch / wheel zoom, thumbnails, jump to page, text search, text selection and copy.
 - Click text → edit it in place (same font when possible, other fonts selectable).
@@ -169,32 +170,32 @@ NOTES         : Task 1.3 complete (Vite + React app shell with code splitting an
 
 ## 2. LOCKED TECH DECISIONS (change only if a Phase 0 spike fails)
 
-| Area | Decision |
-|---|---|
-| Language | TypeScript (`strict`). C/C++ only if we must build our own PDFium WASM with Emscripten |
-| UI | React (latest stable) + Vite |
-| Styling / components | Tailwind CSS + shadcn/ui (Radix primitives); design tokens as CSS variables (light + dark) |
-| Icons | Lucide |
-| State | Zustand for UI state. Document state lives in the engine worker; our `EditSession` owns the command stack |
-| Threads | Web Workers + Comlink RPC: engine worker (PDFium), OCR worker(s), shaping / fonts worker |
+| Area                     | Decision                                                                                                                                                                                                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Language                 | TypeScript (`strict`). C/C++ only if we must build our own PDFium WASM with Emscripten                                                                                                                                                                              |
+| UI                       | React (latest stable) + Vite                                                                                                                                                                                                                                        |
+| Styling / components     | Tailwind CSS + shadcn/ui (Radix primitives); design tokens as CSS variables (light + dark)                                                                                                                                                                          |
+| Icons                    | Lucide                                                                                                                                                                                                                                                              |
+| State                    | Zustand for UI state. Document state lives in the engine worker; our `EditSession` owns the command stack                                                                                                                                                           |
+| Threads                  | Web Workers + Comlink RPC: engine worker (PDFium), OCR worker(s), shaping / fonts worker                                                                                                                                                                            |
 | PDF render + edit engine | **PDFium compiled to WebAssembly.** Start from `@embedpdf/pdfium` (MIT; PDFium in WASM; 2.x on npm). Hidden behind a `PdfEngine` TypeScript interface so it can be swapped. If its exports lack page objects, font loading or save flags, build our own PDFium WASM |
-| Why one engine | The same engine must **render and edit**, so the preview always equals the saved file. PDF.js is a good viewer but not a content editor. Do not mix renderers |
-| Text shaping | HarfBuzz via `harfbuzzjs` (WASM) |
-| Bidi / line breaking | UAX #9 bidi library (e.g. `bidi-js`), UAX #14 line-break library, `Intl.Segmenter` for Thai / CJK word breaks |
-| Fonts | `fontkit` / `opentype.js` for metrics and outlines; HarfBuzz subsetter (WASM) for subsetting and variable-font instancing |
-| Text-editing surface | Tiptap (ProseMirror) overlay for typing, IME and selection. **Our own `TextLayoutEngine` does the final layout and writes the PDF text** |
-| OCR | Tesseract.js v7 (WASM, 100+ languages) as baseline. PaddleOCR.js / ONNX Runtime Web (PP-OCRv5) as optional high-accuracy engine. Final pick from Task 0.8. OpenCV.js for preprocessing and inpainting |
-| Image codecs | Browser `createImageBitmap` + Canvas for decoding; jSquash (MozJPEG / OxiPNG / WebP WASM) for encoding on save |
-| Local storage | OPFS (working copies, autosave), IndexedDB via Dexie (recents, settings, signatures), Cache Storage (fonts, OCR models) |
-| File access | `<input type=file>`, drag and drop, File System Access API where available, download fallback |
-| Offline / PWA | Service worker (Workbox / `vite-plugin-pwa`), web app manifest with file handlers |
-| Repo | pnpm workspaces + Turborepo monorepo |
-| Testing | Vitest, Playwright (Chromium + Firefox + WebKit), axe-core, pixelmatch |
-| CI / CD | GitHub Actions → static host (Cloudflare Pages, Netlify or Vercel) with preview deploys |
-| i18n | i18next; CSS logical properties for RTL |
-| Browser support | Latest 2 versions of Chrome, Edge, Firefox, Safari (macOS + iOS), Chrome Android. Feature-detect, never user-agent sniff |
-| Security headers | COOP `same-origin` + COEP `require-corp` (cross-origin isolation for multithreaded WASM); strict CSP with `'wasm-unsafe-eval'` |
-| Backend | **None in v1.0** (static site). Optional later for accounts / cloud: Backlog |
+| Why one engine           | The same engine must **render and edit**, so the preview always equals the saved file. PDF.js is a good viewer but not a content editor. Do not mix renderers                                                                                                       |
+| Text shaping             | HarfBuzz via `harfbuzzjs` (WASM)                                                                                                                                                                                                                                    |
+| Bidi / line breaking     | UAX #9 bidi library (e.g. `bidi-js`), UAX #14 line-break library, `Intl.Segmenter` for Thai / CJK word breaks                                                                                                                                                       |
+| Fonts                    | `fontkit` / `opentype.js` for metrics and outlines; HarfBuzz subsetter (WASM) for subsetting and variable-font instancing                                                                                                                                           |
+| Text-editing surface     | Tiptap (ProseMirror) overlay for typing, IME and selection. **Our own `TextLayoutEngine` does the final layout and writes the PDF text**                                                                                                                            |
+| OCR                      | Tesseract.js v7 (WASM, 100+ languages) as baseline. PaddleOCR.js / ONNX Runtime Web (PP-OCRv5) as optional high-accuracy engine. Final pick from Task 0.8. OpenCV.js for preprocessing and inpainting                                                               |
+| Image codecs             | Browser `createImageBitmap` + Canvas for decoding; jSquash (MozJPEG / OxiPNG / WebP WASM) for encoding on save                                                                                                                                                      |
+| Local storage            | OPFS (working copies, autosave), IndexedDB via Dexie (recents, settings, signatures), Cache Storage (fonts, OCR models)                                                                                                                                             |
+| File access              | `<input type=file>`, drag and drop, File System Access API where available, download fallback                                                                                                                                                                       |
+| Offline / PWA            | Service worker (Workbox / `vite-plugin-pwa`), web app manifest with file handlers                                                                                                                                                                                   |
+| Repo                     | pnpm workspaces + Turborepo monorepo                                                                                                                                                                                                                                |
+| Testing                  | Vitest, Playwright (Chromium + Firefox + WebKit), axe-core, pixelmatch                                                                                                                                                                                              |
+| CI / CD                  | GitHub Actions → static host (Cloudflare Pages, Netlify or Vercel) with preview deploys                                                                                                                                                                             |
+| i18n                     | i18next; CSS logical properties for RTL                                                                                                                                                                                                                             |
+| Browser support          | Latest 2 versions of Chrome, Edge, Firefox, Safari (macOS + iOS), Chrome Android. Feature-detect, never user-agent sniff                                                                                                                                            |
+| Security headers         | COOP `same-origin` + COEP `require-corp` (cross-origin isolation for multithreaded WASM); strict CSP with `'wasm-unsafe-eval'`                                                                                                                                      |
+| Backend                  | **None in v1.0** (static site). Optional later for accounts / cloud: Backlog                                                                                                                                                                                        |
 
 > **License warning:** MuPDF / mupdf.js and iText are AGPL. Do NOT use them unless the owner buys a commercial license or open-sources the whole site under AGPL. Nutrient (PSPDFKit) and Apryse (PDFTron) are commercial and paid: allowed only if the owner picks "buy instead of build" (Plan B).
 >
@@ -224,6 +225,7 @@ packages/
 Feature folders inside `apps/editor/src/features/`: `home`, `viewer`, `editor`, `text`, `fonts`, `images`, `annotations`, `pages`, `ocr`, `tools` (password, redact, watermark, compress, export), `settings`.
 
 **Key concepts the agent must implement and keep consistent:**
+
 - `PdfDocument` — opened document handle (engine-owned, closed when done).
 - `PdfPage` — page handle with size, rotation, boxes, objects.
 - `PageObject` — union type: `TextRun`, `ImageObject`, `PathObject` (vector), `FormObject`, `Annotation`.
@@ -239,13 +241,17 @@ export interface PdfEngine {
   open(data: ArrayBuffer | Blob, opts?: { password?: string }): Promise<DocumentHandle>;
   close(doc: DocumentHandle): Promise<void>;
   pageCount(doc: DocumentHandle): Promise<number>;
-  pageInfo(doc: DocumentHandle, page: number): Promise<PageInfo>;        // size, rotation, boxes
-  renderPage(doc: DocumentHandle, page: number, opts: RenderOptions,
-             signal?: AbortSignal): Promise<ImageBitmap>;
+  pageInfo(doc: DocumentHandle, page: number): Promise<PageInfo>; // size, rotation, boxes
+  renderPage(
+    doc: DocumentHandle,
+    page: number,
+    opts: RenderOptions,
+    signal?: AbortSignal
+  ): Promise<ImageBitmap>;
   getPageObjects(doc: DocumentHandle, page: number): Promise<PageObject[]>;
   extractText(doc: DocumentHandle, page: number): Promise<TextRun[]>;
   mutate(doc: DocumentHandle, page: number, ops: PageMutation[]): Promise<MutationResult>;
-  save(doc: DocumentHandle, opts?: SaveOptions): Promise<Blob>;          // always a NEW file
+  save(doc: DocumentHandle, opts?: SaveOptions): Promise<Blob>; // always a NEW file
 }
 ```
 
@@ -284,28 +290,28 @@ export interface PdfEngine {
 
 A PDF is **not** a flowing document like Word. Text is stored as positioned glyphs, often split into tiny pieces, and fonts are usually **subsets** that contain only the letters used. Plan for this.
 
-| Problem | Strategy | Fallback |
-|---|---|---|
-| Text is split into fragments, not paragraphs | Group runs into lines, then blocks, using baseline, font, size, gaps and columns | Let the user drag-select a region and treat it as one block |
-| Embedded font is a subset (new letters missing) | Detect missing glyphs; reuse the font only if every needed glyph exists | Replace the whole edited block with the closest bundled font and tell the user |
-| Editing changes text length (PDF has no auto-reflow) | Re-wrap only inside the block's original box; let the box grow downward | Warn on overflow; offer shrink-to-fit |
-| Old text must disappear, not just be covered | Remove the original text objects (also inside Form XObjects), regenerate content, verify with text extraction | If removal fails, paint a same-color cover and flag the block "covered" |
-| Complex scripts need shaping (Arabic joins, Indic conjuncts) | HarfBuzz → glyph IDs → CID font (Identity-H) + `ToUnicode` | One text object per glyph / cluster; else vector outlines + invisible text layer (flag it) |
-| Right-to-left and mixed-direction text | UAX #9 bidi, mirrored alignment, caret logic | Whole-block editing only for RTL |
-| Scanned PDFs and text inside images have no text | OCR → invisible text layer, or erase + real text | "Replace page image with editable text" |
-| Text was converted to outlines (curves) | Detect glyph-shaped paths with no text objects | Offer "Detect text (OCR)" on that region |
-| **Browser preview differs from saved PDF** (overlay uses browser layout, PDF uses ours) | Same fonts, same HarfBuzz shaping, same line-break rules in preview and commit; parity test in CI | Live preview by re-rendering the block with PDFium (debounced); keep DOM text transparent, only for caret and selection |
-| Embedded fonts often cannot load in browsers (raw CFF / Type 1, missing tables) | Try `FontFace` and validate | Use the closest metric-compatible bundled font in the overlay; the final render always comes from PDFium |
-| Large PDFs run out of memory (WASM cap, iOS Safari tab limits) | Tile rendering, bitmap LRU cache, render only visible pages, chunked file reads | Lower render scale; "large file" notice; hard limit from Task 0.9 |
-| One heavy job freezes the page or crashes | Everything heavy in workers; cancellable jobs | Auto-restart a crashed worker and restore from autosave |
-| PDFium appears to have no public API to **write** encrypted PDFs (confirm in Task 0.12) | Open with password and save without security (verify the save flag in a spike) | Use a qpdf-WASM build for "Add password", or move it to Backlog |
-| Password-protected PDFs | Prompt, retry, cancel | Clear error if wrong |
-| Signed PDFs: editing invalidates signatures | Detect signature fields; warn before editing | "Save as copy (signature no longer valid)" |
-| Tagged-PDF structure is lost on edited content | Warn in the export dialog | Backlog: auto-tagging |
-| Safari / Firefox cannot "save in place" | Feature-detect the File System Access API | Download a new file (the default anyway) |
-| Fonts and OCR models are large | Lazy-load, cache, show size first | Bundled core fonts keep the site usable offline |
-| Font license limits | Ship only OFL / Apache fonts; check `OS/2.fsType` on imported fonts | Refuse to embed restricted fonts and tell the user |
-| Third-party scripts break cross-origin isolation (COEP) | Self-host everything | If ads are ever added, keep them on marketing pages only, never in the editor |
+| Problem                                                                                 | Strategy                                                                                                      | Fallback                                                                                                                |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Text is split into fragments, not paragraphs                                            | Group runs into lines, then blocks, using baseline, font, size, gaps and columns                              | Let the user drag-select a region and treat it as one block                                                             |
+| Embedded font is a subset (new letters missing)                                         | Detect missing glyphs; reuse the font only if every needed glyph exists                                       | Replace the whole edited block with the closest bundled font and tell the user                                          |
+| Editing changes text length (PDF has no auto-reflow)                                    | Re-wrap only inside the block's original box; let the box grow downward                                       | Warn on overflow; offer shrink-to-fit                                                                                   |
+| Old text must disappear, not just be covered                                            | Remove the original text objects (also inside Form XObjects), regenerate content, verify with text extraction | If removal fails, paint a same-color cover and flag the block "covered"                                                 |
+| Complex scripts need shaping (Arabic joins, Indic conjuncts)                            | HarfBuzz → glyph IDs → CID font (Identity-H) + `ToUnicode`                                                    | One text object per glyph / cluster; else vector outlines + invisible text layer (flag it)                              |
+| Right-to-left and mixed-direction text                                                  | UAX #9 bidi, mirrored alignment, caret logic                                                                  | Whole-block editing only for RTL                                                                                        |
+| Scanned PDFs and text inside images have no text                                        | OCR → invisible text layer, or erase + real text                                                              | "Replace page image with editable text"                                                                                 |
+| Text was converted to outlines (curves)                                                 | Detect glyph-shaped paths with no text objects                                                                | Offer "Detect text (OCR)" on that region                                                                                |
+| **Browser preview differs from saved PDF** (overlay uses browser layout, PDF uses ours) | Same fonts, same HarfBuzz shaping, same line-break rules in preview and commit; parity test in CI             | Live preview by re-rendering the block with PDFium (debounced); keep DOM text transparent, only for caret and selection |
+| Embedded fonts often cannot load in browsers (raw CFF / Type 1, missing tables)         | Try `FontFace` and validate                                                                                   | Use the closest metric-compatible bundled font in the overlay; the final render always comes from PDFium                |
+| Large PDFs run out of memory (WASM cap, iOS Safari tab limits)                          | Tile rendering, bitmap LRU cache, render only visible pages, chunked file reads                               | Lower render scale; "large file" notice; hard limit from Task 0.9                                                       |
+| One heavy job freezes the page or crashes                                               | Everything heavy in workers; cancellable jobs                                                                 | Auto-restart a crashed worker and restore from autosave                                                                 |
+| PDFium appears to have no public API to **write** encrypted PDFs (confirm in Task 0.12) | Open with password and save without security (verify the save flag in a spike)                                | Use a qpdf-WASM build for "Add password", or move it to Backlog                                                         |
+| Password-protected PDFs                                                                 | Prompt, retry, cancel                                                                                         | Clear error if wrong                                                                                                    |
+| Signed PDFs: editing invalidates signatures                                             | Detect signature fields; warn before editing                                                                  | "Save as copy (signature no longer valid)"                                                                              |
+| Tagged-PDF structure is lost on edited content                                          | Warn in the export dialog                                                                                     | Backlog: auto-tagging                                                                                                   |
+| Safari / Firefox cannot "save in place"                                                 | Feature-detect the File System Access API                                                                     | Download a new file (the default anyway)                                                                                |
+| Fonts and OCR models are large                                                          | Lazy-load, cache, show size first                                                                             | Bundled core fonts keep the site usable offline                                                                         |
+| Font license limits                                                                     | Ship only OFL / Apache fonts; check `OS/2.fsType` on imported fonts                                           | Refuse to embed restricted fonts and tell the user                                                                      |
+| Third-party scripts break cross-origin isolation (COEP)                                 | Self-host everything                                                                                          | If ads are ever added, keep them on marketing pages only, never in the editor                                           |
 
 **Plan B (only if Phase 0 proves in-browser editing impossible):** (1) switch to a commercial SDK (Apryse or Nutrient): fastest, but paid; (2) run PDFium on a server: needs a backend and breaks the "files never leave your device" promise, so users must be told; (3) shrink v1.0 to annotation-level editing + OCR (what open-source EmbedPDF already offers) and add true text editing later. Decide with the owner.
 
@@ -319,19 +325,19 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 **Goal:** Prove the hard parts work in a browser before investing in UI. Each spike is a tiny throwaway project or test page. Record every result in the Progress Log.
 
-- [x] **0.1** Throwaway Vite + TypeScript project: load PDFium WASM inside a **Web Worker** (start with `@embedpdf/pdfium`; if its exports are too limited, build PDFium to WASM yourself with Emscripten). *Done when:* the worker reports PDFium is initialized and shows it on screen in Chrome, Firefox and Safari.
-- [x] **0.2** Open a PDF from an `ArrayBuffer` and render page 1 to a canvas at 2x scale and at `devicePixelRatio`. *Done when:* output looks identical to Chrome's built-in viewer on 3 sample PDFs.
-- [x] **0.3** List all page objects (text, image, path, form XObject) with bounding boxes and draw them as a DOM / SVG overlay. *Done when:* boxes align with visible content at several zoom levels and on a rotated page.
-- [x] **0.4** Extract text runs: Unicode string, font name, size, fill color, matrix, bounding box, per-character boxes, and "is the font an embedded subset?". *Done when:* output matches the visible text on 3 different PDFs.
-- [x] **0.5** Delete one text object, insert a new text object with a bundled TTF (`FPDFText_LoadFont` or equivalent), regenerate page content, save to a new file. *Done when:* the saved PDF renders correctly in at least 3 other viewers and text extraction shows **no ghost text**.
-- [x] **0.6** Complex scripts: shape **Arabic** and **Hindi (Devanagari)** with `harfbuzzjs`; embed as a CID font (Identity-H, glyph IDs, `ToUnicode`; check whether `FPDFText_LoadCidType2Font` is exported). Also test both fallbacks: (a) one text object per glyph / cluster, (b) vector outlines + invisible text layer. *Done when:* joined letters and conjuncts look right in external viewers and text is searchable / copyable, or the fallback chosen is recorded in the Spike Report.
-- [x] **0.7** Images: find an image object; change its matrix (move + scale + rotate); delete another; insert a new PNG (with transparency) and a JPEG; save. *Done when:* the result displays correctly in external viewers.
-- [x] **0.8** **OCR bake-off:** run Tesseract.js and PaddleOCR.js on rendered scanned pages (English + one Indic or Arabic + one CJK sample). Self-host workers, WASM and language data (the default CDN paths break our privacy and CSP rules). Record character error rate, speed, download size and language coverage. *Done when:* at least 90% correct on clean samples and a primary engine is chosen with data.
-- [x] **0.9** Memory and big files: open a ~100 MB / 500-page PDF; compare full load vs chunked reads (custom file access with Blob range reads); measure the WASM heap; test on a low-RAM laptop and on iOS Safari. *Done when:* hard limits and warning thresholds are written down.
-- [x] **0.10** Hosting spike: deploy a hello-world to the chosen host with COOP / COEP + CSP (`'wasm-unsafe-eval'`) headers. *Done when:* on the **deployed URL** (not only localhost) `crossOriginIsolated` is `true` and workers, WASM and OPFS work.
-- [x] **0.11** Text-editing surface spike: Tiptap / ProseMirror overlay on a rendered page; test IME composition (Japanese, Chinese, Hindi, Arabic keyboards; Android and iOS virtual keyboards); try loading the PDF's embedded font through `FontFace` and compare overlay vs PDFium render. *Done when:* typing works with IMEs and the overlay-vs-PDF mismatch is measured and written down.
-- [x] **0.12** Spot-check the **save and encryption flags**: open an encrypted PDF with its password and save without security; try adding a password with the engine (expected: not possible, see Section 4). *Done when:* the result is recorded and the plan for "Add password" is decided.
-- [x] **0.13** Write the **Spike Report** (bottom of this file): what worked, what failed, final engine decision, **license audit of every dependency**, Go / No-Go. *Done when:* the owner approves it. **If a spike failed, apply the fallback from Section 4 first.**
+- [x] **0.1** Throwaway Vite + TypeScript project: load PDFium WASM inside a **Web Worker** (start with `@embedpdf/pdfium`; if its exports are too limited, build PDFium to WASM yourself with Emscripten). _Done when:_ the worker reports PDFium is initialized and shows it on screen in Chrome, Firefox and Safari.
+- [x] **0.2** Open a PDF from an `ArrayBuffer` and render page 1 to a canvas at 2x scale and at `devicePixelRatio`. _Done when:_ output looks identical to Chrome's built-in viewer on 3 sample PDFs.
+- [x] **0.3** List all page objects (text, image, path, form XObject) with bounding boxes and draw them as a DOM / SVG overlay. _Done when:_ boxes align with visible content at several zoom levels and on a rotated page.
+- [x] **0.4** Extract text runs: Unicode string, font name, size, fill color, matrix, bounding box, per-character boxes, and "is the font an embedded subset?". _Done when:_ output matches the visible text on 3 different PDFs.
+- [x] **0.5** Delete one text object, insert a new text object with a bundled TTF (`FPDFText_LoadFont` or equivalent), regenerate page content, save to a new file. _Done when:_ the saved PDF renders correctly in at least 3 other viewers and text extraction shows **no ghost text**.
+- [x] **0.6** Complex scripts: shape **Arabic** and **Hindi (Devanagari)** with `harfbuzzjs`; embed as a CID font (Identity-H, glyph IDs, `ToUnicode`; check whether `FPDFText_LoadCidType2Font` is exported). Also test both fallbacks: (a) one text object per glyph / cluster, (b) vector outlines + invisible text layer. _Done when:_ joined letters and conjuncts look right in external viewers and text is searchable / copyable, or the fallback chosen is recorded in the Spike Report.
+- [x] **0.7** Images: find an image object; change its matrix (move + scale + rotate); delete another; insert a new PNG (with transparency) and a JPEG; save. _Done when:_ the result displays correctly in external viewers.
+- [x] **0.8** **OCR bake-off:** run Tesseract.js and PaddleOCR.js on rendered scanned pages (English + one Indic or Arabic + one CJK sample). Self-host workers, WASM and language data (the default CDN paths break our privacy and CSP rules). Record character error rate, speed, download size and language coverage. _Done when:_ at least 90% correct on clean samples and a primary engine is chosen with data.
+- [x] **0.9** Memory and big files: open a ~100 MB / 500-page PDF; compare full load vs chunked reads (custom file access with Blob range reads); measure the WASM heap; test on a low-RAM laptop and on iOS Safari. _Done when:_ hard limits and warning thresholds are written down.
+- [x] **0.10** Hosting spike: deploy a hello-world to the chosen host with COOP / COEP + CSP (`'wasm-unsafe-eval'`) headers. _Done when:_ on the **deployed URL** (not only localhost) `crossOriginIsolated` is `true` and workers, WASM and OPFS work.
+- [x] **0.11** Text-editing surface spike: Tiptap / ProseMirror overlay on a rendered page; test IME composition (Japanese, Chinese, Hindi, Arabic keyboards; Android and iOS virtual keyboards); try loading the PDF's embedded font through `FontFace` and compare overlay vs PDFium render. _Done when:_ typing works with IMEs and the overlay-vs-PDF mismatch is measured and written down.
+- [x] **0.12** Spot-check the **save and encryption flags**: open an encrypted PDF with its password and save without security; try adding a password with the engine (expected: not possible, see Section 4). _Done when:_ the result is recorded and the plan for "Add password" is decided.
+- [x] **0.13** Write the **Spike Report** (bottom of this file): what worked, what failed, final engine decision, **license audit of every dependency**, Go / No-Go. _Done when:_ the owner approves it. **If a spike failed, apply the fallback from Section 4 first.**
 
 **PHASE 0 Done when:** every spike is `[x]` and the report is approved.
 
@@ -339,17 +345,17 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PHASE 1 — PROJECT SETUP AND TOOLING
 
-- [x] **1.1** Create the pnpm + Turborepo monorepo with the structure from Section 3. *Done when:* `pnpm install && pnpm build` works from a clean clone.
-- [x] **1.2** TypeScript `strict` everywhere, project references, path aliases, **exact** dependency versions, committed lockfile. *Done when:* `pnpm typecheck` passes in every package.
-- [x] **1.3** Vite + React app shell (`apps/editor`) with code splitting and worker / WASM plumbing (`new Worker(new URL(...), import.meta.url)`). *Done when:* a worker loads and replies in dev **and** in a production build.
-- [ ] **1.4** Lint + format (ESLint flat config + Prettier, or Biome) with a command that fails on violations. *Done when:* `pnpm lint` fails on a deliberately bad file and passes on the repo.
-- [ ] **1.5** Design-system package: tokens (colors, 8 px spacing grid, radius, shadows, type scale) as CSS variables for light + dark; Tailwind theme mapped to tokens; base components (Button, IconButton, Tooltip, Dialog, Popover, Menu, Tabs, Slider, Switch, Select, Toast). *Done when:* a style-guide page shows every component in light and dark.
-- [ ] **1.6** Routing skeleton: `Home → Editor → Page Organizer → Settings`, lazy-loaded. *Done when:* routes work on refresh and deep links.
-- [ ] **1.7** State, errors, logging: Zustand store layout, React error boundaries, a tiny leveled logger, and a global `error` / `unhandledrejection` handler that saves recovery metadata. *Done when:* a thrown error shows a friendly screen and no work is lost.
-- [ ] **1.8** i18n scaffolding (i18next): English only for now, **no hard-coded UI text**, CSS logical properties, `dir` switching. *Done when:* a pseudo-locale (long strings + RTL) renders without broken layout.
-- [ ] **1.9** Test setup: Vitest, Playwright (Chromium, Firefox, WebKit), the `test-fixtures` package, a golden-image helper (pixelmatch). *Done when:* one unit test and one e2e smoke test run locally and in CI.
-- [ ] **1.10** CI (GitHub Actions): install → typecheck → lint → unit → build → e2e smoke → license check → bundle-size budget; preview deploy per pull request. *Done when:* CI is green and a preview URL appears on a PR.
-- [ ] **1.11** Security + PWA baseline: headers (COOP, COEP, CSP, Referrer-Policy, Permissions-Policy, X-Content-Type-Options), dependency audit + Renovate / Dependabot, web app manifest, service-worker shell. *Done when:* a header checker shows the target policy and the app shell loads offline.
+- [x] **1.1** Create the pnpm + Turborepo monorepo with the structure from Section 3. _Done when:_ `pnpm install && pnpm build` works from a clean clone.
+- [x] **1.2** TypeScript `strict` everywhere, project references, path aliases, **exact** dependency versions, committed lockfile. _Done when:_ `pnpm typecheck` passes in every package.
+- [x] **1.3** Vite + React app shell (`apps/editor`) with code splitting and worker / WASM plumbing (`new Worker(new URL(...), import.meta.url)`). _Done when:_ a worker loads and replies in dev **and** in a production build.
+- [x] **1.4** Lint + format (ESLint flat config + Prettier, or Biome) with a command that fails on violations. _Done when:_ `pnpm lint` fails on a deliberately bad file and passes on the repo.
+- [ ] **1.5** Design-system package: tokens (colors, 8 px spacing grid, radius, shadows, type scale) as CSS variables for light + dark; Tailwind theme mapped to tokens; base components (Button, IconButton, Tooltip, Dialog, Popover, Menu, Tabs, Slider, Switch, Select, Toast). _Done when:_ a style-guide page shows every component in light and dark.
+- [ ] **1.6** Routing skeleton: `Home → Editor → Page Organizer → Settings`, lazy-loaded. _Done when:_ routes work on refresh and deep links.
+- [ ] **1.7** State, errors, logging: Zustand store layout, React error boundaries, a tiny leveled logger, and a global `error` / `unhandledrejection` handler that saves recovery metadata. _Done when:_ a thrown error shows a friendly screen and no work is lost.
+- [ ] **1.8** i18n scaffolding (i18next): English only for now, **no hard-coded UI text**, CSS logical properties, `dir` switching. _Done when:_ a pseudo-locale (long strings + RTL) renders without broken layout.
+- [ ] **1.9** Test setup: Vitest, Playwright (Chromium, Firefox, WebKit), the `test-fixtures` package, a golden-image helper (pixelmatch). _Done when:_ one unit test and one e2e smoke test run locally and in CI.
+- [ ] **1.10** CI (GitHub Actions): install → typecheck → lint → unit → build → e2e smoke → license check → bundle-size budget; preview deploy per pull request. _Done when:_ CI is green and a preview URL appears on a PR.
+- [ ] **1.11** Security + PWA baseline: headers (COOP, COEP, CSP, Referrer-Policy, Permissions-Policy, X-Content-Type-Options), dependency audit + Renovate / Dependabot, web app manifest, service-worker shell. _Done when:_ a header checker shows the target policy and the app shell loads offline.
 
 **Done when:** an empty Home page deploys to a preview URL in light and dark theme, CI is green, headers are verified.
 
@@ -357,21 +363,21 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PHASE 2 — PDF ENGINE LAYER (`pdf-engine` PACKAGE)
 
-- [ ] **2.1** Define the `PdfEngine` TypeScript interface and domain models (Section 3 sketch). No PDFium types may leak outside this package. *Done when:* interfaces compile and a mock engine passes the same unit tests.
-- [ ] **2.2** Worker host + RPC (Comlink): one engine worker, a serialized request queue (PDFium is not thread-safe), cancellation via `AbortSignal`, transferables for bitmaps and buffers. *Done when:* 100 concurrent calls from the UI run correctly and cancellation works.
-- [ ] **2.3** WASM loading strategy: lazy load, streaming compile, cached by the service worker, loading progress UI. *Done when:* second visit starts the engine from cache, offline.
-- [ ] **2.4** Open a document from `ArrayBuffer` / `Blob` with optional password; chunked reads for big files (per Task 0.9). *Done when:* wrong password returns `WrongPassword` and a 100 MB file opens within the limits.
-- [ ] **2.5** Page render to `ImageBitmap` with options: scale, `devicePixelRatio`, clip rect (for tiles), rotation, annotations on / off. PDFium renders into a WASM bitmap buffer; copy it to `ImageData` and transfer an `ImageBitmap` (no `OffscreenCanvas` dependency). *Done when:* arbitrary scale, tiles and rotation render correctly in all 3 browser engines.
-- [ ] **2.6** Page-object enumeration returning `PageObject` models (type, bounds, matrix, z-index, parent form chain). *Done when:* objects match the Task 0.3 overlay on the sample set.
+- [ ] **2.1** Define the `PdfEngine` TypeScript interface and domain models (Section 3 sketch). No PDFium types may leak outside this package. _Done when:_ interfaces compile and a mock engine passes the same unit tests.
+- [ ] **2.2** Worker host + RPC (Comlink): one engine worker, a serialized request queue (PDFium is not thread-safe), cancellation via `AbortSignal`, transferables for bitmaps and buffers. _Done when:_ 100 concurrent calls from the UI run correctly and cancellation works.
+- [ ] **2.3** WASM loading strategy: lazy load, streaming compile, cached by the service worker, loading progress UI. _Done when:_ second visit starts the engine from cache, offline.
+- [ ] **2.4** Open a document from `ArrayBuffer` / `Blob` with optional password; chunked reads for big files (per Task 0.9). _Done when:_ wrong password returns `WrongPassword` and a 100 MB file opens within the limits.
+- [ ] **2.5** Page render to `ImageBitmap` with options: scale, `devicePixelRatio`, clip rect (for tiles), rotation, annotations on / off. PDFium renders into a WASM bitmap buffer; copy it to `ImageData` and transfer an `ImageBitmap` (no `OffscreenCanvas` dependency). _Done when:_ arbitrary scale, tiles and rotation render correctly in all 3 browser engines.
+- [ ] **2.6** Page-object enumeration returning `PageObject` models (type, bounds, matrix, z-index, parent form chain). _Done when:_ objects match the Task 0.3 overlay on the sample set.
 - [ ] **2.7** Text-object details: string, font name, size, fill / stroke color, render mode, char boxes, character / word spacing, horizontal scale, rotation, embedded-font info (subset, full, not embedded, flags, weight).
 - [ ] **2.8** Image-object details: bitmap preview, pixel size, bounds, matrix, filters, color space, mask / soft-mask info, effective DPI.
 - [ ] **2.9** Path-object details (vector shapes): bounds, segments, stroke, fill, width, dash.
-- [ ] **2.10** Form XObject traversal: enumerate and edit objects inside forms with correct transform composition. *Done when:* text inside a form XObject can be listed and removed.
-- [ ] **2.11** Mutation API: `removeObject`, `insertTextObject`, `insertImageObject`, `insertPathObject`, `setMatrix`, `setColor`, `reorderObject`, `setTextRenderMode`, then `generateContent`. *Done when:* mutations apply, regenerate the page content and update the object list.
-- [ ] **2.12** Save: write a **new** file (never mutate the source bytes); full and incremental options; stream to OPFS / `Blob`. *Done when:* the original bytes are unchanged and the saved file opens in 3 other viewers.
+- [ ] **2.10** Form XObject traversal: enumerate and edit objects inside forms with correct transform composition. _Done when:_ text inside a form XObject can be listed and removed.
+- [ ] **2.11** Mutation API: `removeObject`, `insertTextObject`, `insertImageObject`, `insertPathObject`, `setMatrix`, `setColor`, `reorderObject`, `setTextRenderMode`, then `generateContent`. _Done when:_ mutations apply, regenerate the page content and update the object list.
+- [ ] **2.12** Save: write a **new** file (never mutate the source bytes); full and incremental options; stream to OPFS / `Blob`. _Done when:_ the original bytes are unchanged and the saved file opens in 3 other viewers.
 - [ ] **2.13** Memory management: explicit `close()` for documents / pages / bitmaps, a dev-mode leak detector, heap monitoring, auto-restart of the worker above a heap threshold.
 - [ ] **2.14** Error model: `PdfError` union (Corrupt, WrongPassword, Unsupported, OutOfMemory, IO, Cancelled) mapped from engine errors.
-- [ ] **2.15** Integration tests on the **10-PDF sample set** (Appendix A) plus validators in CI (`qpdf --check`, `pdfcpu validate`, and a headless PDF.js open). *Done when:* the suite opens, renders, enumerates, mutates, saves and re-validates every sample.
+- [ ] **2.15** Integration tests on the **10-PDF sample set** (Appendix A) plus validators in CI (`qpdf --check`, `pdfcpu validate`, and a headless PDF.js open). _Done when:_ the suite opens, renders, enumerates, mutates, saves and re-validates every sample.
 
 **Done when:** a test page can open any sample PDF, render all pages, list objects, apply one mutation and save a valid file that opens in other viewers.
 
@@ -379,10 +385,10 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PHASE 3 — VIEWER (OPEN, RENDER, NAVIGATE)
 
-- [ ] **3.1** `PageCanvas` component: shows one page bitmap with a placeholder, correct aspect ratio and an accessible label. *Done when:* looks right in light and dark.
-- [ ] **3.2** Virtualized continuous page list (e.g. TanStack Virtual); render only visible pages plus 1 page lookahead. *Done when:* a 300-page file scrolls without rendering hidden pages.
-- [ ] **3.3** Tile-based rendering for high zoom (render only the visible region at the current scale). *Done when:* 800% zoom stays sharp with bounded memory.
-- [ ] **3.4** Zoom and pan: Ctrl / Cmd + wheel, trackpad pinch, touch pinch, double-tap, keyboard `+` / `-`; clamp 25% to 800%. *Done when:* works with mouse, trackpad and touch.
+- [ ] **3.1** `PageCanvas` component: shows one page bitmap with a placeholder, correct aspect ratio and an accessible label. _Done when:_ looks right in light and dark.
+- [ ] **3.2** Virtualized continuous page list (e.g. TanStack Virtual); render only visible pages plus 1 page lookahead. _Done when:_ a 300-page file scrolls without rendering hidden pages.
+- [ ] **3.3** Tile-based rendering for high zoom (render only the visible region at the current scale). _Done when:_ 800% zoom stays sharp with bounded memory.
+- [ ] **3.4** Zoom and pan: Ctrl / Cmd + wheel, trackpad pinch, touch pinch, double-tap, keyboard `+` / `-`; clamp 25% to 800%. _Done when:_ works with mouse, trackpad and touch.
 - [ ] **3.5** Bitmap LRU cache with a memory budget (use `navigator.deviceMemory` when available); always call `ImageBitmap.close()` on eviction.
 - [ ] **3.6** Render scheduler: priority queue (visible > near > thumbnails), cancel stale jobs on fast scroll, shimmer placeholder.
 - [ ] **3.7** Thumbnail sidebar with click-to-jump (lazy rendered).
@@ -443,7 +449,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PHASE 6 — IMAGE DETECTION AND EDITING
 
-- [ ] **6.1** Detect all image objects per page (including images inside Form XObjects, inline images and image masks); cache bounds, pixel size and effective DPI. *Done when:* every image in the sample set is listed correctly.
+- [ ] **6.1** Detect all image objects per page (including images inside Form XObjects, inline images and image masks); cache bounds, pixel size and effective DPI. _Done when:_ every image in the sample set is listed correctly.
 - [ ] **6.2** Edit Images mode: images become selectable objects; click selects; `Alt`-click or long-press cycles through overlapping images.
 - [ ] **6.3** Move an image (drag + arrow keys) with snapping guides.
 - [ ] **6.4** Resize with corner handles (keep aspect ratio by default; `Shift` toggles; edge handles for free resize). Show size in pt / px / mm / in and warn when effective DPI drops below ~150.
@@ -468,14 +474,16 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 > Until Phase 8 delivers the full font system, use a minimal bundled set (for example Noto Sans, Roboto and Liberation Sans / Serif / Mono).
 
 ### 7A. Detection and grouping
+
 - [ ] **7.1** Extract all text runs per page (from Phase 2) and cache them per page.
-- [ ] **7.2** Group runs into lines and blocks using baseline, font, size, color, gaps and column detection. *Done when:* unit tests pass on fixtures: single column, two columns, tables, headers / footers, lists.
+- [ ] **7.2** Group runs into lines and blocks using baseline, font, size, color, gaps and column detection. _Done when:_ unit tests pass on fixtures: single column, two columns, tables, headers / footers, lists.
 - [ ] **7.3** Handle rotated text, vertical text (CJK) and text with non-zero character spacing / horizontal scaling.
 - [ ] **7.4** Detect whether each block's font is embedded-subset, embedded-full or not embedded; store `canReuseFont` and `missingGlyphs`.
 - [ ] **7.5** Edit Text mode: hover outline, click selects the block. If the text is not editable (outlined or raster), show a hint with a "Detect text (OCR)" button (becomes active in Phase 10).
 - [ ] **7.6** "Select text region" tool (drag a rectangle) for cases where auto-grouping is wrong.
 
 ### 7B. In-place editing
+
 - [ ] **7.7** Inline editor overlay opens exactly over the block: same font (a `FontFace` made from the PDF's embedded font, or the matched bundled font), same size, color and alignment, with a visible caret.
 - [ ] **7.8** Typing surface built on Tiptap / ProseMirror: IME composition, spellcheck, paste as plain text, `dir="auto"`, mobile virtual keyboards, voice and handwriting input.
 - [ ] **7.9** Selection basics: double-click word, triple-click line / paragraph, `Shift` + arrows, Home / End, `Ctrl/Cmd + A`, context menu.
@@ -489,7 +497,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [ ] **7.17** Move, resize width (re-wrap) and rotate text blocks.
 - [ ] **7.18** Find & Replace across the document (case-sensitive, whole-word, replace one / all). Each replacement is an undoable command; warn when a replacement overflows.
 - [ ] **7.19** Wrap commits in `EditTextBlock` commands with coalescing so undo steps feel natural (per word / per pause).
-- [ ] **7.20** Keep output searchable and copyable (`ToUnicode`, sensible reading order). *Done when:* text extracted from the saved file equals what the user typed.
+- [ ] **7.20** Keep output searchable and copyable (`ToUnicode`, sensible reading order). _Done when:_ text extracted from the saved file equals what the user typed.
 - [ ] **7.21** Verify in external viewers (Chrome, Firefox PDF.js, Acrobat Reader, macOS Preview): identical look and **no ghost text**.
 - [ ] **7.22** Parity test in CI: overlay layout vs PDFium render of the committed block (same line breaks; glyph positions within tolerance).
 
@@ -749,33 +757,34 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PROGRESS LOG (AGENT: ADD ONE LINE PER COMPLETED TASK)
 
-| Date | Task ID | What was done | Commit | Notes / Problems |
-|---|---|---|---|---|
-| 2026-11-09 | — | Web roadmap created from the Android checklist | — | Start at Task 0.1 |
-| 2026-11-09 | 0.1 | Load PDFium WASM in Web Worker with Vite + TS spike | `P0.1` | Initialized @embedpdf/pdfium 2.15.1 in worker, self-hosted WASM verified |
-| 2026-11-09 | 0.2 | Render 3 sample PDFs to canvas at 2x scale and DPR | `P0.2` | Validated rendering on single-column, two-column and image-heavy PDFs |
-| 2026-11-09 | 0.3 | Page object enumeration and DOM/SVG overlay mapping | `P0.3` | Mapped bounds at 1x, 1.5x, 2x and handled 90 deg rotation with FPDF_PageToDevice |
-| 2026-11-09 | 0.4 | Text run extraction with font, size, color, subset & char boxes | `P0.4` | Verified extraction across 3 sample PDFs with per-character bounding boxes |
-| 2026-11-09 | 0.5 | Delete text object, insert new text with bundled font, save | `P0.5` | Verified in-place replacement and confirmed 0 ghost text in regenerated file |
-| 2026-11-09 | 0.6 | Complex scripts: Arabic & Devanagari shaping with HarfBuzz | `P0.6` | Verified RTL Arabic & Hindi conjunct ligatures, CID Type2 font support & fallbacks |
-| 2026-11-09 | 0.7 | Image manipulation: transform, delete, and insert PNG & JPEG | `P0.7` | Verified matrix transform (rotate 45 deg), deletion, and PNG with alpha transparency |
-| 2026-11-09 | 0.8 | Self-hosted Tesseract.js OCR bake-off benchmark | `P0.8` | Verified 94% accuracy, 710ms speed, offline self-hosted WASM + traineddata |
-| 2026-11-09 | 0.9 | Memory & big file benchmarks, WASM heap & hard limits | `P0.9` | Measured 100-page heap (17.8MB), set 50MB warning, 150MB mobile / 300MB desktop caps |
-| 2026-11-09 | 0.10 | Hosting headers (COOP/COEP/CSP), crossOriginIsolated & OPFS | `P0.10` | Verified crossOriginIsolated=true, OPFS round-trip, created headers configs |
-| 2026-11-09 | 0.11 | Text-editing surface: IME composition and layout parity | `P0.11` | Validated Japanese/CJK IME lifecycle, measured 0.57% mismatch, transparent DOM overlay strategy |
-| 2026-11-09 | 0.12 | Save & encryption flags: password unlock and decryption export | `P0.12` | Verified wrong password rejected, password unlock, EPDF_RemoveEncryption, and unencrypted save |
-| 2026-11-09 | 0.13 | Write Spike Report, license audit & feasibility verification | `P0.13` | Completed Phase 0: all 12 spikes passed, licenses verified, Go decision |
-| 2026-11-09 | 1.1 | Setup pnpm + Turborepo monorepo with target structure | `P1.1` | Created apps/editor and 9 packages; pnpm install & pnpm build & Playwright pass |
-| 2026-11-09 | 1.2 | Strict TypeScript, project references & exact dependency versions | `P1.2` | Configured strict flags, composite project references, exact deps, verified typecheck |
-| 2026-11-09 | 1.3 | Vite + React app shell with code splitting & worker/WASM plumbing | `P1.3` | Code-split skeleton chunks, dedicated worker loads PDFium WASM in dev & prod preview |
+| Date       | Task ID | What was done                                                     | Commit  | Notes / Problems                                                                                |
+| ---------- | ------- | ----------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
+| 2026-11-09 | —       | Web roadmap created from the Android checklist                    | —       | Start at Task 0.1                                                                               |
+| 2026-11-09 | 0.1     | Load PDFium WASM in Web Worker with Vite + TS spike               | `P0.1`  | Initialized @embedpdf/pdfium 2.15.1 in worker, self-hosted WASM verified                        |
+| 2026-11-09 | 0.2     | Render 3 sample PDFs to canvas at 2x scale and DPR                | `P0.2`  | Validated rendering on single-column, two-column and image-heavy PDFs                           |
+| 2026-11-09 | 0.3     | Page object enumeration and DOM/SVG overlay mapping               | `P0.3`  | Mapped bounds at 1x, 1.5x, 2x and handled 90 deg rotation with FPDF_PageToDevice                |
+| 2026-11-09 | 0.4     | Text run extraction with font, size, color, subset & char boxes   | `P0.4`  | Verified extraction across 3 sample PDFs with per-character bounding boxes                      |
+| 2026-11-09 | 0.5     | Delete text object, insert new text with bundled font, save       | `P0.5`  | Verified in-place replacement and confirmed 0 ghost text in regenerated file                    |
+| 2026-11-09 | 0.6     | Complex scripts: Arabic & Devanagari shaping with HarfBuzz        | `P0.6`  | Verified RTL Arabic & Hindi conjunct ligatures, CID Type2 font support & fallbacks              |
+| 2026-11-09 | 0.7     | Image manipulation: transform, delete, and insert PNG & JPEG      | `P0.7`  | Verified matrix transform (rotate 45 deg), deletion, and PNG with alpha transparency            |
+| 2026-11-09 | 0.8     | Self-hosted Tesseract.js OCR bake-off benchmark                   | `P0.8`  | Verified 94% accuracy, 710ms speed, offline self-hosted WASM + traineddata                      |
+| 2026-11-09 | 0.9     | Memory & big file benchmarks, WASM heap & hard limits             | `P0.9`  | Measured 100-page heap (17.8MB), set 50MB warning, 150MB mobile / 300MB desktop caps            |
+| 2026-11-09 | 0.10    | Hosting headers (COOP/COEP/CSP), crossOriginIsolated & OPFS       | `P0.10` | Verified crossOriginIsolated=true, OPFS round-trip, created headers configs                     |
+| 2026-11-09 | 0.11    | Text-editing surface: IME composition and layout parity           | `P0.11` | Validated Japanese/CJK IME lifecycle, measured 0.57% mismatch, transparent DOM overlay strategy |
+| 2026-11-09 | 0.12    | Save & encryption flags: password unlock and decryption export    | `P0.12` | Verified wrong password rejected, password unlock, EPDF_RemoveEncryption, and unencrypted save  |
+| 2026-11-09 | 0.13    | Write Spike Report, license audit & feasibility verification      | `P0.13` | Completed Phase 0: all 12 spikes passed, licenses verified, Go decision                         |
+| 2026-11-09 | 1.1     | Setup pnpm + Turborepo monorepo with target structure             | `P1.1`  | Created apps/editor and 9 packages; pnpm install & pnpm build & Playwright pass                 |
+| 2026-11-09 | 1.2     | Strict TypeScript, project references & exact dependency versions | `P1.2`  | Configured strict flags, composite project references, exact deps, verified typecheck           |
+| 2026-11-09 | 1.3     | Vite + React app shell with code splitting & worker/WASM plumbing | `P1.3`  | Code-split skeleton chunks, dedicated worker loads PDFium WASM in dev & prod preview            |
+| 2026-11-09 | 1.4     | Lint and format setup (ESLint flat config + Prettier)              | `P1.4`  | Verified pnpm lint fails on deliberately bad file and passes cleanly across repo                 |
 
 ---
 
 ## SPIKE REPORT (FILLED IN AT TASK 0.13)
 
 - **Engine decision:** **PDFium WebAssembly via `@embedpdf/pdfium` (version 2.15.1)**
-  - *Rationale:* Comprehensive inspection and automated browser tests confirm `@embedpdf/pdfium` exports the full surface of necessary editing APIs: object enumeration (`FPDFPage_CountObjects`, `FPDFPage_GetObject`, `FPDFPageObj_GetBounds`), text manipulation (`FPDFPageObj_CreateTextObj`, `FPDFText_LoadStandardFont`, `FPDFText_LoadFont`, `FPDFText_LoadCidType2Font`, `FPDFText_SetText`, `FPDFPageObj_SetMatrix`), object tree mutation (`FPDFPage_RemoveObject`, `FPDFPage_InsertObject`, `FPDFPage_GenerateContent`), image handling (`FPDFImageObj_SetBitmap`, `FPDFImageObj_SetMatrix`, `FPDFBitmap_CreateEx`), security management (`EPDF_SetEncryption`, `EPDF_RemoveEncryption`), and in-memory export (`PDFiumExt_OpenFileWriter`, `PDFiumExt_SaveAsCopy`).
-  - *Verdict:* **GO.** In-browser PDF editing is 100% feasible with zero server dependency. No custom Emscripten build is necessary.
+  - _Rationale:_ Comprehensive inspection and automated browser tests confirm `@embedpdf/pdfium` exports the full surface of necessary editing APIs: object enumeration (`FPDFPage_CountObjects`, `FPDFPage_GetObject`, `FPDFPageObj_GetBounds`), text manipulation (`FPDFPageObj_CreateTextObj`, `FPDFText_LoadStandardFont`, `FPDFText_LoadFont`, `FPDFText_LoadCidType2Font`, `FPDFText_SetText`, `FPDFPageObj_SetMatrix`), object tree mutation (`FPDFPage_RemoveObject`, `FPDFPage_InsertObject`, `FPDFPage_GenerateContent`), image handling (`FPDFImageObj_SetBitmap`, `FPDFImageObj_SetMatrix`, `FPDFBitmap_CreateEx`), security management (`EPDF_SetEncryption`, `EPDF_RemoveEncryption`), and in-memory export (`PDFiumExt_OpenFileWriter`, `PDFiumExt_SaveAsCopy`).
+  - _Verdict:_ **GO.** In-browser PDF editing is 100% feasible with zero server dependency. No custom Emscripten build is necessary.
 
 - **What worked:**
   - **0.1 Worker Initialization:** PDFium WASM initialized in a dedicated Web Worker via self-hosted `pdfium.wasm` without touching external CDNs.
@@ -792,8 +801,8 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
   - **0.12 Save & Encryption Flags:** Verified password flow: incorrect password rejected with error code 4 (`FPDF_ERR_PASSWORD`), valid password unlocked document, `EPDF_RemoveEncryption` stripped security, and saved unencrypted PDF opened without password. Verified `EPDF_SetEncryption` for adding passwords.
 
 - **What failed + fallback chosen:**
-  - *DOM text layout vs PDFium text layout:* Directly using browser DOM styling for text layout produces small character drift (0.57% - 2.5%) due to browser subpixel antialiasing and hinting differences. **Fallback/Strategy Chosen:** DOM text remains transparent (used strictly for browser IME input, virtual keyboard anchors, cursor blinking, and text selection), while the visible rendered text is drawn directly by PDFium on canvas.
-  - *Standalone native binaries under Windows AppLocker/WDAC:* Standard pnpm 10 native binary was blocked by Windows Application Control policies. **Solution:** Used Node-driven pnpm 9.15.4 which runs cleanly under Node without triggering binary restrictions.
+  - _DOM text layout vs PDFium text layout:_ Directly using browser DOM styling for text layout produces small character drift (0.57% - 2.5%) due to browser subpixel antialiasing and hinting differences. **Fallback/Strategy Chosen:** DOM text remains transparent (used strictly for browser IME input, virtual keyboard anchors, cursor blinking, and text selection), while the visible rendered text is drawn directly by PDFium on canvas.
+  - _Standalone native binaries under Windows AppLocker/WDAC:_ Standard pnpm 10 native binary was blocked by Windows Application Control policies. **Solution:** Used Node-driven pnpm 9.15.4 which runs cleanly under Node without triggering binary restrictions.
 
 - **OCR decision:**
   - **Primary Engine:** Tesseract.js v7 (WASM SIMD, self-hosted).
@@ -812,15 +821,15 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 - **Dependency license table:**
 
-| Dependency | Version / source | License | Commercial and offline friendly? | Notes |
-|---|---|---|---|---|
-| PDFium (via `@embedpdf/pdfium`) | 2.15.1 | BSD-3-Clause / Apache-2.0 | Yes (Commercial friendly, offline) | Google open source |
-| `@embedpdf/pdfium` wrapper | 2.15.1 | MIT | Yes | Zero telemetry |
-| FreeType (inside PDFium) | Bundled | FreeType License / GPL-friendly | Yes | Permissive |
-| HarfBuzz / `harfbuzzjs` | 1.6.4 (HB 15.0) | MIT / Old MIT | Yes | Standard text shaping engine |
-| Tesseract.js + Core | 7.0.0 | Apache-2.0 | Yes | Fully self-hosted WASM SIMD |
-| React, Vite, Zustand | React 18/19, Vite 5 | MIT | Yes | Industry standard UI stack |
-| Core Fonts (Noto, Liberation) | OFL-1.1 | SIL Open Font License 1.1 | Yes | Permissive embedding permitted |
+| Dependency                      | Version / source    | License                         | Commercial and offline friendly?   | Notes                          |
+| ------------------------------- | ------------------- | ------------------------------- | ---------------------------------- | ------------------------------ |
+| PDFium (via `@embedpdf/pdfium`) | 2.15.1              | BSD-3-Clause / Apache-2.0       | Yes (Commercial friendly, offline) | Google open source             |
+| `@embedpdf/pdfium` wrapper      | 2.15.1              | MIT                             | Yes                                | Zero telemetry                 |
+| FreeType (inside PDFium)        | Bundled             | FreeType License / GPL-friendly | Yes                                | Permissive                     |
+| HarfBuzz / `harfbuzzjs`         | 1.6.4 (HB 15.0)     | MIT / Old MIT                   | Yes                                | Standard text shaping engine   |
+| Tesseract.js + Core             | 7.0.0               | Apache-2.0                      | Yes                                | Fully self-hosted WASM SIMD    |
+| React, Vite, Zustand            | React 18/19, Vite 5 | MIT                             | Yes                                | Industry standard UI stack     |
+| Core Fonts (Noto, Liberation)   | OFL-1.1             | SIL Open Font License 1.1       | Yes                                | Permissive embedding permitted |
 
 - **Owner approval (date):** 2026-11-09 (Feasibility Proven — **GO FOR PHASE 1**)
 
@@ -828,22 +837,22 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## APPENDIX A — SAMPLE PDF TEST SET (MINIMUM 10; THE LIST BELOW HAS 14)
 
-| # | File type | Why it is needed |
-|---|---|---|
-| 1 | Text-only, single column (made in Word or Google Docs) | Baseline text editing |
-| 2 | Two-column article / paper (LaTeX) | Column detection |
-| 3 | Image-heavy brochure | Image detection and editing |
-| 4 | Scanned document (phone scan, clean) | OCR |
-| 5 | Scanned document (skewed, noisy) | OCR preprocessing |
-| 6 | Password-protected | Password flow |
-| 7 | Arabic or Hebrew (RTL) | Bidi and shaping |
-| 8 | Chinese / Japanese / Korean | CJK fonts and vertical text |
-| 9 | Form with fields (AcroForm) | Form filling |
-| 10 | Huge (300+ pages or 100 MB+) | Performance and memory |
-| 11 | Rotated pages and unusual crop boxes | Coordinate mapping |
-| 12 | Broken / truncated file | Error handling |
-| 13 | Text converted to outlines + a screenshot containing text | "Not editable" hint, region OCR |
-| 14 | Only subset-embedded fonts (typical Word export) | Missing-glyph fallback |
+| #   | File type                                                 | Why it is needed                |
+| --- | --------------------------------------------------------- | ------------------------------- |
+| 1   | Text-only, single column (made in Word or Google Docs)    | Baseline text editing           |
+| 2   | Two-column article / paper (LaTeX)                        | Column detection                |
+| 3   | Image-heavy brochure                                      | Image detection and editing     |
+| 4   | Scanned document (phone scan, clean)                      | OCR                             |
+| 5   | Scanned document (skewed, noisy)                          | OCR preprocessing               |
+| 6   | Password-protected                                        | Password flow                   |
+| 7   | Arabic or Hebrew (RTL)                                    | Bidi and shaping                |
+| 8   | Chinese / Japanese / Korean                               | CJK fonts and vertical text     |
+| 9   | Form with fields (AcroForm)                               | Form filling                    |
+| 10  | Huge (300+ pages or 100 MB+)                              | Performance and memory          |
+| 11  | Rotated pages and unusual crop boxes                      | Coordinate mapping              |
+| 12  | Broken / truncated file                                   | Error handling                  |
+| 13  | Text converted to outlines + a screenshot containing text | "Not editable" hint, region OCR |
+| 14  | Only subset-embedded fonts (typical Word export)          | Missing-glyph fallback          |
 
 **Sources:** make your own with Word, Google Docs, LaTeX, Chrome "Save as PDF" and a phone scanner; add public test PDFs from the PDFium and PDF.js repositories (check their licenses). Never commit private or confidential documents.
 
@@ -851,19 +860,19 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## APPENDIX B — BROWSER FEATURE MATRIX (ALWAYS FEATURE-DETECT)
 
-| Feature | Where it works | Fallback |
-|---|---|---|
-| WebAssembly + Web Workers | All target browsers | None (required) |
-| OPFS (private file storage) | All current major browsers (details vary) | IndexedDB blobs |
-| File System Access API (open / save in place) | Chromium browsers (Chrome, Edge) | File picker + download |
-| Web Share API with files | Mainly phones and tablets, some desktops | Download |
-| Local Font Access API | Chromium only, needs permission | Bundled + downloaded fonts |
-| `EyeDropper` API | Chromium only | "Pick from page" (sample our own render) |
-| Cross-origin isolation (`SharedArrayBuffer`) | All, when COOP / COEP headers are set | Single-threaded WASM |
-| WebGPU (faster OCR models) | Chromium; others vary | WASM backend |
-| `Intl.Segmenter` | All current browsers | None needed |
-| Vibration API (haptics) | Android Chrome (not iOS Safari) | No haptics |
-| PWA install / file handlers | Chromium desktop (file handlers); limited on Safari / Firefox | Normal website |
+| Feature                                       | Where it works                                                | Fallback                                 |
+| --------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------- |
+| WebAssembly + Web Workers                     | All target browsers                                           | None (required)                          |
+| OPFS (private file storage)                   | All current major browsers (details vary)                     | IndexedDB blobs                          |
+| File System Access API (open / save in place) | Chromium browsers (Chrome, Edge)                              | File picker + download                   |
+| Web Share API with files                      | Mainly phones and tablets, some desktops                      | Download                                 |
+| Local Font Access API                         | Chromium only, needs permission                               | Bundled + downloaded fonts               |
+| `EyeDropper` API                              | Chromium only                                                 | "Pick from page" (sample our own render) |
+| Cross-origin isolation (`SharedArrayBuffer`)  | All, when COOP / COEP headers are set                         | Single-threaded WASM                     |
+| WebGPU (faster OCR models)                    | Chromium; others vary                                         | WASM backend                             |
+| `Intl.Segmenter`                              | All current browsers                                          | None needed                              |
+| Vibration API (haptics)                       | Android Chrome (not iOS Safari)                               | No haptics                               |
+| PWA install / file handlers                   | Chromium desktop (file handlers); limited on Safari / Firefox | Normal website                           |
 
 > **iOS Safari:** tabs have strict memory limits. Test large PDFs and OCR there early (Task 0.9).
 
@@ -871,21 +880,21 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## APPENDIX C — GLOSSARY
 
-| Term | Meaning |
-|---|---|
-| WebAssembly (WASM) | Compiled code (such as the C++ PDFium engine) that runs in the browser at near-native speed |
-| Web Worker | A background thread in the browser; keeps the page smooth |
-| PWA | A website that can be installed and works offline |
-| OPFS | Origin Private File System: private browser storage for large files |
-| OCR | Optical character recognition: turns pictures of text into real text |
-| Content stream | The list of drawing instructions inside a PDF page |
-| Page object | One item on a page: a piece of text, an image or a vector shape |
-| Form XObject | A reusable group of page objects inside a PDF (text can hide in here) |
-| Subset font | A font that contains only the letters used in the document |
-| Shaping | Turning characters into positioned glyphs (needed for Arabic, Indic, Thai) |
-| Bidi | Bidirectional text: mixing left-to-right and right-to-left |
-| CID font / Identity-H | A PDF font type based on glyph numbers; used for complex scripts and CJK |
-| ToUnicode map | Data that lets PDF text be searched and copied correctly |
-| Redaction | Permanently removing content (not just covering it with a black box) |
-| Flatten | Turning annotations and form fields into plain page content |
-| Cross-origin isolation | Browser security mode (COOP / COEP) that enables multithreaded WASM |
+| Term                   | Meaning                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------------------- |
+| WebAssembly (WASM)     | Compiled code (such as the C++ PDFium engine) that runs in the browser at near-native speed |
+| Web Worker             | A background thread in the browser; keeps the page smooth                                   |
+| PWA                    | A website that can be installed and works offline                                           |
+| OPFS                   | Origin Private File System: private browser storage for large files                         |
+| OCR                    | Optical character recognition: turns pictures of text into real text                        |
+| Content stream         | The list of drawing instructions inside a PDF page                                          |
+| Page object            | One item on a page: a piece of text, an image or a vector shape                             |
+| Form XObject           | A reusable group of page objects inside a PDF (text can hide in here)                       |
+| Subset font            | A font that contains only the letters used in the document                                  |
+| Shaping                | Turning characters into positioned glyphs (needed for Arabic, Indic, Thai)                  |
+| Bidi                   | Bidirectional text: mixing left-to-right and right-to-left                                  |
+| CID font / Identity-H  | A PDF font type based on glyph numbers; used for complex scripts and CJK                    |
+| ToUnicode map          | Data that lets PDF text be searched and copied correctly                                    |
+| Redaction              | Permanently removing content (not just covering it with a black box)                        |
+| Flatten                | Turning annotations and form fields into plain page content                                 |
+| Cross-origin isolation | Browser security mode (COOP / COEP) that enables multithreaded WASM                         |

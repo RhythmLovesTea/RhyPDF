@@ -43,6 +43,9 @@ export interface OcrEngine {
   readonly name: string;
   isReady(): boolean;
   init(options?: Partial<OcrEngineOptions>): Promise<void>;
-  recognize(image: ImageData | ImageBitmap | HTMLCanvasElement, options?: Partial<OcrEngineOptions>): Promise<OcrPageResult>;
+  recognize(
+    image: ImageData | ImageBitmap | HTMLCanvasElement,
+    options?: Partial<OcrEngineOptions>
+  ): Promise<OcrPageResult>;
   terminate(): Promise<void>;
 }

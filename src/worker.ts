@@ -21,7 +21,10 @@ self.onmessage = async (e: MessageEvent) => {
       self.postMessage({
         id,
         type: 'INIT_SUCCESS',
-        result: { status: 'initialized', hasExtInit: typeof pdfiumModule.PDFiumExt_Init === 'function' }
+        result: {
+          status: 'initialized',
+          hasExtInit: typeof pdfiumModule.PDFiumExt_Init === 'function'
+        }
       });
       return;
     }
@@ -29,7 +32,7 @@ self.onmessage = async (e: MessageEvent) => {
     if (type === 'RENDER_PAGE') {
       if (!pdfiumModule) throw new Error('PDFium not initialized');
       const { pdfBytes, pageIndex, scale } = payload;
-      
+
       const heap = getHeap(pdfiumModule);
       const pData = pdfiumModule.pdfium.wasmExports.malloc(pdfBytes.byteLength);
       const heapBytes = new Uint8Array(heap.buffer, pData, pdfBytes.byteLength);
@@ -49,20 +52,20 @@ self.onmessage = async (e: MessageEvent) => {
       // Format 4 = FPDFBitmap_BGRA
       const bitmap = pdfiumModule.FPDFBitmap_CreateEx(width, height, 4, 0, 0);
       // Fill with white background (0xFFFFFFFF)
-      pdfiumModule.FPDFBitmap_FillRect(bitmap, 0, 0, width, height, 0xFFFFFFFF);
+      pdfiumModule.FPDFBitmap_FillRect(bitmap, 0, 0, width, height, 0xffffffff);
 
       // Render page to bitmap: FPDF_RenderPageBitmap(bitmap, page, start_x, start_y, size_x, size_y, rotate, flags)
       pdfiumModule.FPDF_RenderPageBitmap(bitmap, page, 0, 0, width, height, 0, 0);
 
       const bufferPtr = pdfiumModule.FPDFBitmap_GetBuffer(bitmap);
       const pixelBytes = new Uint8Array(heap.buffer, bufferPtr, width * height * 4);
-      
+
       // Convert BGRA to RGBA for standard browser ImageData
       const rgba = new Uint8ClampedArray(width * height * 4);
       for (let i = 0; i < width * height * 4; i += 4) {
-        rgba[i] = pixelBytes[i + 2];     // R
+        rgba[i] = pixelBytes[i + 2]; // R
         rgba[i + 1] = pixelBytes[i + 1]; // G
-        rgba[i + 2] = pixelBytes[i];     // B
+        rgba[i + 2] = pixelBytes[i]; // B
         rgba[i + 3] = pixelBytes[i + 3]; // A
       }
 
@@ -112,7 +115,16 @@ self.onmessage = async (e: MessageEvent) => {
       for (let i = 0; i < count; i++) {
         const obj = pdfiumModule.FPDFPage_GetObject(page, i);
         const objType = pdfiumModule.FPDFPageObj_GetType(obj);
-        const typeName = objType === 1 ? 'TEXT' : objType === 2 ? 'PATH' : objType === 3 ? 'IMAGE' : objType === 5 ? 'FORM' : 'OTHER';
+        const typeName =
+          objType === 1
+            ? 'TEXT'
+            : objType === 2
+              ? 'PATH'
+              : objType === 3
+                ? 'IMAGE'
+                : objType === 5
+                  ? 'FORM'
+                  : 'OTHER';
 
         pdfiumModule.FPDFPageObj_GetBounds(obj, pLeft, pBottom, pRight, pTop);
         const left = view.getFloat32(pLeft, true);
@@ -133,7 +145,7 @@ self.onmessage = async (e: MessageEvent) => {
           x: Math.min(x1, x2),
           y: Math.min(y1, y2),
           w: Math.abs(x2 - x1),
-          h: Math.abs(y2 - y1),
+          h: Math.abs(y2 - y1)
         };
 
         objects.push({
@@ -228,7 +240,13 @@ self.onmessage = async (e: MessageEvent) => {
         const a = view.getUint32(pA, true);
 
         // Font info
-        const written = pdfiumModule.FPDFText_GetFontInfo(textPage, i, pFontBuf, fontBufLen, pFlags);
+        const written = pdfiumModule.FPDFText_GetFontInfo(
+          textPage,
+          i,
+          pFontBuf,
+          fontBufLen,
+          pFlags
+        );
         let fontName = 'Unknown';
         if (written > 0) {
           const raw = new Uint8Array(heap.buffer, pFontBuf, written);
@@ -255,12 +273,19 @@ self.onmessage = async (e: MessageEvent) => {
         isSubset: boolean;
         color: { r: number; g: number; b: number; a: number };
         bounds: { left: number; bottom: number; right: number; top: number };
-        charBoxes: Array<{ char: string; left: number; right: number; bottom: number; top: number }>;
+        charBoxes: Array<{
+          char: string;
+          left: number;
+          right: number;
+          bottom: number;
+          top: number;
+        }>;
       }> = [];
 
       let currentRun: (typeof runs)[0] | null = null;
       for (const c of chars) {
-        const sameStyle = currentRun &&
+        const sameStyle =
+          currentRun &&
           currentRun.fontName === c.fontName &&
           Math.abs(currentRun.fontSize - c.fontSize) < 0.1 &&
           currentRun.color.r === c.color.r &&
@@ -325,7 +350,7 @@ self.onmessage = async (e: MessageEvent) => {
 
       // Remove target object
       const targetObj = pdfiumModule.FPDFPage_GetObject(page, removeIndex);
-      const removeOk = pdfiumModule.FPDFPage_RemoveObject(page, targetObj);
+      const _removeOk = pdfiumModule.FPDFPage_RemoveObject(page, targetObj);
 
       // Load font & create new text object
       const font = pdfiumModule.FPDFText_LoadStandardFont(doc, 'Helvetica-Bold');
@@ -400,17 +425,20 @@ self.onmessage = async (e: MessageEvent) => {
       const hasGhost = extracted.includes('Sample Contract Agreement');
       const hasNew = extracted.includes(newText);
 
-      self.postMessage({
-        id,
-        type: 'MUTATE_AND_SAVE_TEXT_SUCCESS',
-        result: {
-          savedSize,
-          hasGhost,
-          hasNew,
-          extractedPreview: extracted.slice(0, 120),
-          savedBytes: savedBytes.buffer
-        }
-      }, [savedBytes.buffer]);
+      self.postMessage(
+        {
+          id,
+          type: 'MUTATE_AND_SAVE_TEXT_SUCCESS',
+          result: {
+            savedSize,
+            hasGhost,
+            hasNew,
+            extractedPreview: extracted.slice(0, 120),
+            savedBytes: savedBytes.buffer
+          }
+        },
+        [savedBytes.buffer]
+      );
       return;
     }
 
@@ -435,7 +463,7 @@ self.onmessage = async (e: MessageEvent) => {
 
       // 1. Transform Image 0: rotate 45 deg, scale 120x120, move to (80, 80)
       if (imageObjects.length > 0) {
-        const rad = 45 * Math.PI / 180;
+        const rad = (45 * Math.PI) / 180;
         const s = 120;
         const a = Math.cos(rad) * s;
         const b = Math.sin(rad) * s;
@@ -456,7 +484,7 @@ self.onmessage = async (e: MessageEvent) => {
       const pngImg = pdfiumModule.FPDFPageObj_NewImageObj(doc);
       const bmpPng = pdfiumModule.FPDFBitmap_CreateEx(4, 4, 4, 0, 0);
       // BGRA: semi-transparent green (A=180, R=0, G=220, B=50) -> 0xB400DC32
-      pdfiumModule.FPDFBitmap_FillRect(bmpPng, 0, 0, 4, 4, 0xB400DC32);
+      pdfiumModule.FPDFBitmap_FillRect(bmpPng, 0, 0, 4, 4, 0xb400dc32);
       pdfiumModule.FPDFImageObj_SetBitmap(pPages, 1, pngImg, bmpPng);
       pdfiumModule.FPDFImageObj_SetMatrix(pngImg, 100, 0, 0, 100, 250, 150);
       pdfiumModule.FPDFPage_InsertObject(page, pngImg);
@@ -465,7 +493,7 @@ self.onmessage = async (e: MessageEvent) => {
       const jpgImg = pdfiumModule.FPDFPageObj_NewImageObj(doc);
       const bmpJpg = pdfiumModule.FPDFBitmap_CreateEx(4, 4, 4, 0, 0);
       // BGRA: blue (A=255, R=30, G=100, B=230) -> 0xFF1E64E6
-      pdfiumModule.FPDFBitmap_FillRect(bmpJpg, 0, 0, 4, 4, 0xFF1E64E6);
+      pdfiumModule.FPDFBitmap_FillRect(bmpJpg, 0, 0, 4, 4, 0xff1e64e6);
       pdfiumModule.FPDFImageObj_SetBitmap(pPages, 1, jpgImg, bmpJpg);
       pdfiumModule.FPDFImageObj_SetMatrix(jpgImg, 80, 0, 0, 80, 380, 150);
       pdfiumModule.FPDFPage_InsertObject(page, jpgImg);
@@ -506,16 +534,19 @@ self.onmessage = async (e: MessageEvent) => {
       pdfiumModule.FPDF_CloseDocument(doc2);
       pdfiumModule.pdfium.wasmExports.free(pCheck);
 
-      self.postMessage({
-        id,
-        type: 'MUTATE_AND_SAVE_IMAGES_SUCCESS',
-        result: {
-          savedSize,
-          initialImages: imageObjects.length,
-          finalImages,
-          savedBytes: savedBytes.buffer
-        }
-      }, [savedBytes.buffer]);
+      self.postMessage(
+        {
+          id,
+          type: 'MUTATE_AND_SAVE_IMAGES_SUCCESS',
+          result: {
+            savedSize,
+            initialImages: imageObjects.length,
+            finalImages,
+            savedBytes: savedBytes.buffer
+          }
+        },
+        [savedBytes.buffer]
+      );
       return;
     }
 
@@ -534,7 +565,13 @@ self.onmessage = async (e: MessageEvent) => {
       const pageCount = pdfiumModule.FPDF_GetPageCount(doc);
 
       // Render 5 sample pages (e.g., page 0, 25, 50, 75, 99)
-      const renderPages = [0, Math.floor(pageCount / 4), Math.floor(pageCount / 2), Math.floor((3 * pageCount) / 4), pageCount - 1];
+      const renderPages = [
+        0,
+        Math.floor(pageCount / 4),
+        Math.floor(pageCount / 2),
+        Math.floor((3 * pageCount) / 4),
+        pageCount - 1
+      ];
       const pageRenders = [];
 
       for (const pIdx of renderPages) {
@@ -542,7 +579,7 @@ self.onmessage = async (e: MessageEvent) => {
         const w = Math.floor(pdfiumModule.FPDF_GetPageWidthF(page) * 1.0);
         const h = Math.floor(pdfiumModule.FPDF_GetPageHeightF(page) * 1.0);
         const bmp = pdfiumModule.FPDFBitmap_CreateEx(w, h, 4, 0, 0);
-        pdfiumModule.FPDFBitmap_FillRect(bmp, 0, 0, w, h, 0xFFFFFFFF);
+        pdfiumModule.FPDFBitmap_FillRect(bmp, 0, 0, w, h, 0xffffffff);
         pdfiumModule.FPDF_RenderPageBitmap(bmp, page, 0, 0, w, h, 0, 0);
 
         pdfiumModule.FPDFBitmap_Destroy(bmp);
@@ -598,7 +635,11 @@ self.onmessage = async (e: MessageEvent) => {
       const wrongErrorCode = pdfiumModule.FPDF_GetLastError();
 
       // 2. Open with correct password
-      const rightDoc = pdfiumModule.FPDF_LoadMemDocument(pData, encBytes.byteLength, correctPassword);
+      const rightDoc = pdfiumModule.FPDF_LoadMemDocument(
+        pData,
+        encBytes.byteLength,
+        correctPassword
+      );
       if (!rightDoc) {
         pdfiumModule.pdfium.wasmExports.free(pData);
         throw new Error('Failed to open with correct password');

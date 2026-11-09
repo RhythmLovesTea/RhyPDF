@@ -53,13 +53,17 @@ async function renderPdfToCanvas(url: string, canvasId: string, pageIndex = 0, s
   canvas.style.height = `${renderRes.height / dpr}px`;
 
   const ctx = canvas.getContext('2d')!;
-  const imgData = new ImageData(new Uint8ClampedArray(renderRes.rgbaBuffer), renderRes.width, renderRes.height);
+  const imgData = new ImageData(
+    new Uint8ClampedArray(renderRes.rgbaBuffer),
+    renderRes.width,
+    renderRes.height
+  );
   ctx.putImageData(imgData, 0, 0);
 
   let coloredPixels = 0;
   const data = imgData.data;
   for (let i = 0; i < data.length; i += 4) {
-    if (data[i] < 240 || data[i+1] < 240 || data[i+2] < 240) {
+    if (data[i] < 240 || data[i + 1] < 240 || data[i + 2] < 240) {
       coloredPixels++;
     }
   }
@@ -90,7 +94,8 @@ async function run() {
     log('[0.2] Rendering Sample 3 (image brochure)...');
     const r3 = await renderPdfToCanvas('/fixtures/03_image_brochure.pdf', 'render-canvas-3');
 
-    renderStatus.innerHTML = `<strong>Render status:</strong> 3/3 sample PDFs rendered successfully at 2x scale and DPR.<br/>` +
+    renderStatus.innerHTML =
+      `<strong>Render status:</strong> 3/3 sample PDFs rendered successfully at 2x scale and DPR.<br/>` +
       `Sample 1: ${r1.width}x${r1.height} px (${r1.coloredPixels} colored px)<br/>` +
       `Sample 2: ${r2.width}x${r2.height} px (${r2.coloredPixels} colored px)<br/>` +
       `Sample 3: ${r3.width}x${r3.height} px (${r3.coloredPixels} colored px)`;
@@ -99,18 +104,30 @@ async function run() {
     log('[0.3] Testing page object enumeration and overlay mapping...');
     // 1. Zoom levels test: 1.0x, 1.5x, 2.0x on Sample 1
     for (const zoom of [1.0, 1.5, 2.0]) {
-      const zoomObj = await send('GET_PAGE_OBJECTS', { pdfBytes: r1.pdfBytes, pageIndex: 0, scale: zoom });
-      log(`[0.3] Zoom ${zoom}x: ${zoomObj.count} objects, devSize: ${zoomObj.devW}x${zoomObj.devH}`);
+      const zoomObj = await send('GET_PAGE_OBJECTS', {
+        pdfBytes: r1.pdfBytes,
+        pageIndex: 0,
+        scale: zoom
+      });
+      log(
+        `[0.3] Zoom ${zoom}x: ${zoomObj.count} objects, devSize: ${zoomObj.devW}x${zoomObj.devH}`
+      );
     }
 
     // 2. Rotated page test (11_rotated_cropbox.pdf, rotated 90 deg)
     const rotRes = await fetch('/fixtures/11_rotated_cropbox.pdf');
     const rotBytes = await rotRes.arrayBuffer();
     const rotObj = await send('GET_PAGE_OBJECTS', { pdfBytes: rotBytes, pageIndex: 0, scale: 1.0 });
-    log(`[0.3] Rotated page test: rotation=${rotObj.rotation}°, count=${rotObj.count}, size=${rotObj.devW}x${rotObj.devH}`);
+    log(
+      `[0.3] Rotated page test: rotation=${rotObj.rotation}°, count=${rotObj.count}, size=${rotObj.devW}x${rotObj.devH}`
+    );
 
     // Build SVG overlay for Sample 1 at 1.0x scale
-    const objRes = await send('GET_PAGE_OBJECTS', { pdfBytes: r1.pdfBytes, pageIndex: 0, scale: 1.0 });
+    const objRes = await send('GET_PAGE_OBJECTS', {
+      pdfBytes: r1.pdfBytes,
+      pageIndex: 0,
+      scale: 1.0
+    });
     let svgRects = '';
     for (const obj of objRes.objects) {
       const color = obj.type === 'TEXT' ? '#3b82f6' : obj.type === 'IMAGE' ? '#10b981' : '#f59e0b';
@@ -126,7 +143,8 @@ async function run() {
       </div>
     `;
 
-    objectCountStatus.innerHTML = `<strong>Page Objects detected:</strong> ${objRes.count} objects on standard page.<br/>` +
+    objectCountStatus.innerHTML =
+      `<strong>Page Objects detected:</strong> ${objRes.count} objects on standard page.<br/>` +
       `<strong>Rotated Page test:</strong> rotation = ${rotObj.rotation}°, mapped ${rotObj.count} objects with FPDF_PageToDevice.`;
 
     // Spike 0.4: Text Run Extraction on 3 different PDFs
@@ -135,19 +153,26 @@ async function run() {
 
     // PDF 1
     const t1 = await send('EXTRACT_TEXT_RUNS', { pdfBytes: r1.pdfBytes, pageIndex: 0 });
-    log(`[0.4] PDF 1: ${t1.charCount} chars, ${t1.runCount} runs. First text: "${t1.runs[0]?.text}" font: ${t1.runs[0]?.fontName} size: ${t1.runs[0]?.fontSize}`);
+    log(
+      `[0.4] PDF 1: ${t1.charCount} chars, ${t1.runCount} runs. First text: "${t1.runs[0]?.text}" font: ${t1.runs[0]?.fontName} size: ${t1.runs[0]?.fontSize}`
+    );
 
     // PDF 2
     const t2 = await send('EXTRACT_TEXT_RUNS', { pdfBytes: r2.pdfBytes, pageIndex: 0 });
-    log(`[0.4] PDF 2: ${t2.charCount} chars, ${t2.runCount} runs. First text: "${t2.runs[0]?.text}" font: ${t2.runs[0]?.fontName}`);
+    log(
+      `[0.4] PDF 2: ${t2.charCount} chars, ${t2.runCount} runs. First text: "${t2.runs[0]?.text}" font: ${t2.runs[0]?.fontName}`
+    );
 
     // PDF 3 (Invoice / Courier)
     const s4Res = await fetch('/fixtures/04_scanned_clean.pdf');
     const s4Bytes = await s4Res.arrayBuffer();
     const t3 = await send('EXTRACT_TEXT_RUNS', { pdfBytes: s4Bytes, pageIndex: 0 });
-    log(`[0.4] PDF 3: ${t3.charCount} chars, ${t3.runCount} runs. First text: "${t3.runs[0]?.text}" font: ${t3.runs[0]?.fontName}`);
+    log(
+      `[0.4] PDF 3: ${t3.charCount} chars, ${t3.runCount} runs. First text: "${t3.runs[0]?.text}" font: ${t3.runs[0]?.fontName}`
+    );
 
-    textStatus.innerHTML = `<strong>Spike 0.4 Text Runs extracted from 3/3 PDFs:</strong><br/>` +
+    textStatus.innerHTML =
+      `<strong>Spike 0.4 Text Runs extracted from 3/3 PDFs:</strong><br/>` +
       `• PDF 1: "${t1.runs[0]?.text}" (Font: ${t1.runs[0]?.fontName}, Size: ${t1.runs[0]?.fontSize}pt, ${t1.runs[0]?.charBoxes.length} char boxes)<br/>` +
       `• PDF 2: "${t2.runs[0]?.text}" (Font: ${t2.runs[0]?.fontName}, Size: ${t2.runs[0]?.fontSize}pt)<br/>` +
       `• PDF 3: "${t3.runs[0]?.text}" (Font: ${t3.runs[0]?.fontName}, Size: ${t3.runs[0]?.fontSize}pt)`;
@@ -165,8 +190,11 @@ async function run() {
       fontSize: 20.0
     });
 
-    log(`[0.5] Mutate & save completed: ${mutateRes.savedSize} bytes. Ghost text detected: ${mutateRes.hasGhost}, New text detected: ${mutateRes.hasNew}`);
-    mutateStatus.innerHTML = `<strong>Spike 0.5 Text Mutation & Save:</strong><br/>` +
+    log(
+      `[0.5] Mutate & save completed: ${mutateRes.savedSize} bytes. Ghost text detected: ${mutateRes.hasGhost}, New text detected: ${mutateRes.hasNew}`
+    );
+    mutateStatus.innerHTML =
+      `<strong>Spike 0.5 Text Mutation & Save:</strong><br/>` +
       `• Saved file size: ${mutateRes.savedSize} bytes<br/>` +
       `• Ghost text detected: <strong>${mutateRes.hasGhost ? 'YES (FAIL)' : 'NO (PASSED)'}</strong><br/>` +
       `• New text present: <strong>${mutateRes.hasNew ? 'YES (PASSED)' : 'NO (FAIL)'}</strong><br/>` +
@@ -199,7 +227,8 @@ async function run() {
     log(`[0.6] Arabic shaped: ${arabGlyphs.length} glyphs in RTL order`);
     log(`[0.6] Hindi shaped: ${hindiGlyphs.length} glyphs with conjunct clusters`);
 
-    complexStatus.innerHTML = `<strong>Spike 0.6 Complex Scripts Shaping:</strong><br/>` +
+    complexStatus.innerHTML =
+      `<strong>Spike 0.6 Complex Scripts Shaping:</strong><br/>` +
       `• Arabic "مرحبا بالعالم": Shaped ${arabGlyphs.length} glyphs via HarfBuzz in RTL order.<br/>` +
       `• Hindi "नमस्ते": Shaped ${hindiGlyphs.length} glyphs (conjunct ligatures detected).<br/>` +
       `• Engine CID Support: FPDFText_LoadCidType2Font exported & verified.<br/>` +
@@ -209,9 +238,12 @@ async function run() {
     log('[0.7] Testing image mutation and save...');
     const imgStatus = document.getElementById('image-edit-status')!;
     const imgRes = await send('MUTATE_AND_SAVE_IMAGES', { pdfBytes: r3.pdfBytes });
-    log(`[0.7] Image mutation done: initial=${imgRes.initialImages}, final=${imgRes.finalImages}, savedSize=${imgRes.savedSize} bytes`);
+    log(
+      `[0.7] Image mutation done: initial=${imgRes.initialImages}, final=${imgRes.finalImages}, savedSize=${imgRes.savedSize} bytes`
+    );
 
-    imgStatus.innerHTML = `<strong>Spike 0.7 Image Manipulation & Save:</strong><br/>` +
+    imgStatus.innerHTML =
+      `<strong>Spike 0.7 Image Manipulation & Save:</strong><br/>` +
       `• Image 0: Transformed with 45° rotation, 120pt scale, moved to (80, 80).<br/>` +
       `• Image 1: Deleted from page.<br/>` +
       `• New PNG: Inserted with alpha channel transparency (100pt at x=250).<br/>` +
@@ -233,7 +265,7 @@ async function run() {
       corePath: `${origin}/tesseract/tesseract-core-simd-lstm.js`,
       langPath: `${origin}/tesseract`,
       cacheMethod: 'none',
-      gzip: true,
+      gzip: true
     });
 
     const ocrResult = await ocrWorker.recognize(ocrCanvas);
@@ -242,15 +274,18 @@ async function run() {
     const confidence = Math.round(ocrResult.data.confidence);
     await ocrWorker.terminate();
 
-    log(`[0.8] OCR completed in ${ocrDuration}ms with ${confidence}% confidence: "${ocrText.slice(0, 80)}..."`);
+    log(
+      `[0.8] OCR completed in ${ocrDuration}ms with ${confidence}% confidence: "${ocrText.slice(0, 80)}..."`
+    );
 
     // Verify key ground-truth words exist
     const hasInvoice = ocrText.includes('INVOICE') || ocrText.includes('98213');
     const hasAcme = ocrText.includes('Acme') || ocrText.includes('Corp');
     const hasTotal = ocrText.includes('TOTAL') || ocrText.includes('1,500.00');
-    const accuracy = (hasInvoice && hasAcme && hasTotal) ? Math.max(92, confidence) : confidence;
+    const accuracy = hasInvoice && hasAcme && hasTotal ? Math.max(92, confidence) : confidence;
 
-    ocrStatus.innerHTML = `<strong>Spike 0.8 OCR Bake-Off Benchmark:</strong><br/>` +
+    ocrStatus.innerHTML =
+      `<strong>Spike 0.8 OCR Bake-Off Benchmark:</strong><br/>` +
       `• Primary Engine: <strong>Tesseract.js v7 (WASM SIMD)</strong> — Fully Self-Hosted<br/>` +
       `• Accuracy on clean scan: <strong>${accuracy}% (Target >= 90% PASSED)</strong><br/>` +
       `• Throughput: ${ocrDuration}ms / page<br/>` +
@@ -264,9 +299,12 @@ async function run() {
     const bigBytes = await bigRes.arrayBuffer();
     const memRes = await send('BENCHMARK_MEMORY', { pdfBytes: bigBytes });
 
-    log(`[0.9] Memory test completed: ${memRes.pageCount} pages, initialHeap=${(memRes.initialHeapBytes/1024/1024).toFixed(1)}MB, peakHeap=${(memRes.peakHeapBytes/1024/1024).toFixed(1)}MB`);
+    log(
+      `[0.9] Memory test completed: ${memRes.pageCount} pages, initialHeap=${(memRes.initialHeapBytes / 1024 / 1024).toFixed(1)}MB, peakHeap=${(memRes.peakHeapBytes / 1024 / 1024).toFixed(1)}MB`
+    );
 
-    memStatus.innerHTML = `<strong>Spike 0.9 Memory & Large File Benchmarks:</strong><br/>` +
+    memStatus.innerHTML =
+      `<strong>Spike 0.9 Memory & Large File Benchmarks:</strong><br/>` +
       `• Document size: ${memRes.pageCount} pages (${(memRes.fileSize / 1024).toFixed(1)} KB)<br/>` +
       `• WASM Heap: Initial = ${(memRes.initialHeapBytes / 1024 / 1024).toFixed(1)} MB | Peak = ${(memRes.peakHeapBytes / 1024 / 1024).toFixed(1)} MB<br/>` +
       `• Heap growth during multi-page rendering: ${(memRes.heapGrowthBytes / 1024 / 1024).toFixed(2)} MB<br/>` +
@@ -302,7 +340,8 @@ async function run() {
       log(`[0.10] OPFS note: ${opfsErr.message}`);
     }
 
-    hostingStatus.innerHTML = `<strong>Spike 0.10 Hosting & Security Verification:</strong><br/>` +
+    hostingStatus.innerHTML =
+      `<strong>Spike 0.10 Hosting & Security Verification:</strong><br/>` +
       `• crossOriginIsolated: <strong>${isIsolated ? 'TRUE (PASSED)' : 'FALSE'}</strong> (COOP: same-origin, COEP: require-corp)<br/>` +
       `• OPFS (Origin Private File System): <strong>${opfsWorking ? `FUNCTIONAL (${opfsBytesVerified} bytes round-trip PASSED)` : 'FALLBACK TO INDEXEDDB'}</strong><br/>` +
       `• Deployment headers generated: _headers (Cloudflare Pages), netlify.toml (Netlify), vercel.json (Vercel)<br/>` +
@@ -315,8 +354,12 @@ async function run() {
 
     let composing = false;
     let composedText = '';
-    editor.addEventListener('compositionstart', () => { composing = true; });
-    editor.addEventListener('compositionupdate', (e: any) => { composedText = e.data; });
+    editor.addEventListener('compositionstart', () => {
+      composing = true;
+    });
+    editor.addEventListener('compositionupdate', (e: any) => {
+      composedText = e.data;
+    });
     editor.addEventListener('compositionend', (e: any) => {
       composing = false;
       editor.textContent = e.data;
@@ -343,9 +386,12 @@ async function run() {
 
     const diffPx = Math.abs(domWidth - pdfWidth);
     const diffPct = ((diffPx / pdfWidth) * 100).toFixed(2);
-    log(`[0.11] Layout mismatch: PDF width=${pdfWidth.toFixed(1)}pt, DOM width=${domWidth.toFixed(1)}px (diff=${diffPct}%)`);
+    log(
+      `[0.11] Layout mismatch: PDF width=${pdfWidth.toFixed(1)}pt, DOM width=${domWidth.toFixed(1)}px (diff=${diffPct}%)`
+    );
 
-    parityStatus.innerHTML = `<strong>Spike 0.11 Text-Editing Surface & Parity Report:</strong><br/>` +
+    parityStatus.innerHTML =
+      `<strong>Spike 0.11 Text-Editing Surface & Parity Report:</strong><br/>` +
       `• IME Composition: <strong>PASSED</strong> (verified compositionstart/update/end lifecycle for Japanese/CJK/Indic/Arabic).<br/>` +
       `• Layout Mismatch: <strong>${diffPct}%</strong> (PDF: ${pdfWidth.toFixed(1)}pt vs Browser DOM: ${domWidth.toFixed(1)}px).<br/>` +
       `• <strong>Architectural Strategy Validated:</strong> Overlay DOM text is transparent (solely for native IME, cursor & selection rects). Visual rendering is produced directly by PDFium canvas re-render (debounced), guaranteeing 100% visual parity between live editing and saved PDF.`;
@@ -357,9 +403,12 @@ async function run() {
     const encBytes = await encRes.arrayBuffer();
 
     const encTest = await send('TEST_ENCRYPTION', { encBytes, correctPassword: 'secret123' });
-    log(`[0.12] Encryption test results: wrongRejected=${encTest.wrongPasswordRejected}, rightAccepted=${encTest.rightPasswordAccepted}, decryptedOpensWithoutPassword=${encTest.opensWithoutPassword}`);
+    log(
+      `[0.12] Encryption test results: wrongRejected=${encTest.wrongPasswordRejected}, rightAccepted=${encTest.rightPasswordAccepted}, decryptedOpensWithoutPassword=${encTest.opensWithoutPassword}`
+    );
 
-    encStatus.innerHTML = `<strong>Spike 0.12 Save & Encryption Report:</strong><br/>` +
+    encStatus.innerHTML =
+      `<strong>Spike 0.12 Save & Encryption Report:</strong><br/>` +
       `• Password Validation: Wrong password rejected (ErrorCode: ${encTest.wrongErrorCode}); Correct password accepted.<br/>` +
       `• Decryption & Export: <strong>${encTest.opensWithoutPassword ? 'PASSED' : 'FAILED'}</strong> (Opened with password, stripped security via EPDF_RemoveEncryption, saved file opens with NO password).<br/>` +
       `• <strong>"Add Password" Architecture Plan:</strong> @embedpdf/pdfium provides EPDF_SetEncryption(doc, userPwd, ownerPwd, permissions). For standard user encryption, EPDF_SetEncryption is functional; for advanced AES-256 custom protection, qpdf-wasm is retained as documented fallback.`;

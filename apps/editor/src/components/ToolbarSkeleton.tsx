@@ -14,16 +14,44 @@ export default function ToolbarSkeleton(): React.JSX.Element {
         backgroundColor: '#f8fafc'
       }}
     >
-      <button style={{ padding: '6px 12px', borderRadius: THEME_TOKENS.radius.sm, border: '1px solid #cbd5e1', cursor: 'pointer' }}>
+      <button
+        style={{
+          padding: '6px 12px',
+          borderRadius: THEME_TOKENS.radius.sm,
+          border: '1px solid #cbd5e1',
+          cursor: 'pointer'
+        }}
+      >
         Open Document
       </button>
-      <button style={{ padding: '6px 12px', borderRadius: THEME_TOKENS.radius.sm, border: '1px solid #cbd5e1', cursor: 'pointer' }}>
+      <button
+        style={{
+          padding: '6px 12px',
+          borderRadius: THEME_TOKENS.radius.sm,
+          border: '1px solid #cbd5e1',
+          cursor: 'pointer'
+        }}
+      >
         Zoom In (+)
       </button>
-      <button style={{ padding: '6px 12px', borderRadius: THEME_TOKENS.radius.sm, border: '1px solid #cbd5e1', cursor: 'pointer' }}>
+      <button
+        style={{
+          padding: '6px 12px',
+          borderRadius: THEME_TOKENS.radius.sm,
+          border: '1px solid #cbd5e1',
+          cursor: 'pointer'
+        }}
+      >
         Zoom Out (-)
       </button>
-      <button style={{ padding: '6px 12px', borderRadius: THEME_TOKENS.radius.sm, border: '1px solid #cbd5e1', cursor: 'pointer' }}>
+      <button
+        style={{
+          padding: '6px 12px',
+          borderRadius: THEME_TOKENS.radius.sm,
+          border: '1px solid #cbd5e1',
+          cursor: 'pointer'
+        }}
+      >
         Save PDF
       </button>
     </div>

@@ -11,11 +11,38 @@ async function buildFixtures() {
     const doc = await PDFDocument.create();
     const font = await doc.embedFont(StandardFonts.Helvetica);
     const page = doc.addPage([595.28, 841.89]); // A4
-    page.drawText('Sample Contract Agreement', { x: 50, y: 790, size: 20, font, color: rgb(0.1, 0.1, 0.1) });
-    page.drawText('1. Scope of Agreement and Terms', { x: 50, y: 750, size: 14, font, color: rgb(0.2, 0.2, 0.2) });
-    page.drawText('This agreement constitutes the complete understanding between parties.', { x: 50, y: 720, size: 11, font });
-    page.drawText('All obligations under this contract remain legally binding and enforceable.', { x: 50, y: 700, size: 11, font });
-    page.drawText('The quick brown fox jumps over the lazy dog repeatedly.', { x: 50, y: 680, size: 11, font });
+    page.drawText('Sample Contract Agreement', {
+      x: 50,
+      y: 790,
+      size: 20,
+      font,
+      color: rgb(0.1, 0.1, 0.1)
+    });
+    page.drawText('1. Scope of Agreement and Terms', {
+      x: 50,
+      y: 750,
+      size: 14,
+      font,
+      color: rgb(0.2, 0.2, 0.2)
+    });
+    page.drawText('This agreement constitutes the complete understanding between parties.', {
+      x: 50,
+      y: 720,
+      size: 11,
+      font
+    });
+    page.drawText('All obligations under this contract remain legally binding and enforceable.', {
+      x: 50,
+      y: 700,
+      size: 11,
+      font
+    });
+    page.drawText('The quick brown fox jumps over the lazy dog repeatedly.', {
+      x: 50,
+      y: 680,
+      size: 11,
+      font
+    });
     fs.writeFileSync(path.join(dir, '01_text_single_column.pdf'), await doc.save());
   }
 
@@ -25,17 +52,52 @@ async function buildFixtures() {
     const font = await doc.embedFont(StandardFonts.TimesRoman);
     const fontBold = await doc.embedFont(StandardFonts.TimesRomanBold);
     const page = doc.addPage([595.28, 841.89]);
-    page.drawText('Research on Modern Document Layout Algorithms', { x: 50, y: 800, size: 18, font: fontBold });
+    page.drawText('Research on Modern Document Layout Algorithms', {
+      x: 50,
+      y: 800,
+      size: 18,
+      font: fontBold
+    });
     // Left column (x=50..270)
     page.drawText('Abstract - Left Column', { x: 50, y: 760, size: 12, font: fontBold });
-    page.drawText('In this section we review the algorithmic foundation', { x: 50, y: 740, size: 10, font });
-    page.drawText('for detecting column boundaries without heuristic failure.', { x: 50, y: 725, size: 10, font });
-    page.drawText('Primary experiments demonstrate 99.8% precision.', { x: 50, y: 710, size: 10, font });
+    page.drawText('In this section we review the algorithmic foundation', {
+      x: 50,
+      y: 740,
+      size: 10,
+      font
+    });
+    page.drawText('for detecting column boundaries without heuristic failure.', {
+      x: 50,
+      y: 725,
+      size: 10,
+      font
+    });
+    page.drawText('Primary experiments demonstrate 99.8% precision.', {
+      x: 50,
+      y: 710,
+      size: 10,
+      font
+    });
     // Right column (x=310..530)
     page.drawText('Introduction - Right Column', { x: 310, y: 760, size: 12, font: fontBold });
-    page.drawText('Digital document processing has evolved dramatically.', { x: 310, y: 740, size: 10, font });
-    page.drawText('WebAssembly execution offers native-level throughput.', { x: 310, y: 725, size: 10, font });
-    page.drawText('Client-side rendering preserves total user privacy.', { x: 310, y: 710, size: 10, font });
+    page.drawText('Digital document processing has evolved dramatically.', {
+      x: 310,
+      y: 740,
+      size: 10,
+      font
+    });
+    page.drawText('WebAssembly execution offers native-level throughput.', {
+      x: 310,
+      y: 725,
+      size: 10,
+      font
+    });
+    page.drawText('Client-side rendering preserves total user privacy.', {
+      x: 310,
+      y: 710,
+      size: 10,
+      font
+    });
     fs.writeFileSync(path.join(dir, '02_two_column_article.pdf'), await doc.save());
   }
 
@@ -46,10 +108,17 @@ async function buildFixtures() {
     const page = doc.addPage([600, 400]);
     // Create simple 1x1 or 4x4 PNG buffer:
     // Minimal valid PNG 2x2 with red/blue pixels
-    const pngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVQIW2P8z8Dwn4GBgYGRgQEAAg8BAfG/7gYAAAAASUVORK5CYII=';
+    const pngBase64 =
+      'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVQIW2P8z8Dwn4GBgYGRgQEAAg8BAfG/7gYAAAAASUVORK5CYII=';
     const pngBytes = Buffer.from(pngBase64, 'base64');
     const image = await doc.embedPng(pngBytes);
-    page.drawText('Product Catalogue 2026', { x: 40, y: 360, size: 22, font, color: rgb(0, 0.4, 0.8) });
+    page.drawText('Product Catalogue 2026', {
+      x: 40,
+      y: 360,
+      size: 22,
+      font,
+      color: rgb(0, 0.4, 0.8)
+    });
     page.drawImage(image, { x: 40, y: 100, width: 220, height: 220 });
     page.drawImage(image, { x: 320, y: 100, width: 220, height: 220 });
     fs.writeFileSync(path.join(dir, '03_image_brochure.pdf'), await doc.save());
@@ -60,11 +129,22 @@ async function buildFixtures() {
     const doc = await PDFDocument.create();
     const font = await doc.embedFont(StandardFonts.Courier);
     const page = doc.addPage([595.28, 841.89]);
-    page.drawText('INVOICE #98213 - VERIFIED SCAN', { x: 50, y: 780, size: 14, font, color: rgb(0.1, 0.1, 0.1) });
+    page.drawText('INVOICE #98213 - VERIFIED SCAN', {
+      x: 50,
+      y: 780,
+      size: 14,
+      font,
+      color: rgb(0.1, 0.1, 0.1)
+    });
     page.drawText('BILL TO: Acme Corp Technologies Inc.', { x: 50, y: 750, size: 11, font });
     page.drawText('DATE: 2026-11-09   DUE: Upon Receipt', { x: 50, y: 730, size: 11, font });
     page.drawText('ITEM 1: Client Software License ($1,200.00)', { x: 50, y: 700, size: 11, font });
-    page.drawText('ITEM 2: Maintenance & Technical Support ($300.00)', { x: 50, y: 680, size: 11, font });
+    page.drawText('ITEM 2: Maintenance & Technical Support ($300.00)', {
+      x: 50,
+      y: 680,
+      size: 11,
+      font
+    });
     page.drawText('TOTAL BALANCE DUE: $1,500.00 USD', { x: 50, y: 650, size: 12, font });
     fs.writeFileSync(path.join(dir, '04_scanned_clean.pdf'), await doc.save());
   }
@@ -74,9 +154,27 @@ async function buildFixtures() {
     const doc = await PDFDocument.create();
     const font = await doc.embedFont(StandardFonts.CourierOblique);
     const page = doc.addPage([595.28, 841.89]);
-    page.drawText('RECEIPT #4019 - GAS & ELECTRICITY', { x: 60, y: 770, size: 12, font, rotate: degrees(-1.5) });
-    page.drawText('METER READ: 492019 kWh   RATE: 0.145/kWh', { x: 60, y: 740, size: 10, font, rotate: degrees(-1.5) });
-    page.drawText('SUBTOTAL: $84.20  TAX: $6.74  TOTAL: $90.94', { x: 60, y: 710, size: 10, font, rotate: degrees(-1.5) });
+    page.drawText('RECEIPT #4019 - GAS & ELECTRICITY', {
+      x: 60,
+      y: 770,
+      size: 12,
+      font,
+      rotate: degrees(-1.5)
+    });
+    page.drawText('METER READ: 492019 kWh   RATE: 0.145/kWh', {
+      x: 60,
+      y: 740,
+      size: 10,
+      font,
+      rotate: degrees(-1.5)
+    });
+    page.drawText('SUBTOTAL: $84.20  TAX: $6.74  TOTAL: $90.94', {
+      x: 60,
+      y: 710,
+      size: 10,
+      font,
+      rotate: degrees(-1.5)
+    });
     fs.writeFileSync(path.join(dir, '05_scanned_skewed.pdf'), await doc.save());
   }
 
@@ -108,7 +206,12 @@ async function buildFixtures() {
     const font = await doc.embedFont(StandardFonts.Helvetica);
     const page = doc.addPage([500, 400]);
     page.drawText('CJK Document Fixture', { x: 50, y: 350, size: 16, font });
-    page.drawText('Chinese, Japanese, Korean unicode text tests', { x: 50, y: 320, size: 12, font });
+    page.drawText('Chinese, Japanese, Korean unicode text tests', {
+      x: 50,
+      y: 320,
+      size: 12,
+      font
+    });
     fs.writeFileSync(path.join(dir, '08_cjk.pdf'), await doc.save());
   }
 
@@ -135,7 +238,12 @@ async function buildFixtures() {
     for (let i = 1; i <= 100; i++) {
       const page = doc.addPage([500, 300]);
       page.drawText(`Page Number ${i} of 100`, { x: 50, y: 250, size: 14, font });
-      page.drawText(`Large document test suite content for page index ${i}.`, { x: 50, y: 220, size: 10, font });
+      page.drawText(`Large document test suite content for page index ${i}.`, {
+        x: 50,
+        y: 220,
+        size: 10,
+        font
+      });
     }
     fs.writeFileSync(path.join(dir, '10_large_multipage.pdf'), await doc.save());
   }
@@ -166,7 +274,15 @@ async function buildFixtures() {
     const doc = await PDFDocument.create();
     const page = doc.addPage([400, 300]);
     // Draw vector path rectangle representing outline
-    page.drawRectangle({ x: 50, y: 200, width: 300, height: 50, color: rgb(0.9, 0.9, 0.9), borderColor: rgb(0.2, 0.2, 0.2), borderWidth: 2 });
+    page.drawRectangle({
+      x: 50,
+      y: 200,
+      width: 300,
+      height: 50,
+      color: rgb(0.9, 0.9, 0.9),
+      borderColor: rgb(0.2, 0.2, 0.2),
+      borderWidth: 2
+    });
     fs.writeFileSync(path.join(dir, '13_outlines_image_text.pdf'), await doc.save());
   }
 

@@ -1,0 +1,8 @@
+dist
+node_modules
+test-results
+playwright-report
+public
+fixtures
+packages/test-fixtures/fixtures
+pnpm-lock.yaml

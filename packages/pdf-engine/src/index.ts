@@ -71,7 +71,10 @@ export type PdfErrorCode =
   | 'Unknown';
 
 export class PdfError extends Error {
-  constructor(public readonly code: PdfErrorCode, message: string) {
+  constructor(
+    public readonly code: PdfErrorCode,
+    message: string
+  ) {
     super(message);
     this.name = 'PdfError';
   }
