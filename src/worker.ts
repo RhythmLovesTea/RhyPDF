@@ -80,48 +80,88 @@ self.onmessage = async (e: MessageEvent) => {
 
     if (type === 'GET_PAGE_OBJECTS') {
       if (!pdfiumModule) throw new Error('PDFium not initialized');
-      const { pdfBytes, pageIndex } = payload;
+      const { pdfBytes, pageIndex, scale = 1.0 } = payload;
       const heap = getHeap(pdfiumModule);
       const pData = pdfiumModule.pdfium.wasmExports.malloc(pdfBytes.byteLength);
       new Uint8Array(heap.buffer, pData, pdfBytes.byteLength).set(new Uint8Array(pdfBytes));
 
       const doc = pdfiumModule.FPDF_LoadMemDocument(pData, pdfBytes.byteLength, '');
       const page = pdfiumModule.FPDF_LoadPage(doc, pageIndex);
+      const pageWidth = pdfiumModule.FPDF_GetPageWidthF(page);
+      const pageHeight = pdfiumModule.FPDF_GetPageHeightF(page);
+      const rotationIndex = pdfiumModule.FPDFPage_GetRotation(page);
+      const rotation = rotationIndex * 90; // 0=0, 1=90, 2=180, 3=270
       const count = pdfiumModule.FPDFPage_CountObjects(page);
       const objects = [];
+
+      const devW = Math.floor(pageWidth * scale);
+      const devH = Math.floor(pageHeight * scale);
+
+      const pLeft = pdfiumModule.pdfium.wasmExports.malloc(4);
+      const pBottom = pdfiumModule.pdfium.wasmExports.malloc(4);
+      const pRight = pdfiumModule.pdfium.wasmExports.malloc(4);
+      const pTop = pdfiumModule.pdfium.wasmExports.malloc(4);
+
+      const pDevX1 = pdfiumModule.pdfium.wasmExports.malloc(4);
+      const pDevY1 = pdfiumModule.pdfium.wasmExports.malloc(4);
+      const pDevX2 = pdfiumModule.pdfium.wasmExports.malloc(4);
+      const pDevY2 = pdfiumModule.pdfium.wasmExports.malloc(4);
+
+      const view = new DataView(heap.buffer);
 
       for (let i = 0; i < count; i++) {
         const obj = pdfiumModule.FPDFPage_GetObject(page, i);
         const objType = pdfiumModule.FPDFPageObj_GetType(obj);
-        // Types: 1 = TEXT, 2 = PATH, 3 = IMAGE, 4 = SHADING, 5 = FORMXOBJECT
         const typeName = objType === 1 ? 'TEXT' : objType === 2 ? 'PATH' : objType === 3 ? 'IMAGE' : objType === 5 ? 'FORM' : 'OTHER';
 
-        // Get bounds
-        const pLeft = pdfiumModule.pdfium.wasmExports.malloc(4);
-        const pBottom = pdfiumModule.pdfium.wasmExports.malloc(4);
-        const pRight = pdfiumModule.pdfium.wasmExports.malloc(4);
-        const pTop = pdfiumModule.pdfium.wasmExports.malloc(4);
-
         pdfiumModule.FPDFPageObj_GetBounds(obj, pLeft, pBottom, pRight, pTop);
-        const view = new DataView(heap.buffer);
         const left = view.getFloat32(pLeft, true);
         const bottom = view.getFloat32(pBottom, true);
         const right = view.getFloat32(pRight, true);
         const top = view.getFloat32(pTop, true);
 
-        pdfiumModule.pdfium.wasmExports.free(pLeft);
-        pdfiumModule.pdfium.wasmExports.free(pBottom);
-        pdfiumModule.pdfium.wasmExports.free(pRight);
-        pdfiumModule.pdfium.wasmExports.free(pTop);
+        // Convert (left, top) and (right, bottom) to device coordinates via FPDF_PageToDevice
+        pdfiumModule.FPDF_PageToDevice(page, 0, 0, devW, devH, 0, left, top, pDevX1, pDevY1);
+        pdfiumModule.FPDF_PageToDevice(page, 0, 0, devW, devH, 0, right, bottom, pDevX2, pDevY2);
 
-        objects.push({ index: i, type: typeName, bounds: { left, bottom, right, top } });
+        const x1 = view.getInt32(pDevX1, true);
+        const y1 = view.getInt32(pDevY1, true);
+        const x2 = view.getInt32(pDevX2, true);
+        const y2 = view.getInt32(pDevY2, true);
+
+        const devBox = {
+          x: Math.min(x1, x2),
+          y: Math.min(y1, y2),
+          w: Math.abs(x2 - x1),
+          h: Math.abs(y2 - y1),
+        };
+
+        objects.push({
+          index: i,
+          type: typeName,
+          pdfBounds: { left, bottom, right, top },
+          devBox
+        });
       }
+
+      pdfiumModule.pdfium.wasmExports.free(pLeft);
+      pdfiumModule.pdfium.wasmExports.free(pBottom);
+      pdfiumModule.pdfium.wasmExports.free(pRight);
+      pdfiumModule.pdfium.wasmExports.free(pTop);
+      pdfiumModule.pdfium.wasmExports.free(pDevX1);
+      pdfiumModule.pdfium.wasmExports.free(pDevY1);
+      pdfiumModule.pdfium.wasmExports.free(pDevX2);
+      pdfiumModule.pdfium.wasmExports.free(pDevY2);
 
       pdfiumModule.FPDF_ClosePage(page);
       pdfiumModule.FPDF_CloseDocument(doc);
       pdfiumModule.pdfium.wasmExports.free(pData);
 
-      self.postMessage({ id, type: 'PAGE_OBJECTS_SUCCESS', result: { count, objects } });
+      self.postMessage({
+        id,
+        type: 'PAGE_OBJECTS_SUCCESS',
+        result: { count, rotation, pageWidth, pageHeight, devW, devH, objects }
+      });
       return;
     }
 

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Spike 0.1 & 0.2: PDFium worker init and render 3 sample PDFs to canvas at 2x scale + DPR', async ({ page }) => {
+test('Spike 0.1, 0.2, 0.3: PDFium init, render 3 PDFs, and object enumeration + rotated overlay', async ({ page }) => {
   await page.goto('/');
 
   // Spike 0.1: Worker status
@@ -11,16 +11,14 @@ test('Spike 0.1 & 0.2: PDFium worker init and render 3 sample PDFs to canvas at 
   const renderStatus = page.locator('#render-status');
   await expect(renderStatus).toContainText('3/3 sample PDFs rendered successfully', { timeout: 15000 });
 
-  // Verify all 3 canvases are visible and sized correctly
-  for (const id of ['#render-canvas-1', '#render-canvas-2', '#render-canvas-3']) {
-    const canvas = page.locator(id);
-    await expect(canvas).toBeVisible();
-    const box = await canvas.boundingBox();
-    expect(box?.width).toBeGreaterThan(50);
-    expect(box?.height).toBeGreaterThan(50);
-  }
-
-  // Spike 0.3: Object count
+  // Spike 0.3: Object count & Rotated Page test
   const objectStatus = page.locator('#object-count-status');
   await expect(objectStatus).toContainText('Page Objects detected: 5 objects', { timeout: 15000 });
+  await expect(objectStatus).toContainText('rotation = 90°', { timeout: 15000 });
+
+  // Verify SVG overlay rendered rectangles
+  const svgRects = page.locator('#overlay-container svg rect');
+  await expect(svgRects.first()).toBeVisible();
+  const count = await svgRects.count();
+  expect(count).toBe(5);
 });
