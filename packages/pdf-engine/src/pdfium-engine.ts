@@ -1538,13 +1538,42 @@ export class PdfiumEngine implements PdfEngine {
     }
 
     try {
-      this.pdfium.PDFiumExt_SaveAsCopy(doc.docPtr, writer);
-      const size = this.pdfium.PDFiumExt_GetFileWriterSize(writer);
-      const outPtr = this.emscripten.wasmExports.malloc(size);
+      const flags = opts?.incremental ? 1 : 2; // 1 = FPDF_INCREMENTAL, 2 = FPDF_NO_INCREMENTAL
+      let saveRes: boolean | number;
+      if (opts?.version && typeof this.pdfium.FPDF_SaveWithVersion === 'function') {
+        saveRes = this.pdfium.FPDF_SaveWithVersion(doc.docPtr, writer, flags, opts.version);
+      } else if (typeof this.pdfium.FPDF_SaveAsCopy === 'function') {
+        saveRes = this.pdfium.FPDF_SaveAsCopy(doc.docPtr, writer, flags);
+      } else {
+        saveRes = this.pdfium.PDFiumExt_SaveAsCopy(doc.docPtr, writer);
+      }
 
+      if (!saveRes) {
+        throw new PdfError('IO', 'Failed to serialize PDF document during save');
+      }
+
+      const size = this.pdfium.PDFiumExt_GetFileWriterSize(writer);
+      if (size <= 0) {
+        throw new PdfError('IO', 'PDF save failed: output size is 0 bytes');
+      }
+
+      const outPtr = this.emscripten.wasmExports.malloc(size);
       this.pdfium.PDFiumExt_GetFileWriterData(writer, outPtr, size);
       const savedBytes = new Uint8Array(this.emscripten.HEAPU8.buffer, outPtr, size).slice();
       this.emscripten.wasmExports.free(outPtr);
+
+      if (opts?.destination) {
+        const streamWriter = opts.destination.getWriter();
+        const chunkSize = 64 * 1024;
+        for (let offset = 0; offset < savedBytes.byteLength; offset += chunkSize) {
+          const chunk = savedBytes.subarray(
+            offset,
+            Math.min(offset + chunkSize, savedBytes.byteLength)
+          );
+          await streamWriter.write(chunk);
+        }
+        await streamWriter.close();
+      }
 
       return new Blob([savedBytes], { type: 'application/pdf' });
     } finally {

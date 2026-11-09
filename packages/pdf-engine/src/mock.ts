@@ -451,10 +451,18 @@ export class MockPdfEngine implements PdfEngine {
       docState.isEncrypted = false;
     }
 
+    const versionStr = opts?.version ? (opts.version / 10).toFixed(1) : '1.7';
+    const modeStr = opts?.incremental ? 'Incremental' : 'Full';
     // Produce valid synthetic PDF header bytes for unit testing and export
-    const pdfContent = `%PDF-1.7\n%RhyPDF Mock Engine Exported\n%Pages: ${docState.pages.length}\n%%EOF\n`;
+    const pdfContent = `%PDF-${versionStr}\n%RhyPDF Mock Engine Exported (${modeStr})\n%Pages: ${docState.pages.length}\n%%EOF\n`;
     const encoder = new TextEncoder();
     const bytes = encoder.encode(pdfContent);
+
+    if (opts?.destination) {
+      const streamWriter = opts.destination.getWriter();
+      await streamWriter.write(bytes);
+      await streamWriter.close();
+    }
 
     return new Blob([bytes], { type: 'application/pdf' });
   }

@@ -89,8 +89,10 @@ export interface MutationResult {
 
 export interface SaveOptions {
   incremental?: boolean;
+  version?: number;
   stripSecurity?: boolean;
   password?: string;
+  destination?: WritableStream<Uint8Array>;
 }
 
 export type PdfErrorCode =

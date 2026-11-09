@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 2
-CURRENT TASK  : 2.12
+CURRENT TASK  : 2.13
 LAST UPDATED  : 2026-11-10
-NOTES         : Task 2.11 complete (Mutation API: removeObject, insertText, insertImage, insertPath, setMatrix, setColor, reorderObject, setTextRenderMode, generateContent). Moving to Task 2.12 (Save: write a new file, full and incremental options, stream to OPFS/Blob).
+NOTES         : Task 2.12 complete (Save to new file with full rewrite, incremental append, versioning, source byte immutability, and WritableStream destination streaming). Moving to Task 2.13 (Memory management: explicit close for documents/pages/bitmaps, dev-mode leak detector, heap monitoring, auto-restart of worker above heap threshold).
 ```
 
 ---
@@ -374,7 +374,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **2.9** Path-object details (vector shapes): bounds, segments, stroke, fill, width, dash.
 - [x] **2.10** Form XObject traversal: enumerate and edit objects inside forms with correct transform composition. _Done when:_ text inside a form XObject can be listed and removed.
 - [x] **2.11** Mutation API: `removeObject`, `insertTextObject`, `insertImageObject`, `insertPathObject`, `setMatrix`, `setColor`, `reorderObject`, `setTextRenderMode`, then `generateContent`. _Done when:_ mutations apply, regenerate the page content and update the object list.
-- [ ] **2.12** Save: write a **new** file (never mutate the source bytes); full and incremental options; stream to OPFS / `Blob`. _Done when:_ the original bytes are unchanged and the saved file opens in 3 other viewers.
+- [x] **2.12** Save: write a **new** file (never mutate the source bytes); full and incremental options; stream to OPFS / `Blob`. _Done when:_ the original bytes are unchanged and the saved file opens in 3 other viewers.
 - [ ] **2.13** Memory management: explicit `close()` for documents / pages / bitmaps, a dev-mode leak detector, heap monitoring, auto-restart of the worker above a heap threshold.
 - [ ] **2.14** Error model: `PdfError` union (Corrupt, WrongPassword, Unsupported, OutOfMemory, IO, Cancelled) mapped from engine errors.
 - [ ] **2.15** Integration tests on the **10-PDF sample set** (Appendix A) plus validators in CI (`qpdf --check`, `pdfcpu validate`, and a headless PDF.js open). _Done when:_ the suite opens, renders, enumerates, mutates, saves and re-validates every sample.
@@ -794,7 +794,8 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-10 | 2.8     | Image-object details: preview, pixel size, filters, DPI & masks    | `P2.8`  | Extracted FPDFImageObj metadata, decoded RGBA preview bitmap, colorSpace & alpha mask detection              |
 | 2026-11-10 | 2.9     | Path-object details: vector shapes, segments, stroke, fill & dash  | `P2.9`  | Extracted path segments (moveTo, lineTo, bezier, close), stroke width, stroke/fill color & dash array        |
 | 2026-11-10 | 2.10    | Form XObject traversal: enumerate and edit objects inside forms    | `P2.10` | 2D affine composition for form child objects, UTF-16 fix, FPDFFormObj_RemoveObject verified on engine & mock |
-| 2026-11-10 | 2.11    | Mutation API: text, image & path insertion, transforms & reorder   | `P2.11`  | removeObject, insertText, insertImage, insertPath, setMatrix, setColor, reorder & renderMode |
+| 2026-11-10 | 2.11    | Mutation API: text, image & path insertion, transforms & reorder   | `P2.11` | removeObject, insertText, insertImage, insertPath, setMatrix, setColor, reorder & renderMode                 |
+| 2026-11-10 | 2.12    | Save: new file, source immutability, full, incremental & streaming | `P2.12` | Verified bit-for-bit source immutability, FPDF_SaveAsCopy incremental/full, versions & stream                 |
 
 ---
 

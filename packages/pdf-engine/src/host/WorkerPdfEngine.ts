@@ -112,7 +112,17 @@ export class WorkerPdfEngine implements PdfEngine {
 
   async save(doc: DocumentHandle, opts?: SaveOptions): Promise<Blob> {
     const reqId = this.nextId('save');
-    const buffer = await this.remote.save(reqId, doc, opts);
+    const { destination, ...remoteOpts } = opts || {};
+    const buffer = await this.remote.save(reqId, doc, remoteOpts);
+    if (destination) {
+      const streamWriter = destination.getWriter();
+      const u8 = new Uint8Array(buffer);
+      const chunkSize = 64 * 1024;
+      for (let offset = 0; offset < u8.byteLength; offset += chunkSize) {
+        await streamWriter.write(u8.subarray(offset, Math.min(offset + chunkSize, u8.byteLength)));
+      }
+      await streamWriter.close();
+    }
     return new Blob([buffer], { type: 'application/pdf' });
   }
 
