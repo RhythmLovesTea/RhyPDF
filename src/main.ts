@@ -126,7 +126,30 @@ async function run() {
     objectCountStatus.innerHTML = `<strong>Page Objects detected:</strong> ${objRes.count} objects on standard page.<br/>` +
       `<strong>Rotated Page test:</strong> rotation = ${rotObj.rotation}°, mapped ${rotObj.count} objects with FPDF_PageToDevice.`;
 
-    log('[Success] Spikes 0.1, 0.2, and 0.3 verified!');
+    // Spike 0.4: Text Run Extraction on 3 different PDFs
+    log('[0.4] Extracting text runs on 3 different PDFs...');
+    const textStatus = document.getElementById('text-run-status')!;
+
+    // PDF 1
+    const t1 = await send('EXTRACT_TEXT_RUNS', { pdfBytes: r1.pdfBytes, pageIndex: 0 });
+    log(`[0.4] PDF 1: ${t1.charCount} chars, ${t1.runCount} runs. First text: "${t1.runs[0]?.text}" font: ${t1.runs[0]?.fontName} size: ${t1.runs[0]?.fontSize}`);
+
+    // PDF 2
+    const t2 = await send('EXTRACT_TEXT_RUNS', { pdfBytes: r2.pdfBytes, pageIndex: 0 });
+    log(`[0.4] PDF 2: ${t2.charCount} chars, ${t2.runCount} runs. First text: "${t2.runs[0]?.text}" font: ${t2.runs[0]?.fontName}`);
+
+    // PDF 3 (Invoice / Courier)
+    const s4Res = await fetch('/fixtures/04_scanned_clean.pdf');
+    const s4Bytes = await s4Res.arrayBuffer();
+    const t3 = await send('EXTRACT_TEXT_RUNS', { pdfBytes: s4Bytes, pageIndex: 0 });
+    log(`[0.4] PDF 3: ${t3.charCount} chars, ${t3.runCount} runs. First text: "${t3.runs[0]?.text}" font: ${t3.runs[0]?.fontName}`);
+
+    textStatus.innerHTML = `<strong>Spike 0.4 Text Runs extracted from 3/3 PDFs:</strong><br/>` +
+      `• PDF 1: "${t1.runs[0]?.text}" (Font: ${t1.runs[0]?.fontName}, Size: ${t1.runs[0]?.fontSize}pt, ${t1.runs[0]?.charBoxes.length} char boxes)<br/>` +
+      `• PDF 2: "${t2.runs[0]?.text}" (Font: ${t2.runs[0]?.fontName}, Size: ${t2.runs[0]?.fontSize}pt)<br/>` +
+      `• PDF 3: "${t3.runs[0]?.text}" (Font: ${t3.runs[0]?.fontName}, Size: ${t3.runs[0]?.fontSize}pt)`;
+
+    log('[Success] Spikes 0.1, 0.2, 0.3, and 0.4 verified!');
   } catch (err: any) {
     log(`[Error] ${err.message}`);
     workerStatus.className = 'status-badge status-err';

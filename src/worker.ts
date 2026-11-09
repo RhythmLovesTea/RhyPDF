@@ -165,6 +165,154 @@ self.onmessage = async (e: MessageEvent) => {
       return;
     }
 
+    if (type === 'EXTRACT_TEXT_RUNS') {
+      if (!pdfiumModule) throw new Error('PDFium not initialized');
+      const { pdfBytes, pageIndex } = payload;
+      const heap = getHeap(pdfiumModule);
+      const pData = pdfiumModule.pdfium.wasmExports.malloc(pdfBytes.byteLength);
+      new Uint8Array(heap.buffer, pData, pdfBytes.byteLength).set(new Uint8Array(pdfBytes));
+
+      const doc = pdfiumModule.FPDF_LoadMemDocument(pData, pdfBytes.byteLength, '');
+      const page = pdfiumModule.FPDF_LoadPage(doc, pageIndex);
+      const textPage = pdfiumModule.FPDFText_LoadPage(page);
+      const charCount = pdfiumModule.FPDFText_CountChars(textPage);
+
+      const pLeft = pdfiumModule.pdfium.wasmExports.malloc(8);
+      const pRight = pdfiumModule.pdfium.wasmExports.malloc(8);
+      const pBottom = pdfiumModule.pdfium.wasmExports.malloc(8);
+      const pTop = pdfiumModule.pdfium.wasmExports.malloc(8);
+
+      const pR = pdfiumModule.pdfium.wasmExports.malloc(4);
+      const pG = pdfiumModule.pdfium.wasmExports.malloc(4);
+      const pB = pdfiumModule.pdfium.wasmExports.malloc(4);
+      const pA = pdfiumModule.pdfium.wasmExports.malloc(4);
+
+      const pFlags = pdfiumModule.pdfium.wasmExports.malloc(4);
+      const fontBufLen = 256;
+      const pFontBuf = pdfiumModule.pdfium.wasmExports.malloc(fontBufLen);
+
+      const pMatrix = pdfiumModule.pdfium.wasmExports.malloc(24); // 6 doubles = 48 or floats = 24
+
+      const view = new DataView(heap.buffer);
+
+      interface CharInfo {
+        char: string;
+        unicode: number;
+        fontSize: number;
+        fontName: string;
+        isSubset: boolean;
+        color: { r: number; g: number; b: number; a: number };
+        box: { left: number; right: number; bottom: number; top: number };
+      }
+
+      const chars: CharInfo[] = [];
+
+      for (let i = 0; i < charCount; i++) {
+        const u = pdfiumModule.FPDFText_GetUnicode(textPage, i);
+        if (u === 0) continue;
+        const ch = String.fromCodePoint(u);
+        const fontSize = pdfiumModule.FPDFText_GetFontSize(textPage, i);
+
+        // Char Box (doubles in FPDFText_GetCharBox)
+        pdfiumModule.FPDFText_GetCharBox(textPage, i, pLeft, pRight, pBottom, pTop);
+        const left = view.getFloat64(pLeft, true);
+        const right = view.getFloat64(pRight, true);
+        const bottom = view.getFloat64(pBottom, true);
+        const top = view.getFloat64(pTop, true);
+
+        // Fill Color
+        pdfiumModule.FPDFText_GetFillColor(textPage, i, pR, pG, pB, pA);
+        const r = view.getUint32(pR, true);
+        const g = view.getUint32(pG, true);
+        const b = view.getUint32(pB, true);
+        const a = view.getUint32(pA, true);
+
+        // Font info
+        const written = pdfiumModule.FPDFText_GetFontInfo(textPage, i, pFontBuf, fontBufLen, pFlags);
+        let fontName = 'Unknown';
+        if (written > 0) {
+          const raw = new Uint8Array(heap.buffer, pFontBuf, written);
+          fontName = new TextDecoder().decode(raw).replace(/\0.*$/, '');
+        }
+        const isSubset = /^[A-Z]{6}\+/.test(fontName);
+
+        chars.push({
+          char: ch,
+          unicode: u,
+          fontSize,
+          fontName,
+          isSubset,
+          color: { r, g, b, a },
+          box: { left, right, bottom, top }
+        });
+      }
+
+      // Group into runs sharing fontName, fontSize, color
+      const runs: Array<{
+        text: string;
+        fontName: string;
+        fontSize: number;
+        isSubset: boolean;
+        color: { r: number; g: number; b: number; a: number };
+        bounds: { left: number; bottom: number; right: number; top: number };
+        charBoxes: Array<{ char: string; left: number; right: number; bottom: number; top: number }>;
+      }> = [];
+
+      let currentRun: (typeof runs)[0] | null = null;
+      for (const c of chars) {
+        const sameStyle = currentRun &&
+          currentRun.fontName === c.fontName &&
+          Math.abs(currentRun.fontSize - c.fontSize) < 0.1 &&
+          currentRun.color.r === c.color.r &&
+          currentRun.color.g === c.color.g &&
+          currentRun.color.b === c.color.b;
+
+        if (sameStyle && currentRun) {
+          currentRun.text += c.char;
+          currentRun.bounds.left = Math.min(currentRun.bounds.left, c.box.left);
+          currentRun.bounds.bottom = Math.min(currentRun.bounds.bottom, c.box.bottom);
+          currentRun.bounds.right = Math.max(currentRun.bounds.right, c.box.right);
+          currentRun.bounds.top = Math.max(currentRun.bounds.top, c.box.top);
+          currentRun.charBoxes.push({ char: c.char, ...c.box });
+        } else {
+          currentRun = {
+            text: c.char,
+            fontName: c.fontName,
+            fontSize: c.fontSize,
+            isSubset: c.isSubset,
+            color: c.color,
+            bounds: { left: c.box.left, bottom: c.box.bottom, right: c.box.right, top: c.box.top },
+            charBoxes: [{ char: c.char, ...c.box }]
+          };
+          runs.push(currentRun);
+        }
+      }
+
+      pdfiumModule.pdfium.wasmExports.free(pLeft);
+      pdfiumModule.pdfium.wasmExports.free(pRight);
+      pdfiumModule.pdfium.wasmExports.free(pBottom);
+      pdfiumModule.pdfium.wasmExports.free(pTop);
+      pdfiumModule.pdfium.wasmExports.free(pR);
+      pdfiumModule.pdfium.wasmExports.free(pG);
+      pdfiumModule.pdfium.wasmExports.free(pB);
+      pdfiumModule.pdfium.wasmExports.free(pA);
+      pdfiumModule.pdfium.wasmExports.free(pFlags);
+      pdfiumModule.pdfium.wasmExports.free(pFontBuf);
+      pdfiumModule.pdfium.wasmExports.free(pMatrix);
+
+      pdfiumModule.FPDFText_ClosePage(textPage);
+      pdfiumModule.FPDF_ClosePage(page);
+      pdfiumModule.FPDF_CloseDocument(doc);
+      pdfiumModule.pdfium.wasmExports.free(pData);
+
+      self.postMessage({
+        id,
+        type: 'EXTRACT_TEXT_RUNS_SUCCESS',
+        result: { charCount: chars.length, runCount: runs.length, runs }
+      });
+      return;
+    }
+
     throw new Error(`Unknown command type: ${type}`);
   } catch (err: any) {
     self.postMessage({ id, type: 'ERROR', error: err.message || String(err) });

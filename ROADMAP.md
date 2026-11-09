@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 0
-CURRENT TASK  : 0.4
+CURRENT TASK  : 0.5
 LAST UPDATED  : 2026-11-09
-NOTES         : Spike 0.3 complete. Moving to Spike 0.4 (text run extraction with font & subset info).
+NOTES         : Spike 0.4 complete. Moving to Spike 0.5 (delete text object, insert new text with bundled font, save with no ghost text).
 ```
 
 ---
@@ -322,7 +322,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **0.1** Throwaway Vite + TypeScript project: load PDFium WASM inside a **Web Worker** (start with `@embedpdf/pdfium`; if its exports are too limited, build PDFium to WASM yourself with Emscripten). *Done when:* the worker reports PDFium is initialized and shows it on screen in Chrome, Firefox and Safari.
 - [x] **0.2** Open a PDF from an `ArrayBuffer` and render page 1 to a canvas at 2x scale and at `devicePixelRatio`. *Done when:* output looks identical to Chrome's built-in viewer on 3 sample PDFs.
 - [x] **0.3** List all page objects (text, image, path, form XObject) with bounding boxes and draw them as a DOM / SVG overlay. *Done when:* boxes align with visible content at several zoom levels and on a rotated page.
-- [ ] **0.4** Extract text runs: Unicode string, font name, size, fill color, matrix, bounding box, per-character boxes, and "is the font an embedded subset?". *Done when:* output matches the visible text on 3 different PDFs.
+- [x] **0.4** Extract text runs: Unicode string, font name, size, fill color, matrix, bounding box, per-character boxes, and "is the font an embedded subset?". *Done when:* output matches the visible text on 3 different PDFs.
 - [ ] **0.5** Delete one text object, insert a new text object with a bundled TTF (`FPDFText_LoadFont` or equivalent), regenerate page content, save to a new file. *Done when:* the saved PDF renders correctly in at least 3 other viewers and text extraction shows **no ghost text**.
 - [ ] **0.6** Complex scripts: shape **Arabic** and **Hindi (Devanagari)** with `harfbuzzjs`; embed as a CID font (Identity-H, glyph IDs, `ToUnicode`; check whether `FPDFText_LoadCidType2Font` is exported). Also test both fallbacks: (a) one text object per glyph / cluster, (b) vector outlines + invisible text layer. *Done when:* joined letters and conjuncts look right in external viewers and text is searchable / copyable, or the fallback chosen is recorded in the Spike Report.
 - [ ] **0.7** Images: find an image object; change its matrix (move + scale + rotate); delete another; insert a new PNG (with transparency) and a JPEG; save. *Done when:* the result displays correctly in external viewers.
@@ -755,6 +755,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-09 | 0.1 | Load PDFium WASM in Web Worker with Vite + TS spike | `P0.1` | Initialized @embedpdf/pdfium 2.15.1 in worker, self-hosted WASM verified |
 | 2026-11-09 | 0.2 | Render 3 sample PDFs to canvas at 2x scale and DPR | `P0.2` | Validated rendering on single-column, two-column and image-heavy PDFs |
 | 2026-11-09 | 0.3 | Page object enumeration and DOM/SVG overlay mapping | `P0.3` | Mapped bounds at 1x, 1.5x, 2x and handled 90 deg rotation with FPDF_PageToDevice |
+| 2026-11-09 | 0.4 | Text run extraction with font, size, color, subset & char boxes | `P0.4` | Verified extraction across 3 sample PDFs with per-character bounding boxes |
 
 ---
 
