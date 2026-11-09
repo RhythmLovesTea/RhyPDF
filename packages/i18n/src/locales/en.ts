@@ -1,0 +1,135 @@
+export const enTranslations = {
+  app: {
+    title: 'RhyPDF',
+    tagline: 'Private, client-side PDF editing in your browser',
+    clientSideBadge: '100% Client-Side',
+    workerStatusConnected: 'Worker: connected',
+    workerStatusConnecting: 'Worker: connecting...',
+    workerStatusError: 'Worker: error',
+    loadingView: 'Loading route view...'
+  },
+  nav: {
+    home: 'Home',
+    editor: 'Editor',
+    pages: 'Page Organizer',
+    settings: 'Settings',
+    styleGuide: 'Style Guide'
+  },
+  home: {
+    title: 'RhyPDF Workspace',
+    subtitle: 'High-performance, 100% private, client-side PDF editing in your browser.',
+    openDocumentTitle: 'Open a Document to Begin',
+    openDocumentDesc:
+      'Select a PDF file from your device. No files are ever uploaded to any server.',
+    btnOpenEditor: 'Open PDF Editor',
+    btnOpenOrganizer: 'Page Organizer',
+    quickStartTitle: 'Quick Start Sample Fixtures',
+    openSample: 'Open Sample'
+  },
+  editor: {
+    title: 'RhyPDF Editor',
+    loadingToolbar: 'Loading toolbar...',
+    loadingSidebar: 'Loading sidebar...',
+    loadingViewport: 'Loading viewport...',
+    toolbar: {
+      openDoc: 'Open Document',
+      zoomIn: 'Zoom In (+)',
+      zoomOut: 'Zoom Out (-)',
+      savePdf: 'Save PDF'
+    },
+    sidebar: {
+      thumbnailsTitle: 'Document Thumbnails',
+      page: 'Page {{page}}'
+    },
+    viewer: {
+      viewportTitle: 'PDF Page Canvas Viewport',
+      renderSurface: 'Direct WebAssembly Render Surface',
+      pdfiumStatus: 'PDFium Engine: {{status}}'
+    }
+  },
+  pages: {
+    title: 'Page Organizer',
+    subtitle: 'Reorder, rotate, extract, and remove pages from your PDF document.',
+    rotateCw: 'Rotate 90° CW',
+    rotateCcw: 'Rotate 90° CCW',
+    deletePage: 'Delete Page',
+    extractPage: 'Extract Page',
+    pageNumber: 'Page {{page}}',
+    dimensions: 'Size: 612 × 792 pt (Letter)'
+  },
+  settings: {
+    title: 'Application Settings',
+    subtitle: 'Configure appearance, performance thresholds, and OCR defaults.',
+    themeTitle: 'Theme Appearance',
+    themeLight: 'Light Mode',
+    themeDark: 'Dark Mode',
+    themeSystem: 'Match System',
+    languageTitle: 'Language & Region',
+    languageSelect: 'Select application interface language and direction',
+    ocrTitle: 'OCR Auto-Detection',
+    ocrDesc: 'Automatically scan imported images for editable text',
+    memoryTitle: 'Memory Warning Threshold (MB)',
+    memoryDesc: 'Alert user when document memory exceeds {{mb}} MB.',
+    btnSave: 'Save Preferences',
+    btnCrash: 'Simulate Crash Error',
+    savedToast: 'Saved!'
+  },
+  errorBoundary: {
+    title: 'Something went wrong',
+    subtitle: 'An unexpected application error was caught by the React error boundary.',
+    reload: 'Reload Application',
+    recover: 'Recover Session',
+    diagnosticsTitle: 'Crash Diagnostics',
+    copyDiagnostics: 'Copy Diagnostics',
+    copied: 'Copied!'
+  },
+  common: {
+    cancel: 'Cancel',
+    confirm: 'Confirm',
+    close: 'Close',
+    save: 'Save',
+    dismiss: 'Dismiss',
+    delete: 'Delete',
+    loading: 'Loading...'
+  },
+  styleGuide: {
+    title: 'RhyPDF Design System Style Guide',
+    subtitle: 'Interactive showcase of theme tokens and base components',
+    themeControls: 'Theme & Layout Controls',
+    lightMode: 'Light Mode',
+    darkMode: 'Dark Mode',
+    buttons: 'Buttons',
+    slidersSwitches: 'Sliders & Switches',
+    selectTabs: 'Select & Tabs',
+    dialogsToasts: 'Dialogs & Toasts',
+    popoverTooltip: 'Popover & Tooltip',
+    dropdownMenu: 'Dropdown Menu',
+    openDialog: 'Open Sample Dialog',
+    showToast: 'Show Toast Alert',
+    themeToggle: 'Toggle Theme (Current: {{theme}})',
+    btnPrimary: 'Primary',
+    btnSecondary: 'Secondary',
+    btnDestructive: 'Destructive',
+    btnGhost: 'Ghost',
+    zoomScale: 'Zoom Scale',
+    enableOcr: 'Enable OCR auto-detect',
+    sampleDialogTitle: 'Sample Modal Dialog',
+    sampleDialogDesc: 'Testing modal dialog open/close lifecycle.',
+    toastTitle: 'File Saved Locally',
+    toastMessage: 'Your PDF has been saved directly to browser storage.',
+    tooltipTarget: 'Hover for Tooltip',
+    tooltipContent: 'Helpful tooltip text',
+    popoverContent: 'Popover content anchored to trigger',
+    openPopover: 'Open Popover',
+    menuActions: 'Options Menu ▾',
+    menuItemRotate: 'Edit Page',
+    menuItemDuplicate: 'Export PDF',
+    menuItemDelete: 'Delete Page',
+    tabGeneral: 'General',
+    tabGeneralContent: 'General tab content panel.',
+    tabSecurity: 'Security',
+    tabSecurityContent: 'Security settings tab content.'
+  }
+};
+
+export type TranslationSchema = typeof enTranslations;

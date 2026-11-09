@@ -6,9 +6,11 @@ export default defineConfig({
     '**/editor-shell.spec.ts',
     '**/styleguide.spec.ts',
     '**/routing.spec.ts',
-    '**/error-handling.spec.ts'
+    '**/error-handling.spec.ts',
+    '**/i18n.spec.ts'
   ],
   timeout: 60000,
+  workers: 1,
   webServer: {
     command: 'pnpm --filter @rhypdf/editor preview --port 4173',
     port: 4173,

@@ -33,7 +33,7 @@ export const Popover: React.FC<PopoverProps> = ({ trigger, children }) => {
           style={{
             position: 'absolute',
             top: 'calc(100% + 4px)',
-            left: 0,
+            insetInlineStart: 0,
             backgroundColor: 'var(--bg-card)',
             color: 'var(--bg-card-foreground)',
             border: '1px solid var(--bg-border)',

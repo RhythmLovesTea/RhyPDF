@@ -1,5 +1,6 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from '@rhypdf/ui';
+import { i18n } from '@rhypdf/i18n';
 import { logger } from '../lib/logger';
 import { saveRecoveryMetadata } from '../lib/recovery';
 import { useDocStore } from '../stores/docStore';
@@ -106,19 +107,19 @@ export class ErrorBoundary extends Component<Props, State> {
                 justifyContent: 'center',
                 fontSize: 24,
                 fontWeight: 700,
-                margin: '0 auto 16px'
+                marginInline: 'auto',
+                marginBottom: 16
               }}
             >
               !
             </div>
 
             <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 8px' }}>
-              Something went wrong in RhyPDF
+              {i18n.t('errorBoundary.title')}
             </h1>
 
             <p style={{ color: 'var(--bg-muted-foreground)', fontSize: 14, margin: '0 0 16px' }}>
-              Your session state has been saved to local recovery storage so no document work is
-              lost.
+              {i18n.t('errorBoundary.subtitle')}
             </p>
 
             <div
@@ -131,7 +132,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 border: '1px solid #fecaca',
                 fontSize: 13,
                 fontFamily: 'monospace',
-                textAlign: 'left',
+                textAlign: 'start',
                 marginBottom: 20,
                 overflowX: 'auto'
               }}
@@ -145,17 +146,19 @@ export class ErrorBoundary extends Component<Props, State> {
                 variant="primary"
                 onClick={this.handleRecover}
               >
-                Recover Session
+                {i18n.t('errorBoundary.recover')}
               </Button>
               <Button data-testid="btn-reload-app" variant="secondary" onClick={this.handleReload}>
-                Reload Application
+                {i18n.t('errorBoundary.reload')}
               </Button>
               <Button
                 data-testid="btn-copy-diagnostic"
                 variant="ghost"
                 onClick={this.handleCopyDiagnostic}
               >
-                {this.state.copied ? 'Copied Diagnostic!' : 'Copy Diagnostic Report'}
+                {this.state.copied
+                  ? i18n.t('errorBoundary.copied')
+                  : i18n.t('errorBoundary.copyDiagnostics')}
               </Button>
             </div>
           </div>

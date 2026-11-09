@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@rhypdf/ui';
+import { useTranslation } from '@rhypdf/i18n';
 
 interface PageItem {
   id: number;
@@ -7,6 +8,7 @@ interface PageItem {
 }
 
 export default function PageOrganizerPage(): React.JSX.Element {
+  const { t } = useTranslation();
   const [pages, setPages] = useState<PageItem[]>([
     { id: 1, rotation: 0 },
     { id: 2, rotation: 0 },
@@ -25,7 +27,7 @@ export default function PageOrganizerPage(): React.JSX.Element {
   };
 
   return (
-    <div data-testid="page-organizer" style={{ padding: 32, maxWidth: 900, margin: '0 auto' }}>
+    <div data-testid="page-organizer" style={{ padding: 32, maxWidth: 900, marginInline: 'auto' }}>
       <header
         style={{
           marginBottom: 24,
@@ -35,16 +37,16 @@ export default function PageOrganizerPage(): React.JSX.Element {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>Page Organizer</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>{t('pages.title')}</h1>
           <p style={{ color: 'var(--bg-muted-foreground)', fontSize: 14, margin: '4px 0 0' }}>
-            Reorder, rotate, extract, and delete pages visually.
+            {t('pages.subtitle')}
           </p>
         </div>
         <Button
           variant="secondary"
           onClick={() => setPages((prev) => [...prev, { id: prev.length + 1, rotation: 0 }])}
         >
-          + Insert Blank Page
+          + {t('editor.sidebar.page', { page: pages.length + 1 })}
         </Button>
       </header>
 
@@ -86,17 +88,17 @@ export default function PageOrganizerPage(): React.JSX.Element {
                 marginBottom: 12
               }}
             >
-              Page {idx + 1}
+              {t('pages.pageNumber', { page: idx + 1 })}
             </div>
             <div style={{ fontSize: 12, color: 'var(--bg-muted-foreground)', marginBottom: 8 }}>
               {p.rotation}&deg;
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
               <Button size="sm" variant="secondary" onClick={() => rotatePage(p.id)}>
-                Rotate
+                {t('pages.rotateCw')}
               </Button>
               <Button size="sm" variant="destructive" onClick={() => deletePage(p.id)}>
-                Delete
+                {t('pages.deletePage')}
               </Button>
             </div>
           </div>

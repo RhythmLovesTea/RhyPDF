@@ -42,7 +42,7 @@ export const Menu: React.FC<MenuProps> = ({ trigger, items }) => {
           style={{
             position: 'absolute',
             top: 'calc(100% + 4px)',
-            left: 0,
+            insetInlineStart: 0,
             backgroundColor: 'var(--bg-card)',
             color: 'var(--bg-card-foreground)',
             border: '1px solid var(--bg-border)',

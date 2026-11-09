@@ -1,5 +1,6 @@
 import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { THEME_TOKENS } from '@rhypdf/ui';
+import { useTranslation } from '@rhypdf/i18n';
 import '@rhypdf/ui/styles.css';
 import { useRouter } from './router';
 
@@ -13,6 +14,7 @@ const StyleGuide = lazy(() =>
 );
 
 export function App(): React.JSX.Element {
+  const { t } = useTranslation();
   const { currentRoute, navigate } = useRouter();
   const [workerStatus, setWorkerStatus] = useState<'connecting' | 'connected' | 'error'>(
     'connecting'
@@ -57,12 +59,19 @@ export function App(): React.JSX.Element {
   }, []);
 
   const navLinks = [
-    { path: '/', label: 'Home', testId: 'nav-home' },
-    { path: '/editor', label: 'Editor', testId: 'nav-editor' },
-    { path: '/pages', label: 'Page Organizer', testId: 'nav-pages' },
-    { path: '/settings', label: 'Settings', testId: 'nav-settings' },
-    { path: '/styleguide', label: 'Style Guide', testId: 'nav-styleguide' }
+    { path: '/', label: t('nav.home'), testId: 'nav-home' },
+    { path: '/editor', label: t('nav.editor'), testId: 'nav-editor' },
+    { path: '/pages', label: t('nav.pages'), testId: 'nav-pages' },
+    { path: '/settings', label: t('nav.settings'), testId: 'nav-settings' },
+    { path: '/styleguide', label: t('nav.styleGuide'), testId: 'nav-styleguide' }
   ];
+
+  const workerStatusText =
+    workerStatus === 'connected'
+      ? `${t('app.workerStatusConnected')} ${latency !== null ? `(${latency}ms)` : ''}`
+      : workerStatus === 'error'
+        ? t('app.workerStatusError')
+        : t('app.workerStatusConnecting');
 
   return (
     <div
@@ -91,7 +100,7 @@ export function App(): React.JSX.Element {
             style={{ fontSize: 18, fontWeight: 700, cursor: 'pointer' }}
             onClick={() => navigate('/')}
           >
-            RhyPDF
+            {t('app.title')}
           </span>
 
           <nav style={{ display: 'flex', gap: 4 }}>
@@ -132,17 +141,17 @@ export function App(): React.JSX.Element {
               color: workerStatus === 'connected' ? '#166534' : '#991b1b'
             }}
           >
-            Worker: {workerStatus} {latency !== null ? `(${latency}ms)` : ''}
+            {workerStatusText}
           </span>
           <span style={{ fontSize: 'var(--text-xs)', color: 'var(--bg-muted-foreground)' }}>
-            100% Client-Side
+            {t('app.clientSideBadge')}
           </span>
         </div>
       </header>
 
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
         <Suspense
-          fallback={<div style={{ padding: 24, textAlign: 'center' }}>Loading route view...</div>}
+          fallback={<div style={{ padding: 24, textAlign: 'center' }}>{t('app.loadingView')}</div>}
         >
           {currentRoute === '/' && <HomePage onNavigate={navigate} />}
           {currentRoute === '/editor' && <EditorPage wasmStatus={wasmStatus} />}

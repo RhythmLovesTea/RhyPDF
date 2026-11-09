@@ -1,19 +1,20 @@
 import React from 'react';
 import { Button } from '@rhypdf/ui';
 import { SAMPLE_FIXTURES } from '@rhypdf/test-fixtures';
+import { useTranslation } from '@rhypdf/i18n';
 
 interface HomePageProps {
   onNavigate: (route: string) => void;
 }
 
 export default function HomePage({ onNavigate }: HomePageProps): React.JSX.Element {
+  const { t } = useTranslation();
+
   return (
-    <div data-testid="page-home" style={{ padding: 32, maxWidth: 800, margin: '0 auto' }}>
+    <div data-testid="page-home" style={{ padding: 32, maxWidth: 800, marginInline: 'auto' }}>
       <header style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, margin: '0 0 8px' }}>RhyPDF Workspace</h1>
-        <p style={{ color: 'var(--bg-muted-foreground)', margin: 0 }}>
-          High-performance, 100% private, client-side PDF editing in your browser.
-        </p>
+        <h1 style={{ fontSize: 28, fontWeight: 700, margin: '0 0 8px' }}>{t('home.title')}</h1>
+        <p style={{ color: 'var(--bg-muted-foreground)', margin: 0 }}>{t('home.subtitle')}</p>
       </header>
 
       <section
@@ -26,9 +27,9 @@ export default function HomePage({ onNavigate }: HomePageProps): React.JSX.Eleme
           marginBottom: 32
         }}
       >
-        <h2 style={{ fontSize: 18, margin: '0 0 12px' }}>Open a Document to Begin</h2>
+        <h2 style={{ fontSize: 18, margin: '0 0 12px' }}>{t('home.openDocumentTitle')}</h2>
         <p style={{ color: 'var(--bg-muted-foreground)', fontSize: 14, margin: '0 0 20px' }}>
-          Select a PDF file from your device. No files are ever uploaded to any server.
+          {t('home.openDocumentDesc')}
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
           <Button
@@ -36,20 +37,20 @@ export default function HomePage({ onNavigate }: HomePageProps): React.JSX.Eleme
             variant="primary"
             onClick={() => onNavigate('/editor')}
           >
-            Open PDF Editor
+            {t('home.btnOpenEditor')}
           </Button>
           <Button
             data-testid="btn-open-organizer"
             variant="secondary"
             onClick={() => onNavigate('/pages')}
           >
-            Page Organizer
+            {t('home.btnOpenOrganizer')}
           </Button>
         </div>
       </section>
 
       <section>
-        <h3 style={{ fontSize: 16, margin: '0 0 16px' }}>Quick Start Sample Fixtures</h3>
+        <h3 style={{ fontSize: 16, margin: '0 0 16px' }}>{t('home.quickStartTitle')}</h3>
         <div
           style={{
             display: 'grid',
@@ -84,7 +85,7 @@ export default function HomePage({ onNavigate }: HomePageProps): React.JSX.Eleme
                   style={{ marginTop: 12 }}
                   onClick={() => onNavigate(`/editor?doc=${key}`)}
                 >
-                  Open in Editor
+                  {t('home.openSample')}
                 </Button>
               </div>
             ))}

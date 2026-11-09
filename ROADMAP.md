@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 1
-CURRENT TASK  : 1.8
+CURRENT TASK  : 1.9
 LAST UPDATED  : 2026-11-09
-NOTES         : Task 1.7 complete (Zustand store layout, React error boundary, leveled logger, global error/rejection handlers with recovery metadata). Moving to Task 1.8 (i18n scaffolding with i18next, English & pseudo-locale, CSS logical properties, RTL dir switching).
+NOTES         : Task 1.8 complete (i18n scaffolding with i18next, zero hardcoded UI strings, pseudo-locale qps-ploc with brackets and elongation, CSS logical properties, and dynamic RTL dir switching verified in unit tests and Playwright E2E). Moving to Task 1.9 (Test setup: Vitest, Playwright multi-browser, golden-image pixelmatch helper).
 ```
 
 ---
@@ -352,7 +352,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **1.5** Design-system package: tokens (colors, 8 px spacing grid, radius, shadows, type scale) as CSS variables for light + dark; Tailwind theme mapped to tokens; base components (Button, IconButton, Tooltip, Dialog, Popover, Menu, Tabs, Slider, Switch, Select, Toast). _Done when:_ a style-guide page shows every component in light and dark.
 - [x] **1.6** Routing skeleton: `Home → Editor → Page Organizer → Settings`, lazy-loaded. _Done when:_ routes work on refresh and deep links.
 - [x] **1.7** State, errors, logging: Zustand store layout, React error boundaries, a tiny leveled logger, and a global `error` / `unhandledrejection` handler that saves recovery metadata. _Done when:_ a thrown error shows a friendly screen and no work is lost.
-- [ ] **1.8** i18n scaffolding (i18next): English only for now, **no hard-coded UI text**, CSS logical properties, `dir` switching. _Done when:_ a pseudo-locale (long strings + RTL) renders without broken layout.
+- [x] **1.8** i18n scaffolding (i18next): English only for now, **no hard-coded UI text**, CSS logical properties, `dir` switching. _Done when:_ a pseudo-locale (long strings + RTL) renders without broken layout.
 - [ ] **1.9** Test setup: Vitest, Playwright (Chromium, Firefox, WebKit), the `test-fixtures` package, a golden-image helper (pixelmatch). _Done when:_ one unit test and one e2e smoke test run locally and in CI.
 - [ ] **1.10** CI (GitHub Actions): install → typecheck → lint → unit → build → e2e smoke → license check → bundle-size budget; preview deploy per pull request. _Done when:_ CI is green and a preview URL appears on a PR.
 - [ ] **1.11** Security + PWA baseline: headers (COOP, COEP, CSP, Referrer-Policy, Permissions-Policy, X-Content-Type-Options), dependency audit + Renovate / Dependabot, web app manifest, service-worker shell. _Done when:_ a header checker shows the target policy and the app shell loads offline.
@@ -780,6 +780,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-09 | 1.5     | Design-system tokens, theme CSS variables & base components       | `P1.5`  | 11 components (Button, Dialog, Tabs, etc.), CSS tokens, verified in style-guide                 |
 | 2026-11-09 | 1.6     | Routing skeleton: Home -> Editor -> Page Organizer -> Settings    | `P1.6`  | Lazy-loaded feature routes, deep linking & page refresh survival verified in E2E                |
 | 2026-11-09 | 1.7     | State, errors & logging: Zustand, ErrorBoundary, leveled logger   | `P1.7`  | Zustand ui/doc stores, ErrorBoundary, global recovery storage verified in E2E                   |
+| 2026-11-09 | 1.8     | i18n scaffolding (i18next), pseudo-locale, RTL dir switching      | `P1.8`  | Zero hardcoded UI text, CSS logical properties, pseudo-locale & Arabic RTL verified in E2E      |
 
 ---
 

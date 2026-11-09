@@ -1,14 +1,17 @@
 import React from 'react';
 import { THEME_TOKENS } from '@rhypdf/ui';
 import { SAMPLE_FIXTURES } from '@rhypdf/test-fixtures';
+import { useTranslation } from '@rhypdf/i18n';
 
 export default function SidebarSkeleton(): React.JSX.Element {
+  const { t } = useTranslation();
+
   return (
     <aside
       data-testid="sidebar-skeleton"
       style={{
         width: 240,
-        borderRight: '1px solid #e2e8f0',
+        borderInlineEnd: '1px solid #e2e8f0',
         padding: THEME_TOKENS.spacing.md,
         backgroundColor: '#fafafa',
         overflowY: 'auto'
@@ -22,7 +25,7 @@ export default function SidebarSkeleton(): React.JSX.Element {
           marginTop: 0
         }}
       >
-        Pages &amp; Thumbnails
+        {t('editor.sidebar.thumbnailsTitle')}
       </h3>
       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
         {Object.entries(SAMPLE_FIXTURES)
@@ -40,7 +43,7 @@ export default function SidebarSkeleton(): React.JSX.Element {
                 cursor: 'pointer'
               }}
             >
-              Page {idx + 1}: {item.filename.replace('.pdf', '')}
+              {t('editor.sidebar.page', { page: idx + 1 })}: {item.filename.replace('.pdf', '')}
             </li>
           ))}
       </ul>

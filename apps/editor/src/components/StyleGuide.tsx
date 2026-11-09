@@ -12,8 +12,10 @@ import {
   Select,
   Toast
 } from '@rhypdf/ui';
+import { useTranslation } from '@rhypdf/i18n';
 
 export function StyleGuide(): React.JSX.Element {
+  const { t } = useTranslation();
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('tab1');
@@ -51,7 +53,7 @@ export function StyleGuide(): React.JSX.Element {
       >
         <div>
           <h1 style={{ margin: 0, fontSize: 'var(--text-2xl)', fontWeight: 700 }}>
-            Design System Style Guide
+            {t('styleGuide.title')}
           </h1>
           <p
             style={{
@@ -60,11 +62,11 @@ export function StyleGuide(): React.JSX.Element {
               fontSize: 'var(--text-sm)'
             }}
           >
-            Showcasing all 11 base components in light and dark mode
+            {t('styleGuide.subtitle')}
           </p>
         </div>
         <Button data-testid="theme-toggle-btn" variant="secondary" onClick={toggleTheme}>
-          Toggle Theme (Current: {theme})
+          {t('styleGuide.themeToggle', { theme })}
         </Button>
       </header>
 
@@ -86,13 +88,13 @@ export function StyleGuide(): React.JSX.Element {
           }}
         >
           <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 12px' }}>
-            1 &amp; 2. Buttons &amp; IconButtons
+            {t('styleGuide.buttons')}
           </h2>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-            <Button variant="primary">Primary</Button>
-            <Button variant="secondary">Secondary</Button>
-            <Button variant="destructive">Destructive</Button>
-            <Button variant="ghost">Ghost</Button>
+            <Button variant="primary">{t('styleGuide.btnPrimary')}</Button>
+            <Button variant="secondary">{t('styleGuide.btnSecondary')}</Button>
+            <Button variant="destructive">{t('styleGuide.btnDestructive')}</Button>
+            <Button variant="ghost">{t('styleGuide.btnGhost')}</Button>
             <IconButton aria-label="Settings" variant="secondary">
               &#9881;
             </IconButton>
@@ -113,22 +115,22 @@ export function StyleGuide(): React.JSX.Element {
           }}
         >
           <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 12px' }}>
-            3 &amp; 5. Tooltip &amp; Popover
+            {t('styleGuide.popoverTooltip')}
           </h2>
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <Tooltip content="Helpful tooltip text">
+            <Tooltip content={t('styleGuide.tooltipContent')}>
               <Button variant="secondary" data-testid="tooltip-trigger">
-                Hover for Tooltip
+                {t('styleGuide.tooltipTarget')}
               </Button>
             </Tooltip>
             <Popover
               trigger={
                 <Button variant="secondary" data-testid="popover-trigger">
-                  Open Popover
+                  {t('styleGuide.openPopover')}
                 </Button>
               }
             >
-              <div>Popover content anchored to trigger</div>
+              <div>{t('styleGuide.popoverContent')}</div>
             </Popover>
           </div>
         </section>
@@ -143,26 +145,33 @@ export function StyleGuide(): React.JSX.Element {
             backgroundColor: 'var(--bg-card)'
           }}
         >
-          <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 12px' }}>4. Modal Dialog</h2>
+          <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 12px' }}>
+            {t('styleGuide.dialogsToasts')}
+          </h2>
           <span data-testid="dialog-state">{dialogOpen ? 'open' : 'closed'}</span>
           <Button data-testid="open-dialog-btn" onClick={() => setDialogOpen(true)}>
-            Open Dialog
+            {t('styleGuide.openDialog')}
           </Button>
           <Dialog
             open={dialogOpen}
             onClose={() => setDialogOpen(false)}
-            title="Sample Modal Dialog"
-            description="Testing modal dialog open/close lifecycle."
+            title={t('styleGuide.sampleDialogTitle')}
+            description={t('styleGuide.sampleDialogDesc')}
           >
-            <div>Dialog body with actions:</div>
+            <div>{t('styleGuide.sampleDialogDesc')}</div>
             <div
-              style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '8px',
+                marginTop: '16px'
+              }}
             >
               <Button variant="ghost" onClick={() => setDialogOpen(false)}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button variant="primary" onClick={() => setDialogOpen(false)}>
-                Confirm
+                {t('common.confirm')}
               </Button>
             </div>
           </Dialog>
@@ -178,17 +187,19 @@ export function StyleGuide(): React.JSX.Element {
             backgroundColor: 'var(--bg-card)'
           }}
         >
-          <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 12px' }}>6. Dropdown Menu</h2>
+          <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 12px' }}>
+            {t('styleGuide.dropdownMenu')}
+          </h2>
           <Menu
             trigger={
               <Button variant="secondary" data-testid="menu-trigger">
-                Options Menu &#9662;
+                {t('styleGuide.menuActions')}
               </Button>
             }
             items={[
-              { id: '1', label: 'Edit Page', onClick: () => {} },
-              { id: '2', label: 'Export PDF', onClick: () => {} },
-              { id: '3', label: 'Delete Page', disabled: true, onClick: () => {} }
+              { id: '1', label: t('styleGuide.menuItemRotate'), onClick: () => {} },
+              { id: '2', label: t('styleGuide.menuItemDuplicate'), onClick: () => {} },
+              { id: '3', label: t('styleGuide.menuItemDelete'), disabled: true, onClick: () => {} }
             ]}
           />
         </section>
@@ -203,13 +214,23 @@ export function StyleGuide(): React.JSX.Element {
             backgroundColor: 'var(--bg-card)'
           }}
         >
-          <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 12px' }}>7. Tabs</h2>
+          <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 12px' }}>
+            {t('styleGuide.selectTabs')}
+          </h2>
           <Tabs
             activeTab={activeTab}
             onChange={setActiveTab}
             tabs={[
-              { id: 'tab1', label: 'General', content: <div>General tab content panel.</div> },
-              { id: 'tab2', label: 'Security', content: <div>Security settings tab content.</div> }
+              {
+                id: 'tab1',
+                label: t('styleGuide.tabGeneral'),
+                content: <div>{t('styleGuide.tabGeneralContent')}</div>
+              },
+              {
+                id: 'tab2',
+                label: t('styleGuide.tabSecurity'),
+                content: <div>{t('styleGuide.tabSecurityContent')}</div>
+              }
             ]}
           />
         </section>
@@ -225,17 +246,17 @@ export function StyleGuide(): React.JSX.Element {
           }}
         >
           <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 12px' }}>
-            8, 9 &amp; 10. Slider, Switch &amp; Select
+            {t('styleGuide.slidersSwitches')}
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <Slider
-              label="Zoom Scale"
+              label={t('styleGuide.zoomScale')}
               min={25}
               max={400}
               value={sliderVal}
               onChange={setSliderVal}
             />
-            <Switch label="Enable OCR auto-detect" checked={switchVal} onChange={setSwitchVal} />
+            <Switch label={t('styleGuide.enableOcr')} checked={switchVal} onChange={setSwitchVal} />
             <Select
               data-testid="sample-select"
               value={selectVal}
@@ -259,19 +280,17 @@ export function StyleGuide(): React.JSX.Element {
             backgroundColor: 'var(--bg-card)'
           }}
         >
-          <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 12px' }}>
-            11. Toast Notifications
-          </h2>
+          <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 12px' }}>{t('common.info')}</h2>
           {toastVisible ? (
             <Toast
               variant="success"
-              title="File Saved Locally"
-              message="Your PDF has been saved directly to browser storage."
+              title={t('styleGuide.toastTitle')}
+              message={t('styleGuide.toastMessage')}
               onClose={() => setToastVisible(false)}
             />
           ) : (
             <Button size="sm" onClick={() => setToastVisible(true)}>
-              Show Toast
+              {t('styleGuide.showToast')}
             </Button>
           )}
         </section>

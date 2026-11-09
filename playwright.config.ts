@@ -4,6 +4,7 @@ export default defineConfig({
   testDir: './tests',
   testIgnore: '**/spikes.spec.ts',
   timeout: 60000,
+  workers: 1,
   webServer: {
     command: 'pnpm dev',
     port: 5173,

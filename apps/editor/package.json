@@ -20,8 +20,10 @@
     "@rhypdf/test-fixtures": "workspace:*",
     "@rhypdf/text-layout": "workspace:*",
     "@rhypdf/ui": "workspace:*",
+    "i18next": "27.0.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "react-i18next": "18.0.1",
     "zustand": "5.0.1"
   },
   "devDependencies": {

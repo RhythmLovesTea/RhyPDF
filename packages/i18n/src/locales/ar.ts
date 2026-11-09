@@ -1,0 +1,125 @@
+export const arTranslations = {
+  app: {
+    title: 'راي بي دي إف',
+    tagline: 'تعديل ملفات PDF محلياً وبخصوصية تامة داخل متصفحك',
+    clientSideBadge: '١٠٠٪ من جانب العميل',
+    workerStatusConnected: 'المعالج: متصل',
+    workerStatusConnecting: 'المعالج: يتصل...',
+    workerStatusError: 'المعالج: خطأ',
+    loadingView: 'جارٍ تحميل العرض...'
+  },
+  nav: {
+    home: 'الرئيسية',
+    editor: 'المحرر',
+    pages: 'منظم الصفحات',
+    settings: 'الإعدادات',
+    styleGuide: 'دليل الأنماط'
+  },
+  home: {
+    title: 'مساحة عمل راي بي دي إف',
+    subtitle: 'محرر PDF فائق الأداء وخاص بنسبة ١٠٠٪ يعمل محلياً داخل متصفحك.',
+    openDocumentTitle: 'افتح مستنداً للبدء',
+    openDocumentDesc: 'اختر ملف PDF من جهازك. لا يتم رفع أي ملفات إلى أي خادم أبداً.',
+    btnOpenEditor: 'فتح محرر PDF',
+    btnOpenOrganizer: 'منظم الصفحات',
+    quickStartTitle: 'مستندات نموذجية سريعة',
+    openSample: 'فتح النموذج'
+  },
+  editor: {
+    title: 'محرر راي بي دي إف',
+    loadingToolbar: 'جارٍ تحميل شريط الأدوات...',
+    loadingSidebar: 'جارٍ تحميل الشريط الجانبي...',
+    loadingViewport: 'جارٍ تحميل مساحة العرض...',
+    toolbar: {
+      openDoc: 'فتح مستند',
+      zoomIn: 'تكبير (+)',
+      zoomOut: 'تصغير (-)',
+      savePdf: 'حفظ PDF'
+    },
+    sidebar: {
+      thumbnailsTitle: 'مصغرات المستند',
+      page: 'صفحة {{page}}'
+    },
+    viewer: {
+      viewportTitle: 'منطقة عرض صفحة PDF',
+      renderSurface: 'سطح تصيير WebAssembly المباشر',
+      pdfiumStatus: 'حالة PDFium: {{status}}'
+    }
+  },
+  pages: {
+    title: 'منظم الصفحات',
+    subtitle: 'إعادة ترتيب وتدوير واستخراج وحذف صفحات من مستند PDF الخاص بك.',
+    rotateCw: 'تدوير ٩٠° مع عقارب الساعة',
+    rotateCcw: 'تدوير ٩٠° عكس عقارب الساعة',
+    deletePage: 'حذف الصفحة',
+    extractPage: 'استخراج الصفحة',
+    pageNumber: 'صفحة {{page}}',
+    dimensions: 'الحجم: ٦١٢ × ٧٩٢ نقطة'
+  },
+  settings: {
+    title: 'إعدادات التطبيق',
+    subtitle: 'تهيئة المظهر وعتبات الذاكرة وإعدادات التعرف الضوئي على الحروف (OCR).',
+    themeTitle: 'مظهر السمة',
+    themeLight: 'الوضع الفاتح',
+    themeDark: 'الوضع الداكن',
+    themeSystem: 'مطابقة النظام',
+    languageTitle: 'اللغة والمنطقة',
+    languageSelect: 'حدد لغة واجهة التطبيق والاتجاه',
+    ocrTitle: 'الكشف التلقائي عن النصوص (OCR)',
+    ocrDesc: 'مسح الصور المستوردة تلقائياً للبحث عن نصوص قابلة للتعديل',
+    memoryTitle: 'عتبة تحذير الذاكرة (ميجابايت)',
+    memoryDesc: 'تنبيه المستخدم عندما تتجاوز ذاكرة المستند {{mb}} ميجابايت.',
+    btnSave: 'حفظ التفضيلات',
+    btnCrash: 'محاكاة خطأ فادح',
+    savedToast: 'تم الحفظ!'
+  },
+  errorBoundary: {
+    title: 'حدث خطأ ما',
+    subtitle: 'تم التقاط خطأ غير متوقع بواسطة حد أخطاء React.',
+    reload: 'إعادة تحميل التطبيق',
+    recover: 'استعادة الجلسة',
+    diagnosticsTitle: 'تشخيصات العطل',
+    copyDiagnostics: 'نسخ التشخيصات',
+    copied: 'تم النسخ!'
+  },
+  common: {
+    cancel: 'إلغاء',
+    confirm: 'تأكيد',
+    close: 'إغلاق',
+    save: 'حفظ',
+    dismiss: 'تجاهل',
+    delete: 'حذف',
+    loading: 'جارٍ التحميل...'
+  },
+  styleGuide: {
+    title: 'دليل أنماط تصميم راي بي دي إف',
+    subtitle: 'عرض تفاعلي لمكونات وعناصر النظام',
+    themeControls: 'عناصر التحكم في المظهر والاتجاه',
+    lightMode: 'الوضع الفاتح',
+    darkMode: 'الوضع الداكن',
+    buttons: 'الأزرار',
+    slidersSwitches: 'أشرطة التمرير والمفاتيح',
+    selectTabs: 'القوائم المنسدلة وعلامات التبويب',
+    dialogsToasts: 'النوافذ المنبثقة والإشعارات',
+    popoverTooltip: 'القوائم العائمة والتلميحات',
+    dropdownMenu: 'القائمة المنسدلة',
+    openDialog: 'فتح نافذة حوار نموذجية',
+    showToast: 'عرض تنبيه',
+    sampleDialogTitle: 'مطلوب تأكيد',
+    sampleDialogDesc: 'هذا نموذج لمكون نافذة منبثقة متوافق مع معايير الوصول.',
+    sampleToastTitle: 'نجحت العملية',
+    sampleToastMsg: 'تمت مزامنة تغييرات المستند إلى الذاكرة المحلية.',
+    tooltipTarget: 'مرر أو ركز للتلميح',
+    tooltipContent: 'تلميح دقيق موجه',
+    menuActions: 'قائمة الإجراءات',
+    menuItemRotate: 'تدوير ٩٠° مع عقارب الساعة',
+    menuItemDuplicate: 'مضاعفة الصفحة',
+    menuItemDelete: 'حذف الصفحة (إجراء نهائي)',
+    tabGeneral: 'عام',
+    tabLayout: 'التخطيط',
+    tabAdvanced: 'متقدم',
+    tabGeneralContent: 'خصائص الإعداد العامة لهندسة صفحة PDF.',
+    tabLayoutContent: 'مقاييس التخطيط والهوامش وحدود القطع.',
+    tabAdvancedContent: 'محرك التصيير المتقدم وتوجيهات الخطوط الاحتياطية.'
+  }
+};

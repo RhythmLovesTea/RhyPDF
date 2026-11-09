@@ -49,7 +49,8 @@ export const Toast: React.FC<ToastProps> = ({ title, message, variant = 'info', 
             border: 'none',
             color: 'inherit',
             cursor: 'pointer',
-            padding: '0 0 0 8px',
+            padding: 0,
+            paddingInlineStart: 8,
             fontSize: '14px'
           }}
         >

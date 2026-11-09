@@ -1,7 +1,10 @@
 import React from 'react';
 import { THEME_TOKENS } from '@rhypdf/ui';
+import { useTranslation } from '@rhypdf/i18n';
 
 export default function ToolbarSkeleton(): React.JSX.Element {
+  const { t } = useTranslation();
+
   return (
     <div
       data-testid="toolbar-skeleton"
@@ -22,7 +25,7 @@ export default function ToolbarSkeleton(): React.JSX.Element {
           cursor: 'pointer'
         }}
       >
-        Open Document
+        {t('editor.toolbar.openDoc')}
       </button>
       <button
         style={{
@@ -32,7 +35,7 @@ export default function ToolbarSkeleton(): React.JSX.Element {
           cursor: 'pointer'
         }}
       >
-        Zoom In (+)
+        {t('editor.toolbar.zoomIn')}
       </button>
       <button
         style={{
@@ -42,7 +45,7 @@ export default function ToolbarSkeleton(): React.JSX.Element {
           cursor: 'pointer'
         }}
       >
-        Zoom Out (-)
+        {t('editor.toolbar.zoomOut')}
       </button>
       <button
         style={{
@@ -52,7 +55,7 @@ export default function ToolbarSkeleton(): React.JSX.Element {
           cursor: 'pointer'
         }}
       >
-        Save PDF
+        {t('editor.toolbar.savePdf')}
       </button>
     </div>
   );

@@ -30,8 +30,8 @@ export const Switch: React.FC<SwitchProps> = ({ label, checked, onChange }) => {
             backgroundColor: '#ffffff',
             position: 'absolute',
             top: 2,
-            left: checked ? 18 : 2,
-            transition: 'left 0.2s ease',
+            insetInlineStart: checked ? 18 : 2,
+            transition: 'inset-inline-start 0.2s ease',
             boxShadow: 'var(--shadow-sm)'
           }}
         />

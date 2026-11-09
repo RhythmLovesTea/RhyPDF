@@ -1,11 +1,14 @@
 import React from 'react';
 import { THEME_TOKENS } from '@rhypdf/ui';
+import { useTranslation } from '@rhypdf/i18n';
 
 interface ViewerSkeletonProps {
   wasmStatus: string;
 }
 
 export default function ViewerSkeleton({ wasmStatus }: ViewerSkeletonProps): React.JSX.Element {
+  const { t } = useTranslation();
+
   return (
     <div
       data-testid="viewer-skeleton"
@@ -41,10 +44,10 @@ export default function ViewerSkeleton({ wasmStatus }: ViewerSkeletonProps): Rea
             marginBottom: 8
           }}
         >
-          PDF Page Canvas Viewport
+          {t('editor.viewer.viewportTitle')}
         </div>
         <p style={{ color: '#64748b', fontSize: THEME_TOKENS.typography.typeScale.sm, margin: 0 }}>
-          Direct WebAssembly Render Surface
+          {t('editor.viewer.renderSurface')}
         </p>
         <div
           data-testid="pdfium-status"
@@ -58,7 +61,7 @@ export default function ViewerSkeleton({ wasmStatus }: ViewerSkeletonProps): Rea
             color: wasmStatus.includes('initialized') ? '#166534' : '#92400e'
           }}
         >
-          PDFium Engine: {wasmStatus}
+          {t('editor.viewer.pdfiumStatus', { status: wasmStatus })}
         </div>
       </div>
     </div>
