@@ -15,7 +15,8 @@ import type {
   Rect,
   Matrix2D,
   ColorRGBA,
-  TextRenderMode
+  TextRenderMode,
+  PathSegment
 } from '@rhypdf/pdf-model';
 import type {
   PdfEngine,
@@ -866,6 +867,186 @@ export class PdfiumEngine implements PdfEngine {
       };
     } else if (type === 2 || type === 4) {
       // Path object
+      let lineWidth = 1;
+      const lwPtr = this.emscripten.wasmExports.malloc(4);
+      if (typeof this.pdfium.FPDFPageObj_GetStrokeWidth === 'function') {
+        if (this.pdfium.FPDFPageObj_GetStrokeWidth(objPtr, lwPtr)) {
+          lineWidth = new DataView(this.emscripten.HEAPU8.buffer).getFloat32(lwPtr, true);
+        }
+      }
+      this.emscripten.wasmExports.free(lwPtr);
+
+      // Stroke & fill colors
+      const colorPtr = this.emscripten.wasmExports.malloc(16);
+      let strokeColor: ColorRGBA | undefined;
+      let fillColor: ColorRGBA | undefined;
+
+      if (typeof this.pdfium.FPDFPageObj_GetStrokeColor === 'function') {
+        if (
+          this.pdfium.FPDFPageObj_GetStrokeColor(
+            objPtr,
+            colorPtr,
+            colorPtr + 4,
+            colorPtr + 8,
+            colorPtr + 12
+          )
+        ) {
+          const dvS = new DataView(this.emscripten.HEAPU8.buffer, colorPtr, 16);
+          strokeColor = {
+            r: dvS.getUint32(0, true),
+            g: dvS.getUint32(4, true),
+            b: dvS.getUint32(8, true),
+            a: dvS.getUint32(12, true)
+          };
+        }
+      }
+
+      if (typeof this.pdfium.FPDFPageObj_GetFillColor === 'function') {
+        if (
+          this.pdfium.FPDFPageObj_GetFillColor(
+            objPtr,
+            colorPtr,
+            colorPtr + 4,
+            colorPtr + 8,
+            colorPtr + 12
+          )
+        ) {
+          const dvF = new DataView(this.emscripten.HEAPU8.buffer, colorPtr, 16);
+          fillColor = {
+            r: dvF.getUint32(0, true),
+            g: dvF.getUint32(4, true),
+            b: dvF.getUint32(8, true),
+            a: dvF.getUint32(12, true)
+          };
+        }
+      }
+      this.emscripten.wasmExports.free(colorPtr);
+
+      // Draw mode (fill mode and stroke)
+      let fillMode: 'none' | 'alternate' | 'winding' = 'none';
+      let stroke = false;
+      let fill = false;
+
+      if (typeof this.pdfium.FPDFPath_GetDrawMode === 'function') {
+        const dmPtr = this.emscripten.wasmExports.malloc(8);
+        if (this.pdfium.FPDFPath_GetDrawMode(objPtr, dmPtr, dmPtr + 4)) {
+          const dvD = new DataView(this.emscripten.HEAPU8.buffer, dmPtr, 8);
+          const rawFill = dvD.getInt32(0, true);
+          const rawStroke = dvD.getInt32(4, true);
+
+          stroke = rawStroke !== 0;
+          if (rawFill === 1) {
+            fillMode = 'alternate';
+            fill = true;
+          } else if (rawFill === 2) {
+            fillMode = 'winding';
+            fill = true;
+          }
+        }
+        this.emscripten.wasmExports.free(dmPtr);
+      } else {
+        stroke = strokeColor !== undefined && strokeColor.a > 0;
+        fill = fillColor !== undefined && fillColor.a > 0;
+        if (fill) fillMode = 'winding';
+      }
+
+      // Dash pattern
+      let dashArray: number[] | undefined;
+      let dashPhase: number | undefined;
+
+      if (typeof this.pdfium.FPDFPageObj_GetDashCount === 'function') {
+        const dashCount = this.pdfium.FPDFPageObj_GetDashCount(objPtr);
+        if (dashCount > 0) {
+          const dashBufPtr = this.emscripten.wasmExports.malloc(dashCount * 4);
+          if (
+            typeof this.pdfium.FPDFPageObj_GetDashArray === 'function' &&
+            this.pdfium.FPDFPageObj_GetDashArray(objPtr, dashBufPtr, dashCount)
+          ) {
+            const dvDash = new DataView(this.emscripten.HEAPU8.buffer, dashBufPtr, dashCount * 4);
+            dashArray = [];
+            for (let d = 0; d < dashCount; d++) {
+              dashArray.push(dvDash.getFloat32(d * 4, true));
+            }
+          }
+          this.emscripten.wasmExports.free(dashBufPtr);
+        }
+      }
+
+      if (typeof this.pdfium.FPDFPageObj_GetDashPhase === 'function') {
+        const phasePtr = this.emscripten.wasmExports.malloc(4);
+        if (this.pdfium.FPDFPageObj_GetDashPhase(objPtr, phasePtr)) {
+          dashPhase = new DataView(this.emscripten.HEAPU8.buffer).getFloat32(phasePtr, true);
+        }
+        this.emscripten.wasmExports.free(phasePtr);
+      }
+
+      // Segments
+      const segments: PathSegment[] = [];
+      if (typeof this.pdfium.FPDFPath_CountSegments === 'function') {
+        const segCount = this.pdfium.FPDFPath_CountSegments(objPtr);
+        const ptPtr = this.emscripten.wasmExports.malloc(8);
+
+        for (let s = 0; s < segCount; s++) {
+          const segPtr = this.pdfium.FPDFPath_GetPathSegment(objPtr, s);
+          if (!segPtr) continue;
+
+          const segType = this.pdfium.FPDFPathSegment_GetType(segPtr);
+          const isClose =
+            typeof this.pdfium.FPDFPathSegment_GetClose === 'function'
+              ? !!this.pdfium.FPDFPathSegment_GetClose(segPtr)
+              : false;
+
+          let x = 0;
+          let y = 0;
+          if (
+            typeof this.pdfium.FPDFPathSegment_GetPoint === 'function' &&
+            this.pdfium.FPDFPathSegment_GetPoint(segPtr, ptPtr, ptPtr + 4)
+          ) {
+            const dvP = new DataView(this.emscripten.HEAPU8.buffer, ptPtr, 8);
+            x = dvP.getFloat32(0, true);
+            y = dvP.getFloat32(4, true);
+          }
+
+          if (segType === 2) {
+            // MOVETO
+            segments.push({
+              type: 'moveTo',
+              points: [{ x, y }],
+              close: isClose
+            });
+          } else if (segType === 0) {
+            // LINETO
+            segments.push({
+              type: 'lineTo',
+              points: [{ x, y }],
+              close: isClose
+            });
+          } else if (segType === 1) {
+            // BEZIERTO (cubic bezier: 2 control points + 1 destination point)
+            const lastSeg = segments[segments.length - 1];
+            if (lastSeg && lastSeg.type === 'bezierCurveTo' && lastSeg.points.length < 3) {
+              lastSeg.points.push({ x, y });
+              if (isClose) lastSeg.close = true;
+            } else {
+              segments.push({
+                type: 'bezierCurveTo',
+                points: [{ x, y }],
+                close: isClose
+              });
+            }
+          }
+
+          if (isClose) {
+            segments.push({
+              type: 'closePath',
+              points: [],
+              close: true
+            });
+          }
+        }
+        this.emscripten.wasmExports.free(ptPtr);
+      }
+
       return {
         id,
         type: 'path',
@@ -873,8 +1054,15 @@ export class PdfiumEngine implements PdfEngine {
         matrix,
         zIndex,
         parentFormChain: parentChain,
-        segments: [],
-        lineWidth: 1
+        segments,
+        lineWidth,
+        strokeColor,
+        fillColor,
+        stroke,
+        fill,
+        fillMode,
+        dashArray,
+        dashPhase
       };
     } else if (type === 6) {
       // Form XObject

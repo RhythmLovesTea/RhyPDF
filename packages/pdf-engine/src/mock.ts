@@ -140,6 +140,28 @@ export class MockPdfEngine implements PdfEngine {
           fontSize: 14,
           fillColor: { r: 0, g: 0, b: 0, a: 255 },
           isEmbeddedSubset: false
+        },
+        {
+          id: 'path-1',
+          type: 'path',
+          bounds: { left: 72, bottom: 400, right: 300, top: 450 },
+          matrix: [1, 0, 0, 1, 0, 0],
+          zIndex: 1,
+          lineWidth: 2,
+          stroke: true,
+          fill: true,
+          fillMode: 'winding',
+          strokeColor: { r: 30, g: 64, b: 175, a: 255 },
+          fillColor: { r: 219, g: 234, b: 254, a: 255 },
+          dashArray: [4, 2],
+          dashPhase: 0,
+          segments: [
+            { type: 'moveTo', points: [{ x: 72, y: 400 }] },
+            { type: 'lineTo', points: [{ x: 300, y: 400 }] },
+            { type: 'lineTo', points: [{ x: 300, y: 450 }] },
+            { type: 'lineTo', points: [{ x: 72, y: 450 }] },
+            { type: 'closePath', points: [], close: true }
+          ]
         }
       ]
     };

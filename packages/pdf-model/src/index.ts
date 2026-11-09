@@ -117,6 +117,7 @@ export interface ImageObject extends BasePageObject {
 export interface PathSegment {
   type: 'moveTo' | 'lineTo' | 'bezierCurveTo' | 'closePath';
   points: Point[];
+  close?: boolean;
 }
 
 export interface PathObject extends BasePageObject {
@@ -125,6 +126,11 @@ export interface PathObject extends BasePageObject {
   fillColor?: ColorRGBA;
   strokeColor?: ColorRGBA;
   lineWidth: number;
+  stroke?: boolean;
+  fill?: boolean;
+  fillMode?: 'none' | 'alternate' | 'winding';
+  dashArray?: number[];
+  dashPhase?: number;
 }
 
 export interface FormObject extends BasePageObject {
