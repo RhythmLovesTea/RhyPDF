@@ -20,6 +20,8 @@ export function App(): React.JSX.Element {
     'connecting'
   );
   const [wasmStatus, setWasmStatus] = useState<string>('loading');
+  const [wasmProgress, setWasmProgress] = useState<number>(0);
+  const [wasmPhase, setWasmPhase] = useState<string>('idle');
   const [latency, setLatency] = useState<number | null>(null);
 
   useEffect(() => {
@@ -36,11 +38,19 @@ export function App(): React.JSX.Element {
         worker.postMessage({ id: '2', type: 'INIT_PDFIUM', payload: { wasmUrl: '/pdfium.wasm' } });
       }
 
+      if (type === 'INIT_PDFIUM_PROGRESS') {
+        setWasmProgress(payload?.percent || 0);
+        setWasmPhase(payload?.phase || 'fetching');
+      }
+
       if (type === 'INIT_PDFIUM_SUCCESS') {
+        setWasmProgress(100);
+        setWasmPhase('ready');
         setWasmStatus(`initialized (hasExtInit=${payload?.hasExtInit})`);
       }
 
       if (type === 'INIT_PDFIUM_ERROR') {
+        setWasmPhase('error');
         setWasmStatus(`error: ${e.data.error}`);
       }
     };
@@ -154,7 +164,9 @@ export function App(): React.JSX.Element {
           fallback={<div style={{ padding: 24, textAlign: 'center' }}>{t('app.loadingView')}</div>}
         >
           {currentRoute === '/' && <HomePage onNavigate={navigate} />}
-          {currentRoute === '/editor' && <EditorPage wasmStatus={wasmStatus} />}
+          {currentRoute === '/editor' && (
+            <EditorPage wasmStatus={wasmStatus} wasmProgress={wasmProgress} wasmPhase={wasmPhase} />
+          )}
           {currentRoute === '/pages' && <PageOrganizerPage />}
           {currentRoute === '/settings' && <SettingsPage />}
           {currentRoute === '/styleguide' && <StyleGuide />}

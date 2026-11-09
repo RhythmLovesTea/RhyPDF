@@ -12,6 +12,7 @@
     }
   },
   "dependencies": {
+    "@embedpdf/pdfium": "2.15.1",
     "@rhypdf/pdf-model": "workspace:*",
     "comlink": "4.4.2"
   },

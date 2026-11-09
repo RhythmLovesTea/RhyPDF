@@ -141,6 +141,9 @@ importers:
 
   packages/pdf-engine:
     dependencies:
+      '@embedpdf/pdfium':
+        specifier: 2.15.1
+        version: 2.15.1
       '@rhypdf/pdf-model':
         specifier: workspace:*
         version: link:../pdf-model

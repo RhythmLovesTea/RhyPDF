@@ -7,9 +7,15 @@ const ViewerSkeleton = lazy(() => import('../../components/ViewerSkeleton'));
 
 interface EditorPageProps {
   wasmStatus: string;
+  wasmProgress?: number;
+  wasmPhase?: string;
 }
 
-export default function EditorPage({ wasmStatus }: EditorPageProps): React.JSX.Element {
+export default function EditorPage({
+  wasmStatus,
+  wasmProgress = 100,
+  wasmPhase = 'ready'
+}: EditorPageProps): React.JSX.Element {
   const { t } = useTranslation();
 
   return (
@@ -35,7 +41,11 @@ export default function EditorPage({ wasmStatus }: EditorPageProps): React.JSX.E
         <Suspense
           fallback={<div style={{ flex: 1, padding: 16 }}>{t('editor.loadingViewport')}</div>}
         >
-          <ViewerSkeleton wasmStatus={wasmStatus} />
+          <ViewerSkeleton
+            wasmStatus={wasmStatus}
+            wasmProgress={wasmProgress}
+            wasmPhase={wasmPhase}
+          />
         </Suspense>
       </div>
     </div>

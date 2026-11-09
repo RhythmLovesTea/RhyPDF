@@ -1,9 +1,11 @@
 /**
  * apps/editor/src/worker.ts
  * Dedicated Web Worker for PDF engine operations.
+ * Implements lazy loading, chunked progress streaming, and offline WASM caching.
  */
 
-import { init, WrappedPdfiumModule } from '@embedpdf/pdfium';
+import { loadPdfiumWasm, type WasmLoadProgress } from '@rhypdf/pdf-engine';
+import type { WrappedPdfiumModule } from '@embedpdf/pdfium';
 
 let pdfiumModule: WrappedPdfiumModule | null = null;
 
@@ -18,21 +20,24 @@ self.onmessage = async (event: MessageEvent) => {
   if (type === 'INIT_PDFIUM') {
     try {
       const wasmUrl = payload?.wasmUrl || '/pdfium.wasm';
-      const response = await fetch(wasmUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch WASM binary from ${wasmUrl}: status ${response.status}`);
-      }
-      const wasmBinary = await response.arrayBuffer();
-      pdfiumModule = await init({ wasmBinary });
-      if (pdfiumModule.PDFiumExt_Init) {
-        pdfiumModule.PDFiumExt_Init();
-      }
+
+      pdfiumModule = await loadPdfiumWasm({
+        wasmUrl,
+        onProgress: (progress: WasmLoadProgress) => {
+          self.postMessage({
+            id,
+            type: 'INIT_PDFIUM_PROGRESS',
+            payload: progress
+          });
+        }
+      });
+
       self.postMessage({
         id,
         type: 'INIT_PDFIUM_SUCCESS',
         payload: {
           status: 'pdfium_initialized',
-          hasExtInit: typeof pdfiumModule.PDFiumExt_Init === 'function'
+          hasExtInit: typeof pdfiumModule?.PDFiumExt_Init === 'function'
         }
       });
     } catch (err: unknown) {
