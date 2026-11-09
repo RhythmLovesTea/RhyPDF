@@ -12,6 +12,7 @@ export default defineConfig({
       '@rhypdf/fonts': path.resolve(__dirname, '../../packages/fonts/src/index.ts'),
       '@rhypdf/ocr': path.resolve(__dirname, '../../packages/ocr/src/index.ts'),
       '@rhypdf/edit-core': path.resolve(__dirname, '../../packages/edit-core/src/index.ts'),
+      '@rhypdf/ui/styles.css': path.resolve(__dirname, '../../packages/ui/src/styles.css'),
       '@rhypdf/ui': path.resolve(__dirname, '../../packages/ui/src/index.ts'),
       '@rhypdf/i18n': path.resolve(__dirname, '../../packages/i18n/src/index.ts'),
       '@rhypdf/test-fixtures': path.resolve(__dirname, '../../packages/test-fixtures/src/index.ts')

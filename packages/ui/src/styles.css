@@ -1,0 +1,68 @@
+:root {
+  --bg-background: #ffffff;
+  --bg-foreground: #0f172a;
+  --bg-card: #f8fafc;
+  --bg-card-foreground: #0f172a;
+  --bg-primary: #2563eb;
+  --bg-primary-foreground: #ffffff;
+  --bg-secondary: #f1f5f9;
+  --bg-secondary-foreground: #1e293b;
+  --bg-muted: #f1f5f9;
+  --bg-muted-foreground: #64748b;
+  --bg-border: #e2e8f0;
+  --bg-input: #e2e8f0;
+  --bg-ring: #3b82f6;
+  --bg-destructive: #ef4444;
+  --bg-destructive-foreground: #ffffff;
+
+  /* 8px Spacing Grid */
+  --space-0-5: 4px;
+  --space-1: 8px;
+  --space-1-5: 12px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-6: 48px;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Type Scale */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+}
+
+.dark,
+[data-theme='dark'] {
+  --bg-background: #0f172a;
+  --bg-foreground: #f8fafc;
+  --bg-card: #1e293b;
+  --bg-card-foreground: #f8fafc;
+  --bg-primary: #3b82f6;
+  --bg-primary-foreground: #ffffff;
+  --bg-secondary: #334155;
+  --bg-secondary-foreground: #f8fafc;
+  --bg-muted: #1e293b;
+  --bg-muted-foreground: #94a3b8;
+  --bg-border: #334155;
+  --bg-input: #334155;
+  --bg-ring: #60a5fa;
+  --bg-destructive: #f87171;
+  --bg-destructive-foreground: #ffffff;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+}

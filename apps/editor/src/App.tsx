@@ -1,10 +1,14 @@
 import React, { useEffect, useState, lazy, Suspense } from 'react';
-import { THEME_TOKENS } from '@rhypdf/ui';
+import { THEME_TOKENS, Button } from '@rhypdf/ui';
+import '@rhypdf/ui/styles.css';
 
 // Code splitting via React.lazy
 const ToolbarSkeleton = lazy(() => import('./components/ToolbarSkeleton'));
 const SidebarSkeleton = lazy(() => import('./components/SidebarSkeleton'));
 const ViewerSkeleton = lazy(() => import('./components/ViewerSkeleton'));
+const StyleGuide = lazy(() =>
+  import('./components/StyleGuide').then((m) => ({ default: m.StyleGuide }))
+);
 
 export function App(): React.JSX.Element {
   const [workerStatus, setWorkerStatus] = useState<'connecting' | 'connected' | 'error'>(
@@ -12,6 +16,21 @@ export function App(): React.JSX.Element {
   );
   const [wasmStatus, setWasmStatus] = useState<string>('loading');
   const [latency, setLatency] = useState<number | null>(null);
+  const [currentView, setCurrentView] = useState<'editor' | 'styleguide'>(
+    window.location.hash === '#styleguide' ? 'styleguide' : 'editor'
+  );
+
+  useEffect(() => {
+    const handleHash = () => {
+      if (window.location.hash === '#styleguide') {
+        setCurrentView('styleguide');
+      } else {
+        setCurrentView('editor');
+      }
+    };
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
 
   useEffect(() => {
     // Dedicated worker instantiation via standard ESM URL
@@ -49,6 +68,28 @@ export function App(): React.JSX.Element {
       worker.terminate();
     };
   }, []);
+
+  if (currentView === 'styleguide') {
+    return (
+      <div>
+        <div style={{ position: 'fixed', top: 12, right: 12, zIndex: 9999 }}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              window.location.hash = '';
+              setCurrentView('editor');
+            }}
+          >
+            Back to Editor
+          </Button>
+        </div>
+        <Suspense fallback={<div>Loading Style Guide...</div>}>
+          <StyleGuide />
+        </Suspense>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -98,8 +139,21 @@ export function App(): React.JSX.Element {
           )}
         </div>
 
-        <div style={{ fontSize: THEME_TOKENS.typography.typeScale.xs, color: '#64748b' }}>
-          Zero-Server &bull; 100% Private Client-Side
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Button
+            data-testid="nav-styleguide-btn"
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              window.location.hash = '#styleguide';
+              setCurrentView('styleguide');
+            }}
+          >
+            Design System Style Guide
+          </Button>
+          <span style={{ fontSize: THEME_TOKENS.typography.typeScale.xs, color: '#64748b' }}>
+            Zero-Server &bull; 100% Private Client-Side
+          </span>
         </div>
       </header>
 

@@ -1,7 +1,19 @@
 /**
  * @rhypdf/ui
- * Design system tokens, theme definitions, and UI constants.
+ * Design system tokens, theme definitions, and UI components.
  */
+
+export * from './components/Button';
+export * from './components/IconButton';
+export * from './components/Tooltip';
+export * from './components/Dialog';
+export * from './components/Popover';
+export * from './components/Menu';
+export * from './components/Tabs';
+export * from './components/Slider';
+export * from './components/Switch';
+export * from './components/Select';
+export * from './components/Toast';
 
 export const THEME_TOKENS = {
   spacing: {

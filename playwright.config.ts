@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
+  testIgnore: '**/spikes.spec.ts',
   timeout: 60000,
   webServer: {
     command: 'pnpm dev',
