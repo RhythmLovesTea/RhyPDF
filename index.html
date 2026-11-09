@@ -29,9 +29,22 @@
   </div>
 
   <div class="card" id="spike-0-2">
-    <h3>Spike 0.2: Render PDF to Canvas (2x scale + DPR)</h3>
-    <canvas id="render-canvas"></canvas>
-    <div id="render-status"></div>
+    <h3>Spike 0.2: Render PDF to Canvas (2x scale + DPR) — 3 Sample PDFs</h3>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <div>
+        <h4>1. Single Column Text</h4>
+        <canvas id="render-canvas-1" style="max-height: 250px;"></canvas>
+      </div>
+      <div>
+        <h4>2. Two Column Article</h4>
+        <canvas id="render-canvas-2" style="max-height: 250px;"></canvas>
+      </div>
+      <div>
+        <h4>3. Image Brochure</h4>
+        <canvas id="render-canvas-3" style="max-height: 250px;"></canvas>
+      </div>
+    </div>
+    <div id="render-status" style="margin-top: 10px;">Rendering 3 sample PDFs...</div>
   </div>
 
   <div class="card" id="spike-0-3">
