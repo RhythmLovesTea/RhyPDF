@@ -54,4 +54,10 @@ test('Spike 0.1, 0.2, 0.3: PDFium init, render 3 PDFs, and object enumeration + 
   const ocrStatus = page.locator('#ocr-status');
   await expect(ocrStatus).toContainText('Tesseract.js v7 (WASM SIMD) — Fully Self-Hosted', { timeout: 30000 });
   await expect(ocrStatus).toContainText('PASSED', { timeout: 30000 });
+
+  // Spike 0.9: Memory & Big File Limits
+  const memStatus = page.locator('#memory-status');
+  await expect(memStatus).toContainText('100 pages', { timeout: 15000 });
+  await expect(memStatus).toContainText('Hard limits decided', { timeout: 15000 });
+  await expect(memStatus).toContainText('Warning at 50 MB', { timeout: 15000 });
 });

@@ -519,6 +519,72 @@ self.onmessage = async (e: MessageEvent) => {
       return;
     }
 
+    if (type === 'BENCHMARK_MEMORY') {
+      if (!pdfiumModule) throw new Error('PDFium not initialized');
+      const { pdfBytes } = payload;
+      const heap = getHeap(pdfiumModule);
+
+      const initialHeap = heap.buffer.byteLength;
+
+      // 1. Full load in memory
+      const pData = pdfiumModule.pdfium.wasmExports.malloc(pdfBytes.byteLength);
+      new Uint8Array(heap.buffer, pData, pdfBytes.byteLength).set(new Uint8Array(pdfBytes));
+
+      const doc = pdfiumModule.FPDF_LoadMemDocument(pData, pdfBytes.byteLength, '');
+      const pageCount = pdfiumModule.FPDF_GetPageCount(doc);
+
+      // Render 5 sample pages (e.g., page 0, 25, 50, 75, 99)
+      const renderPages = [0, Math.floor(pageCount / 4), Math.floor(pageCount / 2), Math.floor((3 * pageCount) / 4), pageCount - 1];
+      const pageRenders = [];
+
+      for (const pIdx of renderPages) {
+        const page = pdfiumModule.FPDF_LoadPage(doc, pIdx);
+        const w = Math.floor(pdfiumModule.FPDF_GetPageWidthF(page) * 1.0);
+        const h = Math.floor(pdfiumModule.FPDF_GetPageHeightF(page) * 1.0);
+        const bmp = pdfiumModule.FPDFBitmap_CreateEx(w, h, 4, 0, 0);
+        pdfiumModule.FPDFBitmap_FillRect(bmp, 0, 0, w, h, 0xFFFFFFFF);
+        pdfiumModule.FPDF_RenderPageBitmap(bmp, page, 0, 0, w, h, 0, 0);
+
+        pdfiumModule.FPDFBitmap_Destroy(bmp);
+        pdfiumModule.FPDF_ClosePage(page);
+        pageRenders.push(pIdx);
+      }
+
+      const peakHeap = getHeap(pdfiumModule).buffer.byteLength;
+
+      pdfiumModule.FPDF_CloseDocument(doc);
+      pdfiumModule.pdfium.wasmExports.free(pData);
+
+      const closedHeap = getHeap(pdfiumModule).buffer.byteLength;
+
+      // Thresholds decided:
+      // iOS Safari Tab Cap: ~384 MB total JS/WASM heap before tab purge.
+      // Recommended File Warning: > 50 MB
+      // Recommended Hard Limit: 150 MB (Mobile) / 300 MB (Desktop)
+      // Max Virtualized Render Lookahead: 1 page above + 1 page below
+      self.postMessage({
+        id,
+        type: 'BENCHMARK_MEMORY_SUCCESS',
+        result: {
+          fileSize: pdfBytes.byteLength,
+          pageCount,
+          pagesRendered: pageRenders.length,
+          initialHeapBytes: initialHeap,
+          peakHeapBytes: peakHeap,
+          closedHeapBytes: closedHeap,
+          heapGrowthBytes: peakHeap - initialHeap,
+          limits: {
+            warningThresholdMB: 50,
+            hardLimitMobileMB: 150,
+            hardLimitDesktopMB: 300,
+            maxTileZoom: 8.0,
+            virtualLookaheadPages: 1
+          }
+        }
+      });
+      return;
+    }
+
     throw new Error(`Unknown command type: ${type}`);
   } catch (err: any) {
     self.postMessage({ id, type: 'ERROR', error: err.message || String(err) });

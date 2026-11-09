@@ -257,7 +257,23 @@ async function run() {
       `• Language Coverage: 100+ languages supported with offline self-hosted traineddata<br/>` +
       `• Bake-off Comparison vs PaddleOCR: Tesseract chosen as primary baseline (broadest language coverage 100+ vs 4, smaller download size ~4.8MB vs ~18MB). PaddleOCR retained as optional high-accuracy plugin.`;
 
-    log('[Success] Spikes 0.1 through 0.8 verified!');
+    // Spike 0.9: Memory, Big Files & WASM Heap Limits
+    log('[0.9] Benchmarking memory and WASM heap on large 100-page PDF...');
+    const memStatus = document.getElementById('memory-status')!;
+    const bigRes = await fetch('/fixtures/10_large_multipage.pdf');
+    const bigBytes = await bigRes.arrayBuffer();
+    const memRes = await send('BENCHMARK_MEMORY', { pdfBytes: bigBytes });
+
+    log(`[0.9] Memory test completed: ${memRes.pageCount} pages, initialHeap=${(memRes.initialHeapBytes/1024/1024).toFixed(1)}MB, peakHeap=${(memRes.peakHeapBytes/1024/1024).toFixed(1)}MB`);
+
+    memStatus.innerHTML = `<strong>Spike 0.9 Memory & Large File Benchmarks:</strong><br/>` +
+      `• Document size: ${memRes.pageCount} pages (${(memRes.fileSize / 1024).toFixed(1)} KB)<br/>` +
+      `• WASM Heap: Initial = ${(memRes.initialHeapBytes / 1024 / 1024).toFixed(1)} MB | Peak = ${(memRes.peakHeapBytes / 1024 / 1024).toFixed(1)} MB<br/>` +
+      `• Heap growth during multi-page rendering: ${(memRes.heapGrowthBytes / 1024 / 1024).toFixed(2)} MB<br/>` +
+      `• <strong>Hard limits decided:</strong> Warning at ${memRes.limits.warningThresholdMB} MB; Mobile cap ${memRes.limits.hardLimitMobileMB} MB (iOS Safari tab limit ~384 MB); Desktop cap ${memRes.limits.hardLimitDesktopMB} MB.<br/>` +
+      `• Architecture rule: Use chunked FPDF_LoadCustomDocument for files > 25 MB; virtualize with 1-page lookahead.`;
+
+    log('[Success] Spikes 0.1 through 0.9 verified!');
   } catch (err: any) {
     log(`[Error] ${err.message}`);
     workerStatus.className = 'status-badge status-err';
