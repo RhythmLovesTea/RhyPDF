@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Editor app shell initializes and worker communicates', async ({ page }) => {
+test('Editor app shell initializes with code-split chunks and worker WASM plumbing', async ({ page }) => {
   await page.goto('/');
 
   // Verify page title
@@ -8,17 +8,18 @@ test('Editor app shell initializes and worker communicates', async ({ page }) =>
 
   // Verify app header
   const header = page.locator('h1');
-  await expect(header).toHaveText('RhyPDF Editor Shell');
+  await expect(header).toHaveText('RhyPDF Editor');
 
-  // Verify worker status becomes connected
-  const workerStatus = page.locator('[data-testid="worker-status"]');
-  await expect(workerStatus).toHaveText('Worker status: connected', { timeout: 10000 });
+  // Verify code-split lazy loaded components appear
+  await expect(page.locator('[data-testid="toolbar-skeleton"]')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('[data-testid="sidebar-skeleton"]')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('[data-testid="viewer-skeleton"]')).toBeVisible({ timeout: 10000 });
 
-  // Verify coordinate mapper calculation is rendered
-  const coordMapper = page.locator('[data-testid="coord-mapper-test"]');
-  await expect(coordMapper).toContainText('A4 1.5x CSS Size: 893px × 1263px');
+  // Verify worker status badge indicates connected
+  const workerBadge = page.locator('[data-testid="worker-status-badge"]');
+  await expect(workerBadge).toHaveText('Worker: connected', { timeout: 10000 });
 
-  // Verify fixtures count is rendered
-  const fixturesCount = page.locator('[data-testid="fixtures-count"]');
-  await expect(fixturesCount).toHaveText('Sample fixtures registered: 14');
+  // Verify worker successfully initialized PDFium WASM
+  const pdfiumStatus = page.locator('[data-testid="pdfium-status"]');
+  await expect(pdfiumStatus).toContainText('PDFium Engine: initialized', { timeout: 15000 });
 });

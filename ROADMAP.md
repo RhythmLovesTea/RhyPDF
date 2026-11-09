@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 1
-CURRENT TASK  : 1.3
+CURRENT TASK  : 1.4
 LAST UPDATED  : 2026-11-09
-NOTES         : Task 1.2 complete (TypeScript strict everywhere, project references, exact versions locked). Moving to Task 1.3 (Vite + React app shell code splitting and worker/WASM plumbing).
+NOTES         : Task 1.3 complete (Vite + React app shell with code splitting and worker/WASM plumbing verified in dev and prod build). Moving to Task 1.4 (Lint + format tooling).
 ```
 
 ---
@@ -341,7 +341,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 - [x] **1.1** Create the pnpm + Turborepo monorepo with the structure from Section 3. *Done when:* `pnpm install && pnpm build` works from a clean clone.
 - [x] **1.2** TypeScript `strict` everywhere, project references, path aliases, **exact** dependency versions, committed lockfile. *Done when:* `pnpm typecheck` passes in every package.
-- [ ] **1.3** Vite + React app shell (`apps/editor`) with code splitting and worker / WASM plumbing (`new Worker(new URL(...), import.meta.url)`). *Done when:* a worker loads and replies in dev **and** in a production build.
+- [x] **1.3** Vite + React app shell (`apps/editor`) with code splitting and worker / WASM plumbing (`new Worker(new URL(...), import.meta.url)`). *Done when:* a worker loads and replies in dev **and** in a production build.
 - [ ] **1.4** Lint + format (ESLint flat config + Prettier, or Biome) with a command that fails on violations. *Done when:* `pnpm lint` fails on a deliberately bad file and passes on the repo.
 - [ ] **1.5** Design-system package: tokens (colors, 8 px spacing grid, radius, shadows, type scale) as CSS variables for light + dark; Tailwind theme mapped to tokens; base components (Button, IconButton, Tooltip, Dialog, Popover, Menu, Tabs, Slider, Switch, Select, Toast). *Done when:* a style-guide page shows every component in light and dark.
 - [ ] **1.6** Routing skeleton: `Home → Editor → Page Organizer → Settings`, lazy-loaded. *Done when:* routes work on refresh and deep links.
@@ -767,6 +767,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-09 | 0.13 | Write Spike Report, license audit & feasibility verification | `P0.13` | Completed Phase 0: all 12 spikes passed, licenses verified, Go decision |
 | 2026-11-09 | 1.1 | Setup pnpm + Turborepo monorepo with target structure | `P1.1` | Created apps/editor and 9 packages; pnpm install & pnpm build & Playwright pass |
 | 2026-11-09 | 1.2 | Strict TypeScript, project references & exact dependency versions | `P1.2` | Configured strict flags, composite project references, exact deps, verified typecheck |
+| 2026-11-09 | 1.3 | Vite + React app shell with code splitting & worker/WASM plumbing | `P1.3` | Code-split skeleton chunks, dedicated worker loads PDFium WASM in dev & prod preview |
 
 ---
 
