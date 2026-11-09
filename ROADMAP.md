@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 2
-CURRENT TASK  : 2.2
+CURRENT TASK  : 2.3
 LAST UPDATED  : 2026-11-09
-NOTES         : Task 2.1 complete (Defined PdfEngine TypeScript interface and domain models without PDFium leaks; implemented MockPdfEngine with open, close, pageCount, pageInfo, renderPage with AbortSignal cancellation, getPageObjects, extractText, mutate, and save; passed all 11 unit tests). Moving to Task 2.2 (Worker host + RPC with Comlink: engine worker, serialized request queue, AbortSignal cancellation, transferables for ImageBitmap and buffers).
+NOTES         : Task 2.2 complete (Worker host + RPC with Comlink: WorkerPdfEngine, EngineService, SerializedQueue with strict FIFO execution and AbortSignal cancellation, Comlink transferables for ImageBitmap and ArrayBuffer; verified with 100 concurrent calls and cancellation). Moving to Task 2.3 (WASM loading strategy: lazy load, streaming compile, cached by service worker, loading progress UI).
 ```
 
 ---
@@ -364,7 +364,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 ## PHASE 2 — PDF ENGINE LAYER (`pdf-engine` PACKAGE)
 
 - [x] **2.1** Define the `PdfEngine` TypeScript interface and domain models (Section 3 sketch). No PDFium types may leak outside this package. _Done when:_ interfaces compile and a mock engine passes the same unit tests.
-- [ ] **2.2** Worker host + RPC (Comlink): one engine worker, a serialized request queue (PDFium is not thread-safe), cancellation via `AbortSignal`, transferables for bitmaps and buffers. _Done when:_ 100 concurrent calls from the UI run correctly and cancellation works.
+- [x] **2.2** Worker host + RPC (Comlink): one engine worker, a serialized request queue (PDFium is not thread-safe), cancellation via `AbortSignal`, transferables for bitmaps and buffers. _Done when:_ 100 concurrent calls from the UI run correctly and cancellation works.
 - [ ] **2.3** WASM loading strategy: lazy load, streaming compile, cached by the service worker, loading progress UI. _Done when:_ second visit starts the engine from cache, offline.
 - [ ] **2.4** Open a document from `ArrayBuffer` / `Blob` with optional password; chunked reads for big files (per Task 0.9). _Done when:_ wrong password returns `WrongPassword` and a 100 MB file opens within the limits.
 - [ ] **2.5** Page render to `ImageBitmap` with options: scale, `devicePixelRatio`, clip rect (for tiles), rotation, annotations on / off. PDFium renders into a WASM bitmap buffer; copy it to `ImageData` and transfer an `ImageBitmap` (no `OffscreenCanvas` dependency). _Done when:_ arbitrary scale, tiles and rotation render correctly in all 3 browser engines.
@@ -785,6 +785,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-09 | 1.10    | CI GitHub Actions workflow, license audit & bundle budgets         | `P1.10` | Configured CI, 208-dep license checker, size budget script, and preview deploy action           |
 | 2026-11-09 | 1.11    | Security headers, Web App Manifest & offline Service Worker shell  | `P1.11` | COOP/COEP/CSP headers, manifest PDF file_handlers, precached offline shell & WASM, Dependabot   |
 | 2026-11-09 | 2.1     | Define PdfEngine interface, domain models & MockPdfEngine          | `P2.1`  | Defined zero-leak engine interface, domain models, MockPdfEngine & 11 unit tests passed         |
+| 2026-11-09 | 2.2     | Worker host + Comlink RPC, serialized queue & cancellation         | `P2.2`  | SerializedQueue, WorkerPdfEngine, Comlink transferables, 100 concurrent calls verified          |
 
 ---
 

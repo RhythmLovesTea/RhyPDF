@@ -98,3 +98,7 @@ export interface PdfEngine {
 }
 
 export { MockPdfEngine } from './mock';
+export { SerializedQueue } from './queue';
+export { WorkerPdfEngine } from './host/WorkerPdfEngine';
+export { EngineService } from './worker/engine-service';
+export type { PdfEngineWorkerApi } from './protocol';

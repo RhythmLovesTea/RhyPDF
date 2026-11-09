@@ -12,7 +12,8 @@
     }
   },
   "dependencies": {
-    "@rhypdf/pdf-model": "workspace:*"
+    "@rhypdf/pdf-model": "workspace:*",
+    "comlink": "4.4.2"
   },
   "scripts": {
     "build": "tsc",
