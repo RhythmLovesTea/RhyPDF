@@ -96,3 +96,5 @@ export interface PdfEngine {
   mutate(doc: DocumentHandle, page: number, ops: PageMutation[]): Promise<MutationResult>;
   save(doc: DocumentHandle, opts?: SaveOptions): Promise<Blob>;
 }
+
+export { MockPdfEngine } from './mock';
