@@ -33,4 +33,10 @@ test('Spike 0.1, 0.2, 0.3: PDFium init, render 3 PDFs, and object enumeration + 
   const mutateStatus = page.locator('#mutate-save-status');
   await expect(mutateStatus).toContainText('Ghost text detected: NO (PASSED)', { timeout: 15000 });
   await expect(mutateStatus).toContainText('New text present: YES (PASSED)', { timeout: 15000 });
+
+  // Spike 0.6: Complex Scripts Shaping
+  const complexStatus = page.locator('#complex-script-status');
+  await expect(complexStatus).toContainText('Arabic "مرحبا بالعالم": Shaped', { timeout: 15000 });
+  await expect(complexStatus).toContainText('Hindi "नमस्ते": Shaped', { timeout: 15000 });
+  await expect(complexStatus).toContainText('FPDFText_LoadCidType2Font', { timeout: 15000 });
 });

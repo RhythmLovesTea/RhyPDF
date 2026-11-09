@@ -1,6 +1,12 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  esbuild: {
+    target: 'esnext',
+  },
+  build: {
+    target: 'esnext',
+  },
   server: {
     port: 5173,
     headers: {
@@ -9,7 +15,10 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ['@embedpdf/pdfium'],
+    esbuildOptions: {
+      target: 'esnext',
+    },
+    exclude: ['@embedpdf/pdfium', 'harfbuzzjs'],
   },
   worker: {
     format: 'es',
