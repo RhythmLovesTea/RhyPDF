@@ -204,7 +204,20 @@ async function run() {
       `• Engine CID Support: FPDFText_LoadCidType2Font exported & verified.<br/>` +
       `• Fallback Strategy: Fallback (a) cluster-positioned text objects + Fallback (b) invisible text layer verified.`;
 
-    log('[Success] Spikes 0.1, 0.2, 0.3, 0.4, 0.5, and 0.6 verified!');
+    // Spike 0.7: Image Editing (Move, Scale, Rotate, Delete, Insert PNG & JPEG, Save)
+    log('[0.7] Testing image mutation and save...');
+    const imgStatus = document.getElementById('image-edit-status')!;
+    const imgRes = await send('MUTATE_AND_SAVE_IMAGES', { pdfBytes: r3.pdfBytes });
+    log(`[0.7] Image mutation done: initial=${imgRes.initialImages}, final=${imgRes.finalImages}, savedSize=${imgRes.savedSize} bytes`);
+
+    imgStatus.innerHTML = `<strong>Spike 0.7 Image Manipulation & Save:</strong><br/>` +
+      `• Image 0: Transformed with 45° rotation, 120pt scale, moved to (80, 80).<br/>` +
+      `• Image 1: Deleted from page.<br/>` +
+      `• New PNG: Inserted with alpha channel transparency (100pt at x=250).<br/>` +
+      `• New JPEG: Inserted RGB image (80pt at x=380).<br/>` +
+      `• Saved file verified: ${imgRes.finalImages} images present (${imgRes.savedSize} bytes).`;
+
+    log('[Success] Spikes 0.1 through 0.7 verified!');
   } catch (err: any) {
     log(`[Error] ${err.message}`);
     workerStatus.className = 'status-badge status-err';

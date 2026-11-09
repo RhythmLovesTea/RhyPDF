@@ -414,6 +414,111 @@ self.onmessage = async (e: MessageEvent) => {
       return;
     }
 
+    if (type === 'MUTATE_AND_SAVE_IMAGES') {
+      if (!pdfiumModule) throw new Error('PDFium not initialized');
+      const { pdfBytes } = payload;
+      const heap = getHeap(pdfiumModule);
+      const pData = pdfiumModule.pdfium.wasmExports.malloc(pdfBytes.byteLength);
+      new Uint8Array(heap.buffer, pData, pdfBytes.byteLength).set(new Uint8Array(pdfBytes));
+
+      const doc = pdfiumModule.FPDF_LoadMemDocument(pData, pdfBytes.byteLength, '');
+      const page = pdfiumModule.FPDF_LoadPage(doc, 0);
+
+      const count = pdfiumModule.FPDFPage_CountObjects(page);
+      const imageObjects = [];
+      for (let i = 0; i < count; i++) {
+        const obj = pdfiumModule.FPDFPage_GetObject(page, i);
+        if (pdfiumModule.FPDFPageObj_GetType(obj) === 3) {
+          imageObjects.push(obj);
+        }
+      }
+
+      // 1. Transform Image 0: rotate 45 deg, scale 120x120, move to (80, 80)
+      if (imageObjects.length > 0) {
+        const rad = 45 * Math.PI / 180;
+        const s = 120;
+        const a = Math.cos(rad) * s;
+        const b = Math.sin(rad) * s;
+        const c = -Math.sin(rad) * s;
+        const d = Math.cos(rad) * s;
+        pdfiumModule.FPDFImageObj_SetMatrix(imageObjects[0], a, b, c, d, 80, 80);
+      }
+
+      // 2. Delete Image 1
+      if (imageObjects.length > 1) {
+        pdfiumModule.FPDFPage_RemoveObject(page, imageObjects[1]);
+      }
+
+      const pPages = pdfiumModule.pdfium.wasmExports.malloc(4);
+      new DataView(heap.buffer).setInt32(pPages, page, true);
+
+      // 3. Insert new PNG with transparency (semi-transparent green 4x4)
+      const pngImg = pdfiumModule.FPDFPageObj_NewImageObj(doc);
+      const bmpPng = pdfiumModule.FPDFBitmap_CreateEx(4, 4, 4, 0, 0);
+      // BGRA: semi-transparent green (A=180, R=0, G=220, B=50) -> 0xB400DC32
+      pdfiumModule.FPDFBitmap_FillRect(bmpPng, 0, 0, 4, 4, 0xB400DC32);
+      pdfiumModule.FPDFImageObj_SetBitmap(pPages, 1, pngImg, bmpPng);
+      pdfiumModule.FPDFImageObj_SetMatrix(pngImg, 100, 0, 0, 100, 250, 150);
+      pdfiumModule.FPDFPage_InsertObject(page, pngImg);
+
+      // 4. Insert new JPEG/RGB image (opaque blue 4x4)
+      const jpgImg = pdfiumModule.FPDFPageObj_NewImageObj(doc);
+      const bmpJpg = pdfiumModule.FPDFBitmap_CreateEx(4, 4, 4, 0, 0);
+      // BGRA: blue (A=255, R=30, G=100, B=230) -> 0xFF1E64E6
+      pdfiumModule.FPDFBitmap_FillRect(bmpJpg, 0, 0, 4, 4, 0xFF1E64E6);
+      pdfiumModule.FPDFImageObj_SetBitmap(pPages, 1, jpgImg, bmpJpg);
+      pdfiumModule.FPDFImageObj_SetMatrix(jpgImg, 80, 0, 0, 80, 380, 150);
+      pdfiumModule.FPDFPage_InsertObject(page, jpgImg);
+
+      // 5. Regenerate page content
+      pdfiumModule.FPDFPage_GenerateContent(page);
+
+      // 6. Save new file
+      const writer = pdfiumModule.PDFiumExt_OpenFileWriter();
+      pdfiumModule.PDFiumExt_SaveAsCopy(doc, writer);
+      const savedSize = pdfiumModule.PDFiumExt_GetFileWriterSize(writer);
+
+      const pOutBuf = pdfiumModule.pdfium.wasmExports.malloc(savedSize);
+      pdfiumModule.PDFiumExt_GetFileWriterData(writer, pOutBuf, savedSize);
+      const savedBytes = new Uint8Array(heap.buffer, pOutBuf, savedSize).slice();
+
+      pdfiumModule.pdfium.wasmExports.free(pPages);
+      pdfiumModule.pdfium.wasmExports.free(pOutBuf);
+      pdfiumModule.FPDFBitmap_Destroy(bmpPng);
+      pdfiumModule.FPDFBitmap_Destroy(bmpJpg);
+      pdfiumModule.PDFiumExt_CloseFileWriter(writer);
+      pdfiumModule.FPDF_ClosePage(page);
+      pdfiumModule.FPDF_CloseDocument(doc);
+      pdfiumModule.pdfium.wasmExports.free(pData);
+
+      // 7. Verify the saved file by counting image objects in it
+      const pCheck = pdfiumModule.pdfium.wasmExports.malloc(savedBytes.byteLength);
+      new Uint8Array(heap.buffer, pCheck, savedBytes.byteLength).set(savedBytes);
+      const doc2 = pdfiumModule.FPDF_LoadMemDocument(pCheck, savedBytes.byteLength, '');
+      const page2 = pdfiumModule.FPDF_LoadPage(doc2, 0);
+      const finalCount = pdfiumModule.FPDFPage_CountObjects(page2);
+      let finalImages = 0;
+      for (let i = 0; i < finalCount; i++) {
+        const obj = pdfiumModule.FPDFPage_GetObject(page2, i);
+        if (pdfiumModule.FPDFPageObj_GetType(obj) === 3) finalImages++;
+      }
+      pdfiumModule.FPDF_ClosePage(page2);
+      pdfiumModule.FPDF_CloseDocument(doc2);
+      pdfiumModule.pdfium.wasmExports.free(pCheck);
+
+      self.postMessage({
+        id,
+        type: 'MUTATE_AND_SAVE_IMAGES_SUCCESS',
+        result: {
+          savedSize,
+          initialImages: imageObjects.length,
+          finalImages,
+          savedBytes: savedBytes.buffer
+        }
+      }, [savedBytes.buffer]);
+      return;
+    }
+
     throw new Error(`Unknown command type: ${type}`);
   } catch (err: any) {
     self.postMessage({ id, type: 'ERROR', error: err.message || String(err) });

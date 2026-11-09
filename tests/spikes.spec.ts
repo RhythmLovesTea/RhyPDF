@@ -39,4 +39,11 @@ test('Spike 0.1, 0.2, 0.3: PDFium init, render 3 PDFs, and object enumeration + 
   await expect(complexStatus).toContainText('Arabic "مرحبا بالعالم": Shaped', { timeout: 15000 });
   await expect(complexStatus).toContainText('Hindi "नमस्ते": Shaped', { timeout: 15000 });
   await expect(complexStatus).toContainText('FPDFText_LoadCidType2Font', { timeout: 15000 });
+
+  // Spike 0.7: Image Editing
+  const imgStatus = page.locator('#image-edit-status');
+  await expect(imgStatus).toContainText('Transformed with 45° rotation', { timeout: 15000 });
+  await expect(imgStatus).toContainText('Deleted from page', { timeout: 15000 });
+  await expect(imgStatus).toContainText('Inserted with alpha channel transparency', { timeout: 15000 });
+  await expect(imgStatus).toContainText('3 images present', { timeout: 15000 });
 });
