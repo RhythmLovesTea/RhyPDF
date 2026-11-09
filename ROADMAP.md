@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 0
-CURRENT TASK  : 0.1
+CURRENT TASK  : 0.2
 LAST UPDATED  : 2026-11-09
-NOTES         : Roadmap created. No web code written yet. Start with the feasibility spikes.
+NOTES         : Spike 0.1 complete. Moving to Spike 0.2 (render to canvas at 2x scale and DPR).
 ```
 
 ---
@@ -319,7 +319,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 **Goal:** Prove the hard parts work in a browser before investing in UI. Each spike is a tiny throwaway project or test page. Record every result in the Progress Log.
 
-- [ ] **0.1** Throwaway Vite + TypeScript project: load PDFium WASM inside a **Web Worker** (start with `@embedpdf/pdfium`; if its exports are too limited, build PDFium to WASM yourself with Emscripten). *Done when:* the worker reports PDFium is initialized and shows it on screen in Chrome, Firefox and Safari.
+- [x] **0.1** Throwaway Vite + TypeScript project: load PDFium WASM inside a **Web Worker** (start with `@embedpdf/pdfium`; if its exports are too limited, build PDFium to WASM yourself with Emscripten). *Done when:* the worker reports PDFium is initialized and shows it on screen in Chrome, Firefox and Safari.
 - [ ] **0.2** Open a PDF from an `ArrayBuffer` and render page 1 to a canvas at 2x scale and at `devicePixelRatio`. *Done when:* output looks identical to Chrome's built-in viewer on 3 sample PDFs.
 - [ ] **0.3** List all page objects (text, image, path, form XObject) with bounding boxes and draw them as a DOM / SVG overlay. *Done when:* boxes align with visible content at several zoom levels and on a rotated page.
 - [ ] **0.4** Extract text runs: Unicode string, font name, size, fill color, matrix, bounding box, per-character boxes, and "is the font an embedded subset?". *Done when:* output matches the visible text on 3 different PDFs.
@@ -752,6 +752,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | Date | Task ID | What was done | Commit | Notes / Problems |
 |---|---|---|---|---|
 | 2026-11-09 | — | Web roadmap created from the Android checklist | — | Start at Task 0.1 |
+| 2026-11-09 | 0.1 | Load PDFium WASM in Web Worker with Vite + TS spike | `P0.1` | Initialized @embedpdf/pdfium 2.15.1 in worker, self-hosted WASM verified |
 
 ---
 

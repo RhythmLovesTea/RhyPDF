@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RhyPDF - Phase 0 Spikes Harness</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 20px; background: #f8fafc; color: #1e293b; }
+    h1 { margin-bottom: 8px; }
+    .status-badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-weight: 600; font-size: 14px; }
+    .status-ok { background: #dcfce7; color: #166534; }
+    .status-busy { background: #fef9c3; color: #854d0e; }
+    .status-err { background: #fee2e2; color: #991b1b; }
+    .card { background: white; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    canvas { border: 1px solid #cbd5e1; border-radius: 4px; max-width: 100%; }
+    pre { background: #0f172a; color: #f8fafc; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 13px; }
+    button { background: #2563eb; color: white; border: none; border-radius: 6px; padding: 8px 16px; cursor: pointer; font-weight: 500; }
+    button:hover { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+  <h1>RhyPDF — Phase 0 Feasibility Spikes Harness</h1>
+  <p>Test suite verifying all 12 feasibility spikes in browser WebAssembly & Web Workers.</p>
+  
+  <div class="card" id="spike-0-1">
+    <h3>Spike 0.1: PDFium Worker Initialization</h3>
+    <div id="worker-status" class="status-badge status-busy">Initializing Worker & PDFium WASM...</div>
+    <div id="worker-log" style="margin-top: 10px; font-family: monospace;"></div>
+  </div>
+
+  <div class="card" id="spike-0-2">
+    <h3>Spike 0.2: Render PDF to Canvas (2x scale + DPR)</h3>
+    <canvas id="render-canvas"></canvas>
+    <div id="render-status"></div>
+  </div>
+
+  <div class="card" id="spike-0-3">
+    <h3>Spike 0.3: Page Object Enumeration & Overlay</h3>
+    <div id="object-count-status">Waiting for render...</div>
+    <div id="overlay-container" style="position: relative; display: inline-block;"></div>
+  </div>
+
+  <div class="card" id="spike-results-summary">
+    <h3>Automated Spike Verification Log</h3>
+    <pre id="test-log">Waiting for test run...</pre>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
