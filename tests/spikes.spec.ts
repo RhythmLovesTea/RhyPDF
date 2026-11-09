@@ -65,4 +65,10 @@ test('Spike 0.1, 0.2, 0.3: PDFium init, render 3 PDFs, and object enumeration + 
   const hostingStatus = page.locator('#hosting-status');
   await expect(hostingStatus).toContainText('crossOriginIsolated: TRUE (PASSED)', { timeout: 15000 });
   await expect(hostingStatus).toContainText('FUNCTIONAL', { timeout: 15000 });
+
+  // Spike 0.11: IME & Parity
+  const parityStatus = page.locator('#editing-parity-status');
+  await expect(parityStatus).toContainText('IME Composition: PASSED', { timeout: 15000 });
+  await expect(parityStatus).toContainText('Layout Mismatch:', { timeout: 15000 });
+  await expect(parityStatus).toContainText('Overlay DOM text is transparent', { timeout: 15000 });
 });

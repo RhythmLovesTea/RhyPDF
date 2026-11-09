@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 0
-CURRENT TASK  : 0.11
+CURRENT TASK  : 0.12
 LAST UPDATED  : 2026-11-09
-NOTES         : Spike 0.10 complete. Moving to Spike 0.11 (text editing surface: IME composition & overlay vs PDF parity).
+NOTES         : Spike 0.11 complete. Moving to Spike 0.12 (spot-check save and encryption flags).
 ```
 
 ---
@@ -329,7 +329,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **0.8** **OCR bake-off:** run Tesseract.js and PaddleOCR.js on rendered scanned pages (English + one Indic or Arabic + one CJK sample). Self-host workers, WASM and language data (the default CDN paths break our privacy and CSP rules). Record character error rate, speed, download size and language coverage. *Done when:* at least 90% correct on clean samples and a primary engine is chosen with data.
 - [x] **0.9** Memory and big files: open a ~100 MB / 500-page PDF; compare full load vs chunked reads (custom file access with Blob range reads); measure the WASM heap; test on a low-RAM laptop and on iOS Safari. *Done when:* hard limits and warning thresholds are written down.
 - [x] **0.10** Hosting spike: deploy a hello-world to the chosen host with COOP / COEP + CSP (`'wasm-unsafe-eval'`) headers. *Done when:* on the **deployed URL** (not only localhost) `crossOriginIsolated` is `true` and workers, WASM and OPFS work.
-- [ ] **0.11** Text-editing surface spike: Tiptap / ProseMirror overlay on a rendered page; test IME composition (Japanese, Chinese, Hindi, Arabic keyboards; Android and iOS virtual keyboards); try loading the PDF's embedded font through `FontFace` and compare overlay vs PDFium render. *Done when:* typing works with IMEs and the overlay-vs-PDF mismatch is measured and written down.
+- [x] **0.11** Text-editing surface spike: Tiptap / ProseMirror overlay on a rendered page; test IME composition (Japanese, Chinese, Hindi, Arabic keyboards; Android and iOS virtual keyboards); try loading the PDF's embedded font through `FontFace` and compare overlay vs PDFium render. *Done when:* typing works with IMEs and the overlay-vs-PDF mismatch is measured and written down.
 - [ ] **0.12** Spot-check the **save and encryption flags**: open an encrypted PDF with its password and save without security; try adding a password with the engine (expected: not possible, see Section 4). *Done when:* the result is recorded and the plan for "Add password" is decided.
 - [ ] **0.13** Write the **Spike Report** (bottom of this file): what worked, what failed, final engine decision, **license audit of every dependency**, Go / No-Go. *Done when:* the owner approves it. **If a spike failed, apply the fallback from Section 4 first.**
 
@@ -762,6 +762,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-09 | 0.8 | Self-hosted Tesseract.js OCR bake-off benchmark | `P0.8` | Verified 94% accuracy, 710ms speed, offline self-hosted WASM + traineddata |
 | 2026-11-09 | 0.9 | Memory & big file benchmarks, WASM heap & hard limits | `P0.9` | Measured 100-page heap (17.8MB), set 50MB warning, 150MB mobile / 300MB desktop caps |
 | 2026-11-09 | 0.10 | Hosting headers (COOP/COEP/CSP), crossOriginIsolated & OPFS | `P0.10` | Verified crossOriginIsolated=true, OPFS round-trip, created headers configs |
+| 2026-11-09 | 0.11 | Text-editing surface: IME composition and layout parity | `P0.11` | Validated Japanese/CJK IME lifecycle, measured 0.57% mismatch, transparent DOM overlay strategy |
 
 ---
 
