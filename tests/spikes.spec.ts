@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test('Spike 0.1, 0.2, 0.3: PDFium init, render 3 PDFs, and object enumeration + rotated overlay', async ({ page }) => {
+  page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+  page.on('pageerror', err => console.log('PAGE ERROR:', err.message));
+
   await page.goto('/');
 
   // Spike 0.1: Worker status
@@ -46,4 +49,9 @@ test('Spike 0.1, 0.2, 0.3: PDFium init, render 3 PDFs, and object enumeration + 
   await expect(imgStatus).toContainText('Deleted from page', { timeout: 15000 });
   await expect(imgStatus).toContainText('Inserted with alpha channel transparency', { timeout: 15000 });
   await expect(imgStatus).toContainText('3 images present', { timeout: 15000 });
+
+  // Spike 0.8: OCR Bake-off
+  const ocrStatus = page.locator('#ocr-status');
+  await expect(ocrStatus).toContainText('Tesseract.js v7 (WASM SIMD) — Fully Self-Hosted', { timeout: 30000 });
+  await expect(ocrStatus).toContainText('PASSED', { timeout: 30000 });
 });

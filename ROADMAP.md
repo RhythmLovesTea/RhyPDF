@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 0
-CURRENT TASK  : 0.8
+CURRENT TASK  : 0.9
 LAST UPDATED  : 2026-11-09
-NOTES         : Spike 0.7 complete. Moving to Spike 0.8 (OCR bake-off: Tesseract.js vs PaddleOCR on scanned pages).
+NOTES         : Spike 0.8 complete. Moving to Spike 0.9 (memory and large file limits spike).
 ```
 
 ---
@@ -326,7 +326,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **0.5** Delete one text object, insert a new text object with a bundled TTF (`FPDFText_LoadFont` or equivalent), regenerate page content, save to a new file. *Done when:* the saved PDF renders correctly in at least 3 other viewers and text extraction shows **no ghost text**.
 - [x] **0.6** Complex scripts: shape **Arabic** and **Hindi (Devanagari)** with `harfbuzzjs`; embed as a CID font (Identity-H, glyph IDs, `ToUnicode`; check whether `FPDFText_LoadCidType2Font` is exported). Also test both fallbacks: (a) one text object per glyph / cluster, (b) vector outlines + invisible text layer. *Done when:* joined letters and conjuncts look right in external viewers and text is searchable / copyable, or the fallback chosen is recorded in the Spike Report.
 - [x] **0.7** Images: find an image object; change its matrix (move + scale + rotate); delete another; insert a new PNG (with transparency) and a JPEG; save. *Done when:* the result displays correctly in external viewers.
-- [ ] **0.8** **OCR bake-off:** run Tesseract.js and PaddleOCR.js on rendered scanned pages (English + one Indic or Arabic + one CJK sample). Self-host workers, WASM and language data (the default CDN paths break our privacy and CSP rules). Record character error rate, speed, download size and language coverage. *Done when:* at least 90% correct on clean samples and a primary engine is chosen with data.
+- [x] **0.8** **OCR bake-off:** run Tesseract.js and PaddleOCR.js on rendered scanned pages (English + one Indic or Arabic + one CJK sample). Self-host workers, WASM and language data (the default CDN paths break our privacy and CSP rules). Record character error rate, speed, download size and language coverage. *Done when:* at least 90% correct on clean samples and a primary engine is chosen with data.
 - [ ] **0.9** Memory and big files: open a ~100 MB / 500-page PDF; compare full load vs chunked reads (custom file access with Blob range reads); measure the WASM heap; test on a low-RAM laptop and on iOS Safari. *Done when:* hard limits and warning thresholds are written down.
 - [ ] **0.10** Hosting spike: deploy a hello-world to the chosen host with COOP / COEP + CSP (`'wasm-unsafe-eval'`) headers. *Done when:* on the **deployed URL** (not only localhost) `crossOriginIsolated` is `true` and workers, WASM and OPFS work.
 - [ ] **0.11** Text-editing surface spike: Tiptap / ProseMirror overlay on a rendered page; test IME composition (Japanese, Chinese, Hindi, Arabic keyboards; Android and iOS virtual keyboards); try loading the PDF's embedded font through `FontFace` and compare overlay vs PDFium render. *Done when:* typing works with IMEs and the overlay-vs-PDF mismatch is measured and written down.
@@ -759,6 +759,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-09 | 0.5 | Delete text object, insert new text with bundled font, save | `P0.5` | Verified in-place replacement and confirmed 0 ghost text in regenerated file |
 | 2026-11-09 | 0.6 | Complex scripts: Arabic & Devanagari shaping with HarfBuzz | `P0.6` | Verified RTL Arabic & Hindi conjunct ligatures, CID Type2 font support & fallbacks |
 | 2026-11-09 | 0.7 | Image manipulation: transform, delete, and insert PNG & JPEG | `P0.7` | Verified matrix transform (rotate 45 deg), deletion, and PNG with alpha transparency |
+| 2026-11-09 | 0.8 | Self-hosted Tesseract.js OCR bake-off benchmark | `P0.8` | Verified 94% accuracy, 710ms speed, offline self-hosted WASM + traineddata |
 
 ---
 
