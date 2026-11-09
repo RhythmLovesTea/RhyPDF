@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 1
-CURRENT TASK  : 1.6
+CURRENT TASK  : 1.7
 LAST UPDATED  : 2026-11-09
-NOTES         : Task 1.5 complete (Design-system package @rhypdf/ui with CSS variables, light/dark themes, 11 components & style-guide page verified by Playwright). Moving to Task 1.6 (Routing skeleton: Home -> Editor -> Page Organizer -> Settings, lazy-loaded).
+NOTES         : Task 1.6 complete (Routing skeleton: Home -> Editor -> Page Organizer -> Settings, lazy-loaded with deep linking & refresh survival). Moving to Task 1.7 (State, errors, logging: Zustand store layout, React error boundaries, leveled logger, global recovery metadata).
 ```
 
 ---
@@ -350,7 +350,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **1.3** Vite + React app shell (`apps/editor`) with code splitting and worker / WASM plumbing (`new Worker(new URL(...), import.meta.url)`). _Done when:_ a worker loads and replies in dev **and** in a production build.
 - [x] **1.4** Lint + format (ESLint flat config + Prettier, or Biome) with a command that fails on violations. _Done when:_ `pnpm lint` fails on a deliberately bad file and passes on the repo.
 - [x] **1.5** Design-system package: tokens (colors, 8 px spacing grid, radius, shadows, type scale) as CSS variables for light + dark; Tailwind theme mapped to tokens; base components (Button, IconButton, Tooltip, Dialog, Popover, Menu, Tabs, Slider, Switch, Select, Toast). _Done when:_ a style-guide page shows every component in light and dark.
-- [ ] **1.6** Routing skeleton: `Home → Editor → Page Organizer → Settings`, lazy-loaded. _Done when:_ routes work on refresh and deep links.
+- [x] **1.6** Routing skeleton: `Home → Editor → Page Organizer → Settings`, lazy-loaded. _Done when:_ routes work on refresh and deep links.
 - [ ] **1.7** State, errors, logging: Zustand store layout, React error boundaries, a tiny leveled logger, and a global `error` / `unhandledrejection` handler that saves recovery metadata. _Done when:_ a thrown error shows a friendly screen and no work is lost.
 - [ ] **1.8** i18n scaffolding (i18next): English only for now, **no hard-coded UI text**, CSS logical properties, `dir` switching. _Done when:_ a pseudo-locale (long strings + RTL) renders without broken layout.
 - [ ] **1.9** Test setup: Vitest, Playwright (Chromium, Firefox, WebKit), the `test-fixtures` package, a golden-image helper (pixelmatch). _Done when:_ one unit test and one e2e smoke test run locally and in CI.
@@ -778,6 +778,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-09 | 1.3     | Vite + React app shell with code splitting & worker/WASM plumbing | `P1.3`  | Code-split skeleton chunks, dedicated worker loads PDFium WASM in dev & prod preview            |
 | 2026-11-09 | 1.4     | Lint and format setup (ESLint flat config + Prettier)             | `P1.4`  | Verified pnpm lint fails on deliberately bad file and passes cleanly across repo                |
 | 2026-11-09 | 1.5     | Design-system tokens, theme CSS variables & base components       | `P1.5`  | 11 components (Button, Dialog, Tabs, etc.), CSS tokens, verified in style-guide                 |
+| 2026-11-09 | 1.6     | Routing skeleton: Home -> Editor -> Page Organizer -> Settings    | `P1.6`  | Lazy-loaded feature routes, deep linking & page refresh survival verified in E2E                |
 
 ---
 

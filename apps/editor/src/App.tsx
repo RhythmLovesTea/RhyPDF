@@ -1,36 +1,24 @@
 import React, { useEffect, useState, lazy, Suspense } from 'react';
-import { THEME_TOKENS, Button } from '@rhypdf/ui';
+import { THEME_TOKENS } from '@rhypdf/ui';
 import '@rhypdf/ui/styles.css';
+import { useRouter } from './router';
 
-// Code splitting via React.lazy
-const ToolbarSkeleton = lazy(() => import('./components/ToolbarSkeleton'));
-const SidebarSkeleton = lazy(() => import('./components/SidebarSkeleton'));
-const ViewerSkeleton = lazy(() => import('./components/ViewerSkeleton'));
+// Lazy-loaded routes
+const HomePage = lazy(() => import('./features/home/HomePage'));
+const EditorPage = lazy(() => import('./features/editor/EditorPage'));
+const PageOrganizerPage = lazy(() => import('./features/pages/PageOrganizerPage'));
+const SettingsPage = lazy(() => import('./features/settings/SettingsPage'));
 const StyleGuide = lazy(() =>
   import('./components/StyleGuide').then((m) => ({ default: m.StyleGuide }))
 );
 
 export function App(): React.JSX.Element {
+  const { currentRoute, navigate } = useRouter();
   const [workerStatus, setWorkerStatus] = useState<'connecting' | 'connected' | 'error'>(
     'connecting'
   );
   const [wasmStatus, setWasmStatus] = useState<string>('loading');
   const [latency, setLatency] = useState<number | null>(null);
-  const [currentView, setCurrentView] = useState<'editor' | 'styleguide'>(
-    window.location.hash === '#styleguide' ? 'styleguide' : 'editor'
-  );
-
-  useEffect(() => {
-    const handleHash = () => {
-      if (window.location.hash === '#styleguide') {
-        setCurrentView('styleguide');
-      } else {
-        setCurrentView('editor');
-      }
-    };
-    window.addEventListener('hashchange', handleHash);
-    return () => window.removeEventListener('hashchange', handleHash);
-  }, []);
 
   useEffect(() => {
     // Dedicated worker instantiation via standard ESM URL
@@ -43,7 +31,6 @@ export function App(): React.JSX.Element {
       if (type === 'PONG') {
         setLatency(Math.round(performance.now() - startTime));
         setWorkerStatus('connected');
-        // Now initialize PDFium WASM inside the worker
         worker.postMessage({ id: '2', type: 'INIT_PDFIUM', payload: { wasmUrl: '/pdfium.wasm' } });
       }
 
@@ -69,27 +56,13 @@ export function App(): React.JSX.Element {
     };
   }, []);
 
-  if (currentView === 'styleguide') {
-    return (
-      <div>
-        <div style={{ position: 'fixed', top: 12, right: 12, zIndex: 9999 }}>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => {
-              window.location.hash = '';
-              setCurrentView('editor');
-            }}
-          >
-            Back to Editor
-          </Button>
-        </div>
-        <Suspense fallback={<div>Loading Style Guide...</div>}>
-          <StyleGuide />
-        </Suspense>
-      </div>
-    );
-  }
+  const navLinks = [
+    { path: '/', label: 'Home', testId: 'nav-home' },
+    { path: '/editor', label: 'Editor', testId: 'nav-editor' },
+    { path: '/pages', label: 'Page Organizer', testId: 'nav-pages' },
+    { path: '/settings', label: 'Settings', testId: 'nav-settings' },
+    { path: '/styleguide', label: 'Style Guide', testId: 'nav-styleguide' }
+  ];
 
   return (
     <div
@@ -97,8 +70,8 @@ export function App(): React.JSX.Element {
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
-        backgroundColor: THEME_TOKENS.colors.light.background,
-        color: THEME_TOKENS.colors.light.foreground,
+        backgroundColor: 'var(--bg-background)',
+        color: 'var(--bg-foreground)',
         fontFamily: THEME_TOKENS.typography.fontFamilySans,
         overflow: 'hidden'
       }}
@@ -108,70 +81,76 @@ export function App(): React.JSX.Element {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: `${THEME_TOKENS.spacing.xs}px ${THEME_TOKENS.spacing.md}px`,
-          borderBottom: '1px solid #e2e8f0',
-          backgroundColor: '#ffffff'
+          padding: '8px 24px',
+          borderBottom: '1px solid var(--bg-border)',
+          backgroundColor: 'var(--bg-card)'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <h1
-            style={{ fontSize: THEME_TOKENS.typography.typeScale.base, fontWeight: 700, margin: 0 }}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <span
+            style={{ fontSize: 18, fontWeight: 700, cursor: 'pointer' }}
+            onClick={() => navigate('/')}
           >
-            RhyPDF Editor
-          </h1>
+            RhyPDF
+          </span>
+
+          <nav style={{ display: 'flex', gap: 4 }}>
+            {navLinks.map((link) => {
+              const isActive = currentRoute === link.path;
+              return (
+                <button
+                  key={link.path}
+                  data-testid={link.testId}
+                  onClick={() => navigate(link.path)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: 'none',
+                    backgroundColor: isActive ? 'var(--bg-secondary)' : 'transparent',
+                    color: isActive ? 'var(--bg-primary)' : 'var(--bg-foreground)',
+                    fontWeight: isActive ? 600 : 400,
+                    fontSize: 13,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {link.label}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span
             data-testid="worker-status-badge"
             style={{
               padding: '2px 8px',
-              borderRadius: THEME_TOKENS.radius.full,
-              fontSize: THEME_TOKENS.typography.typeScale.xs,
+              borderRadius: 'var(--radius-full)',
+              fontSize: 'var(--text-xs)',
               fontWeight: 600,
               backgroundColor: workerStatus === 'connected' ? '#dcfce7' : '#fee2e2',
               color: workerStatus === 'connected' ? '#166534' : '#991b1b'
             }}
           >
-            Worker: {workerStatus}
+            Worker: {workerStatus} {latency !== null ? `(${latency}ms)` : ''}
           </span>
-          {latency !== null && (
-            <span style={{ fontSize: THEME_TOKENS.typography.typeScale.xs, color: '#64748b' }}>
-              ({latency}ms)
-            </span>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Button
-            data-testid="nav-styleguide-btn"
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              window.location.hash = '#styleguide';
-              setCurrentView('styleguide');
-            }}
-          >
-            Design System Style Guide
-          </Button>
-          <span style={{ fontSize: THEME_TOKENS.typography.typeScale.xs, color: '#64748b' }}>
-            Zero-Server &bull; 100% Private Client-Side
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--bg-muted-foreground)' }}>
+            100% Client-Side
           </span>
         </div>
       </header>
 
-      <Suspense fallback={<div style={{ padding: 8, fontSize: 12 }}>Loading toolbar...</div>}>
-        <ToolbarSkeleton />
-      </Suspense>
-
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
         <Suspense
-          fallback={<div style={{ width: 240, padding: 8, fontSize: 12 }}>Loading sidebar...</div>}
+          fallback={<div style={{ padding: 24, textAlign: 'center' }}>Loading route view...</div>}
         >
-          <SidebarSkeleton />
+          {currentRoute === '/' && <HomePage onNavigate={navigate} />}
+          {currentRoute === '/editor' && <EditorPage wasmStatus={wasmStatus} />}
+          {currentRoute === '/pages' && <PageOrganizerPage />}
+          {currentRoute === '/settings' && <SettingsPage />}
+          {currentRoute === '/styleguide' && <StyleGuide />}
         </Suspense>
-
-        <Suspense fallback={<div style={{ flex: 1, padding: 16 }}>Loading viewport...</div>}>
-          <ViewerSkeleton wasmStatus={wasmStatus} />
-        </Suspense>
-      </div>
+      </main>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
-  testMatch: ['**/editor-shell.spec.ts', '**/styleguide.spec.ts'],
+  testMatch: ['**/editor-shell.spec.ts', '**/styleguide.spec.ts', '**/routing.spec.ts'],
   timeout: 60000,
   webServer: {
     command: 'pnpm --filter @rhypdf/editor preview --port 4173',
