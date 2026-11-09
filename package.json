@@ -13,7 +13,9 @@
     "test:e2e": "playwright test --project=msedge",
     "test:e2e:all": "playwright test",
     "test:e2e:prod": "playwright test --config playwright.preview.config.ts --project=msedge",
-    "test:e2e:prod:all": "playwright test --config playwright.preview.config.ts"
+    "test:e2e:prod:all": "playwright test --config playwright.preview.config.ts",
+    "license:check": "node scripts/license_check.mjs",
+    "size:check": "node scripts/check_bundle_size.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

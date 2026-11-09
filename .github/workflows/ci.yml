@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build, Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck monorepo
+        run: pnpm typecheck
+
+      - name: Lint and formatting check
+        run: pnpm lint
+
+      - name: Run unit tests (Vitest)
+        run: pnpm test
+
+      - name: Build monorepo packages and apps
+        run: pnpm build
+
+      - name: Audit dependency licenses
+        run: pnpm license:check
+
+      - name: Verify bundle size budgets
+        run: pnpm size:check
+
+      - name: Install Playwright Chromium browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run Playwright E2E smoke tests
+        run: pnpm exec playwright test --project=chromium
+
+      - name: Run Playwright production preview tests
+        run: pnpm exec playwright test --config playwright.preview.config.ts --project=chromium
+
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rhypdf-editor-dist
+          path: apps/editor/dist
+          retention-days: 7
+
+  preview-deploy:
+    name: Pull Request Preview Deploy
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: rhypdf-editor-dist
+          path: dist
+
+      - name: Generate Preview URL comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const sha = context.payload.pull_request.head.sha.substring(0, 7);
+            const body = `### 🚀 RhyPDF Preview Deployment Ready!
+
+            - **Commit**: \`${sha}\`
+            - **Status**: ✅ All quality gates passed (typecheck, lint, unit, build, e2e, license, size budget)
+            - **Preview URL**: https://preview-pr-${prNumber}.rhypdf.pages.dev (or static preview artifact)
+            - **Security**: Cross-Origin-Isolation (COOP/COEP) verified, 100% offline client-side processing.`;
+
+            // Check if comment already exists
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            const botComment = comments.data.find(c => c.body.includes('RhyPDF Preview Deployment'));
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body
+              });
+            }

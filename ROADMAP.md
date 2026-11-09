@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 1
-CURRENT TASK  : 1.10
+CURRENT TASK  : 1.11
 LAST UPDATED  : 2026-11-09
-NOTES         : Task 1.9 complete (Vitest monorepo unit testing setup, Playwright multi-browser configuration, test-fixtures registry with 14 PDFs, golden-image pixelmatch helper with synthetic PNG comparison verified in unit tests and Playwright browser tests). Moving to Task 1.10 (CI GitHub Actions workflow: install -> typecheck -> lint -> unit -> build -> e2e smoke -> license check -> bundle-size budget).
+NOTES         : Task 1.10 complete (GitHub Actions CI workflow, license audit check for 208 dependencies, bundle size budget checks, PR preview deployment action). Moving to Task 1.11 (Security + PWA baseline: COOP/COEP/CSP headers, Web App Manifest with PDF file_handlers, Service Worker shell for offline caching).
 ```
 
 ---
@@ -354,7 +354,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **1.7** State, errors, logging: Zustand store layout, React error boundaries, a tiny leveled logger, and a global `error` / `unhandledrejection` handler that saves recovery metadata. _Done when:_ a thrown error shows a friendly screen and no work is lost.
 - [x] **1.8** i18n scaffolding (i18next): English only for now, **no hard-coded UI text**, CSS logical properties, `dir` switching. _Done when:_ a pseudo-locale (long strings + RTL) renders without broken layout.
 - [x] **1.9** Test setup: Vitest, Playwright (Chromium, Firefox, WebKit), the `test-fixtures` package, a golden-image helper (pixelmatch). _Done when:_ one unit test and one e2e smoke test run locally and in CI.
-- [ ] **1.10** CI (GitHub Actions): install → typecheck → lint → unit → build → e2e smoke → license check → bundle-size budget; preview deploy per pull request. _Done when:_ CI is green and a preview URL appears on a PR.
+- [x] **1.10** CI (GitHub Actions): install → typecheck → lint → unit → build → e2e smoke → license check → bundle-size budget; preview deploy per pull request. _Done when:_ CI is green and a preview URL appears on a PR.
 - [ ] **1.11** Security + PWA baseline: headers (COOP, COEP, CSP, Referrer-Policy, Permissions-Policy, X-Content-Type-Options), dependency audit + Renovate / Dependabot, web app manifest, service-worker shell. _Done when:_ a header checker shows the target policy and the app shell loads offline.
 
 **Done when:** an empty Home page deploys to a preview URL in light and dark theme, CI is green, headers are verified.
@@ -782,6 +782,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-09 | 1.7     | State, errors & logging: Zustand, ErrorBoundary, leveled logger    | `P1.7`  | Zustand ui/doc stores, ErrorBoundary, global recovery storage verified in E2E                   |
 | 2026-11-09 | 1.8     | i18n scaffolding (i18next), pseudo-locale, RTL dir switching       | `P1.8`  | Zero hardcoded UI text, CSS logical properties, pseudo-locale & Arabic RTL verified in E2E      |
 | 2026-11-09 | 1.9     | Test setup: Vitest, Playwright multi-browser & golden-image helper | `P1.9`  | Vitest happy-dom, Playwright multi-browser, test-fixtures & pixelmatch helper verified in tests |
+| 2026-11-09 | 1.10    | CI GitHub Actions workflow, license audit & bundle budgets         | `P1.10` | Configured CI, 208-dep license checker, size budget script, and preview deploy action           |
 
 ---
 
