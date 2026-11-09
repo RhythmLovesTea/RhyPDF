@@ -282,12 +282,43 @@ export class PdfiumEngine implements PdfEngine {
     const pagePtr = this.loadPage(doc, pageIndex);
 
     const scale = opts.scale * opts.dpr;
-    const widthPx = Math.max(1, Math.round(info.width * scale));
-    const heightPx = Math.max(1, Math.round(info.height * scale));
+    const effectiveRot =
+      opts.rotationOverride !== undefined ? opts.rotationOverride : info.rotation;
+    const isSwapped = effectiveRot === 90 || effectiveRot === 270;
 
-    const bitmap = this.pdfium.FPDFBitmap_CreateEx(widthPx, heightPx, 4, 0, 0);
+    let destWidthPx: number;
+    let destHeightPx: number;
+    let startX: number;
+    let startY: number;
+    let sizeX: number;
+    let sizeY: number;
+
+    if (opts.clipRect) {
+      const tileWidthPt = Math.max(1, opts.clipRect.right - opts.clipRect.left);
+      const tileHeightPt = Math.max(1, opts.clipRect.top - opts.clipRect.bottom);
+      destWidthPx = Math.max(1, Math.round(tileWidthPt * scale));
+      destHeightPx = Math.max(1, Math.round(tileHeightPt * scale));
+      startX = -Math.round(opts.clipRect.left * scale);
+      startY = -Math.round((info.height - opts.clipRect.top) * scale);
+      sizeX = Math.round(info.width * scale);
+      sizeY = Math.round(info.height * scale);
+    } else {
+      const pageWidthPt = isSwapped ? info.height : info.width;
+      const pageHeightPt = isSwapped ? info.width : info.height;
+      destWidthPx = Math.max(1, Math.round(pageWidthPt * scale));
+      destHeightPx = Math.max(1, Math.round(pageHeightPt * scale));
+      startX = 0;
+      startY = 0;
+      sizeX = destWidthPx;
+      sizeY = destHeightPx;
+    }
+
+    const bitmap = this.pdfium.FPDFBitmap_CreateEx(destWidthPx, destHeightPx, 4, 0, 0);
     if (!bitmap) {
-      throw new PdfError('OutOfMemory', `Failed to allocate render bitmap ${widthPx}x${heightPx}`);
+      throw new PdfError(
+        'OutOfMemory',
+        `Failed to allocate render bitmap ${destWidthPx}x${destHeightPx}`
+      );
     }
 
     try {
@@ -296,21 +327,22 @@ export class PdfiumEngine implements PdfEngine {
       }
 
       // Background white (0xFFFFFFFF)
-      this.pdfium.FPDFBitmap_FillRect(bitmap, 0, 0, widthPx, heightPx, 0xffffffff);
+      this.pdfium.FPDFBitmap_FillRect(bitmap, 0, 0, destWidthPx, destHeightPx, 0xffffffff);
 
-      const rot =
-        opts.rotationOverride !== undefined
-          ? opts.rotationOverride === 90
-            ? 1
-            : opts.rotationOverride === 180
-              ? 2
-              : opts.rotationOverride === 270
-                ? 3
-                : 0
-          : 0;
+      const rotCode =
+        effectiveRot === 90 ? 1 : effectiveRot === 180 ? 2 : effectiveRot === 270 ? 3 : 0;
 
-      const flags = opts.renderAnnotations ? 1 : 0;
-      this.pdfium.FPDF_RenderPageBitmap(bitmap, pagePtr, 0, 0, widthPx, heightPx, rot, flags);
+      const flags = opts.renderAnnotations !== false ? 1 : 0;
+      this.pdfium.FPDF_RenderPageBitmap(
+        bitmap,
+        pagePtr,
+        startX,
+        startY,
+        sizeX,
+        sizeY,
+        rotCode,
+        flags
+      );
 
       if (signal?.aborted) {
         throw new PdfError('Cancelled', 'Render request aborted after rendering');
@@ -318,14 +350,18 @@ export class PdfiumEngine implements PdfEngine {
 
       const bufferPtr = this.pdfium.FPDFBitmap_GetBuffer(bitmap);
       const stride = this.pdfium.FPDFBitmap_GetStride(bitmap);
-      const bgraBytes = new Uint8Array(this.emscripten.HEAPU8.buffer, bufferPtr, stride * heightPx);
+      const bgraBytes = new Uint8Array(
+        this.emscripten.HEAPU8.buffer,
+        bufferPtr,
+        stride * destHeightPx
+      );
 
       // Convert BGRA to RGBA
-      const rgba = new Uint8ClampedArray(widthPx * heightPx * 4);
-      for (let y = 0; y < heightPx; y++) {
+      const rgba = new Uint8ClampedArray(destWidthPx * destHeightPx * 4);
+      for (let y = 0; y < destHeightPx; y++) {
         const rowSrc = y * stride;
-        const rowDst = y * widthPx * 4;
-        for (let x = 0; x < widthPx; x++) {
+        const rowDst = y * destWidthPx * 4;
+        for (let x = 0; x < destWidthPx; x++) {
           const srcIdx = rowSrc + x * 4;
           const dstIdx = rowDst + x * 4;
           rgba[dstIdx + 0] = bgraBytes[srcIdx + 2] ?? 0; // R
@@ -345,14 +381,15 @@ export class PdfiumEngine implements PdfEngine {
         typeof globalScope.createImageBitmap === 'function' &&
         typeof globalScope.ImageData === 'function'
       ) {
-        const imageData = new globalScope.ImageData(rgba, widthPx, heightPx);
+        const imageData = new globalScope.ImageData(rgba, destWidthPx, destHeightPx);
         return await globalScope.createImageBitmap(imageData);
       }
 
-      // Fallback for Node / Vitest test environment
+      // Fallback for Node / Vitest test environment with pixel buffer inspection
       return {
-        width: widthPx,
-        height: heightPx,
+        width: destWidthPx,
+        height: destHeightPx,
+        data: rgba,
         close: () => {}
       } as unknown as ImageBitmap;
     } finally {

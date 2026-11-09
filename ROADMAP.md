@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 2
-CURRENT TASK  : 2.5
+CURRENT TASK  : 2.6
 LAST UPDATED  : 2026-11-09
-NOTES         : Task 2.4 complete (Open document from ArrayBuffer / Blob with optional password; chunked reads for big 100 MB files using FPDF_LoadCustomDocument without WASM heap explosion; PasswordRequired on missing password, WrongPassword on incorrect password; tested on standard, encrypted, corrupt, and 100 MB files). Moving to Task 2.5 (Page render to ImageBitmap with options: scale, devicePixelRatio, clip rect, rotation, annotations on/off).
+NOTES         : Task 2.5 complete (Page render to ImageBitmap with options: arbitrary scale, devicePixelRatio, clipRect sub-region tiles, 4-angle rotation 0/90/180/270 with aspect ratio dimension swapping, annotations on/off, AbortSignal cancellation; copy WASM BGRA buffer to ImageData and transfer ImageBitmap without OffscreenCanvas dependency). Moving to Task 2.6 (Page-object enumeration returning PageObject models).
 ```
 
 ---
@@ -367,7 +367,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **2.2** Worker host + RPC (Comlink): one engine worker, a serialized request queue (PDFium is not thread-safe), cancellation via `AbortSignal`, transferables for bitmaps and buffers. _Done when:_ 100 concurrent calls from the UI run correctly and cancellation works.
 - [x] **2.3** WASM loading strategy: lazy load, streaming compile, cached by the service worker, loading progress UI. _Done when:_ second visit starts the engine from cache, offline.
 - [x] **2.4** Open a document from `ArrayBuffer` / `Blob` with optional password; chunked reads for big files (per Task 0.9). _Done when:_ wrong password returns `WrongPassword` and a 100 MB file opens within the limits.
-- [ ] **2.5** Page render to `ImageBitmap` with options: scale, `devicePixelRatio`, clip rect (for tiles), rotation, annotations on / off. PDFium renders into a WASM bitmap buffer; copy it to `ImageData` and transfer an `ImageBitmap` (no `OffscreenCanvas` dependency). _Done when:_ arbitrary scale, tiles and rotation render correctly in all 3 browser engines.
+- [x] **2.5** Page render to `ImageBitmap` with options: scale, `devicePixelRatio`, clip rect (for tiles), rotation, annotations on / off. PDFium renders into a WASM bitmap buffer; copy it to `ImageData` and transfer an `ImageBitmap` (no `OffscreenCanvas` dependency). _Done when:_ arbitrary scale, tiles and rotation render correctly in all 3 browser engines.
 - [ ] **2.6** Page-object enumeration returning `PageObject` models (type, bounds, matrix, z-index, parent form chain). _Done when:_ objects match the Task 0.3 overlay on the sample set.
 - [ ] **2.7** Text-object details: string, font name, size, fill / stroke color, render mode, char boxes, character / word spacing, horizontal scale, rotation, embedded-font info (subset, full, not embedded, flags, weight).
 - [ ] **2.8** Image-object details: bitmap preview, pixel size, bounds, matrix, filters, color space, mask / soft-mask info, effective DPI.
@@ -757,37 +757,38 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PROGRESS LOG (AGENT: ADD ONE LINE PER COMPLETED TASK)
 
-| Date       | Task ID | What was done                                                      | Commit  | Notes / Problems                                                                                |
-| ---------- | ------- | ------------------------------------------------------------------ | ------- | ----------------------------------------------------------------------------------------------- |
-| 2026-11-09 | —       | Web roadmap created from the Android checklist                     | —       | Start at Task 0.1                                                                               |
-| 2026-11-09 | 0.1     | Load PDFium WASM in Web Worker with Vite + TS spike                | `P0.1`  | Initialized @embedpdf/pdfium 2.15.1 in worker, self-hosted WASM verified                        |
-| 2026-11-09 | 0.2     | Render 3 sample PDFs to canvas at 2x scale and DPR                 | `P0.2`  | Validated rendering on single-column, two-column and image-heavy PDFs                           |
-| 2026-11-09 | 0.3     | Page object enumeration and DOM/SVG overlay mapping                | `P0.3`  | Mapped bounds at 1x, 1.5x, 2x and handled 90 deg rotation with FPDF_PageToDevice                |
-| 2026-11-09 | 0.4     | Text run extraction with font, size, color, subset & char boxes    | `P0.4`  | Verified extraction across 3 sample PDFs with per-character bounding boxes                      |
-| 2026-11-09 | 0.5     | Delete text object, insert new text with bundled font, save        | `P0.5`  | Verified in-place replacement and confirmed 0 ghost text in regenerated file                    |
-| 2026-11-09 | 0.6     | Complex scripts: Arabic & Devanagari shaping with HarfBuzz         | `P0.6`  | Verified RTL Arabic & Hindi conjunct ligatures, CID Type2 font support & fallbacks              |
-| 2026-11-09 | 0.7     | Image manipulation: transform, delete, and insert PNG & JPEG       | `P0.7`  | Verified matrix transform (rotate 45 deg), deletion, and PNG with alpha transparency            |
-| 2026-11-09 | 0.8     | Self-hosted Tesseract.js OCR bake-off benchmark                    | `P0.8`  | Verified 94% accuracy, 710ms speed, offline self-hosted WASM + traineddata                      |
-| 2026-11-09 | 0.9     | Memory & big file benchmarks, WASM heap & hard limits              | `P0.9`  | Measured 100-page heap (17.8MB), set 50MB warning, 150MB mobile / 300MB desktop caps            |
-| 2026-11-09 | 0.10    | Hosting headers (COOP/COEP/CSP), crossOriginIsolated & OPFS        | `P0.10` | Verified crossOriginIsolated=true, OPFS round-trip, created headers configs                     |
-| 2026-11-09 | 0.11    | Text-editing surface: IME composition and layout parity            | `P0.11` | Validated Japanese/CJK IME lifecycle, measured 0.57% mismatch, transparent DOM overlay strategy |
-| 2026-11-09 | 0.12    | Save & encryption flags: password unlock and decryption export     | `P0.12` | Verified wrong password rejected, password unlock, EPDF_RemoveEncryption, and unencrypted save  |
-| 2026-11-09 | 0.13    | Write Spike Report, license audit & feasibility verification       | `P0.13` | Completed Phase 0: all 12 spikes passed, licenses verified, Go decision                         |
-| 2026-11-09 | 1.1     | Setup pnpm + Turborepo monorepo with target structure              | `P1.1`  | Created apps/editor and 9 packages; pnpm install & pnpm build & Playwright pass                 |
-| 2026-11-09 | 1.2     | Strict TypeScript, project references & exact dependency versions  | `P1.2`  | Configured strict flags, composite project references, exact deps, verified typecheck           |
-| 2026-11-09 | 1.3     | Vite + React app shell with code splitting & worker/WASM plumbing  | `P1.3`  | Code-split skeleton chunks, dedicated worker loads PDFium WASM in dev & prod preview            |
-| 2026-11-09 | 1.4     | Lint and format setup (ESLint flat config + Prettier)              | `P1.4`  | Verified pnpm lint fails on deliberately bad file and passes cleanly across repo                |
-| 2026-11-09 | 1.5     | Design-system tokens, theme CSS variables & base components        | `P1.5`  | 11 components (Button, Dialog, Tabs, etc.), CSS tokens, verified in style-guide                 |
-| 2026-11-09 | 1.6     | Routing skeleton: Home -> Editor -> Page Organizer -> Settings     | `P1.6`  | Lazy-loaded feature routes, deep linking & page refresh survival verified in E2E                |
-| 2026-11-09 | 1.7     | State, errors & logging: Zustand, ErrorBoundary, leveled logger    | `P1.7`  | Zustand ui/doc stores, ErrorBoundary, global recovery storage verified in E2E                   |
-| 2026-11-09 | 1.8     | i18n scaffolding (i18next), pseudo-locale, RTL dir switching       | `P1.8`  | Zero hardcoded UI text, CSS logical properties, pseudo-locale & Arabic RTL verified in E2E      |
-| 2026-11-09 | 1.9     | Test setup: Vitest, Playwright multi-browser & golden-image helper | `P1.9`  | Vitest happy-dom, Playwright multi-browser, test-fixtures & pixelmatch helper verified in tests |
-| 2026-11-09 | 1.10    | CI GitHub Actions workflow, license audit & bundle budgets         | `P1.10` | Configured CI, 208-dep license checker, size budget script, and preview deploy action           |
-| 2026-11-09 | 1.11    | Security headers, Web App Manifest & offline Service Worker shell  | `P1.11` | COOP/COEP/CSP headers, manifest PDF file_handlers, precached offline shell & WASM, Dependabot   |
-| 2026-11-09 | 2.1     | Define PdfEngine interface, domain models & MockPdfEngine          | `P2.1`  | Defined zero-leak engine interface, domain models, MockPdfEngine & 11 unit tests passed         |
-| 2026-11-09 | 2.2     | Worker host + Comlink RPC, serialized queue & cancellation         | `P2.2`  | SerializedQueue, WorkerPdfEngine, Comlink transferables, 100 concurrent calls verified          |
-| 2026-11-09 | 2.3     | WASM loading strategy: lazy load, progress UI & offline cache      | `P2.3`  | loadPdfiumWasm with streaming progress, loading UI bar, offline start verified                  |
-| 2026-11-09 | 2.4     | Open doc from ArrayBuffer/Blob, password handling & 100MB chunked   | `P2.4`  | FPDF_LoadCustomDocument chunked access, PasswordRequired/WrongPassword, 100MB file opens within heap limits |
+| Date       | Task ID | What was done                                                      | Commit  | Notes / Problems                                                                                            |
+| ---------- | ------- | ------------------------------------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------- |
+| 2026-11-09 | —       | Web roadmap created from the Android checklist                     | —       | Start at Task 0.1                                                                                           |
+| 2026-11-09 | 0.1     | Load PDFium WASM in Web Worker with Vite + TS spike                | `P0.1`  | Initialized @embedpdf/pdfium 2.15.1 in worker, self-hosted WASM verified                                    |
+| 2026-11-09 | 0.2     | Render 3 sample PDFs to canvas at 2x scale and DPR                 | `P0.2`  | Validated rendering on single-column, two-column and image-heavy PDFs                                       |
+| 2026-11-09 | 0.3     | Page object enumeration and DOM/SVG overlay mapping                | `P0.3`  | Mapped bounds at 1x, 1.5x, 2x and handled 90 deg rotation with FPDF_PageToDevice                            |
+| 2026-11-09 | 0.4     | Text run extraction with font, size, color, subset & char boxes    | `P0.4`  | Verified extraction across 3 sample PDFs with per-character bounding boxes                                  |
+| 2026-11-09 | 0.5     | Delete text object, insert new text with bundled font, save        | `P0.5`  | Verified in-place replacement and confirmed 0 ghost text in regenerated file                                |
+| 2026-11-09 | 0.6     | Complex scripts: Arabic & Devanagari shaping with HarfBuzz         | `P0.6`  | Verified RTL Arabic & Hindi conjunct ligatures, CID Type2 font support & fallbacks                          |
+| 2026-11-09 | 0.7     | Image manipulation: transform, delete, and insert PNG & JPEG       | `P0.7`  | Verified matrix transform (rotate 45 deg), deletion, and PNG with alpha transparency                        |
+| 2026-11-09 | 0.8     | Self-hosted Tesseract.js OCR bake-off benchmark                    | `P0.8`  | Verified 94% accuracy, 710ms speed, offline self-hosted WASM + traineddata                                  |
+| 2026-11-09 | 0.9     | Memory & big file benchmarks, WASM heap & hard limits              | `P0.9`  | Measured 100-page heap (17.8MB), set 50MB warning, 150MB mobile / 300MB desktop caps                        |
+| 2026-11-09 | 0.10    | Hosting headers (COOP/COEP/CSP), crossOriginIsolated & OPFS        | `P0.10` | Verified crossOriginIsolated=true, OPFS round-trip, created headers configs                                 |
+| 2026-11-09 | 0.11    | Text-editing surface: IME composition and layout parity            | `P0.11` | Validated Japanese/CJK IME lifecycle, measured 0.57% mismatch, transparent DOM overlay strategy             |
+| 2026-11-09 | 0.12    | Save & encryption flags: password unlock and decryption export     | `P0.12` | Verified wrong password rejected, password unlock, EPDF_RemoveEncryption, and unencrypted save              |
+| 2026-11-09 | 0.13    | Write Spike Report, license audit & feasibility verification       | `P0.13` | Completed Phase 0: all 12 spikes passed, licenses verified, Go decision                                     |
+| 2026-11-09 | 1.1     | Setup pnpm + Turborepo monorepo with target structure              | `P1.1`  | Created apps/editor and 9 packages; pnpm install & pnpm build & Playwright pass                             |
+| 2026-11-09 | 1.2     | Strict TypeScript, project references & exact dependency versions  | `P1.2`  | Configured strict flags, composite project references, exact deps, verified typecheck                       |
+| 2026-11-09 | 1.3     | Vite + React app shell with code splitting & worker/WASM plumbing  | `P1.3`  | Code-split skeleton chunks, dedicated worker loads PDFium WASM in dev & prod preview                        |
+| 2026-11-09 | 1.4     | Lint and format setup (ESLint flat config + Prettier)              | `P1.4`  | Verified pnpm lint fails on deliberately bad file and passes cleanly across repo                            |
+| 2026-11-09 | 1.5     | Design-system tokens, theme CSS variables & base components        | `P1.5`  | 11 components (Button, Dialog, Tabs, etc.), CSS tokens, verified in style-guide                             |
+| 2026-11-09 | 1.6     | Routing skeleton: Home -> Editor -> Page Organizer -> Settings     | `P1.6`  | Lazy-loaded feature routes, deep linking & page refresh survival verified in E2E                            |
+| 2026-11-09 | 1.7     | State, errors & logging: Zustand, ErrorBoundary, leveled logger    | `P1.7`  | Zustand ui/doc stores, ErrorBoundary, global recovery storage verified in E2E                               |
+| 2026-11-09 | 1.8     | i18n scaffolding (i18next), pseudo-locale, RTL dir switching       | `P1.8`  | Zero hardcoded UI text, CSS logical properties, pseudo-locale & Arabic RTL verified in E2E                  |
+| 2026-11-09 | 1.9     | Test setup: Vitest, Playwright multi-browser & golden-image helper | `P1.9`  | Vitest happy-dom, Playwright multi-browser, test-fixtures & pixelmatch helper verified in tests             |
+| 2026-11-09 | 1.10    | CI GitHub Actions workflow, license audit & bundle budgets         | `P1.10` | Configured CI, 208-dep license checker, size budget script, and preview deploy action                       |
+| 2026-11-09 | 1.11    | Security headers, Web App Manifest & offline Service Worker shell  | `P1.11` | COOP/COEP/CSP headers, manifest PDF file_handlers, precached offline shell & WASM, Dependabot               |
+| 2026-11-09 | 2.1     | Define PdfEngine interface, domain models & MockPdfEngine          | `P2.1`  | Defined zero-leak engine interface, domain models, MockPdfEngine & 11 unit tests passed                     |
+| 2026-11-09 | 2.2     | Worker host + Comlink RPC, serialized queue & cancellation         | `P2.2`  | SerializedQueue, WorkerPdfEngine, Comlink transferables, 100 concurrent calls verified                      |
+| 2026-11-09 | 2.3     | WASM loading strategy: lazy load, progress UI & offline cache      | `P2.3`  | loadPdfiumWasm with streaming progress, loading UI bar, offline start verified                              |
+| 2026-11-09 | 2.4     | Open doc from ArrayBuffer/Blob, password handling & 100MB chunked  | `P2.4`  | FPDF_LoadCustomDocument chunked access, PasswordRequired/WrongPassword, 100MB file opens within heap limits |
+| 2026-11-09 | 2.5     | Page render to ImageBitmap with scale, DPR, tiles & rotation       | `P2.5`  | Arbitrary scale, DPR, clipRect tile sub-regions, 0/90/180/270 rotation & annotations verified                 |
 
 ---
 

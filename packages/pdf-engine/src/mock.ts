@@ -195,7 +195,18 @@ export class MockPdfEngine implements PdfEngine {
       opts.dpr
     );
 
-    const bitmapSize = mapper.getBitmapSize();
+    let widthPx: number;
+    let heightPx: number;
+
+    if (opts.clipRect) {
+      const scale = opts.scale * opts.dpr;
+      widthPx = Math.max(1, Math.round((opts.clipRect.right - opts.clipRect.left) * scale));
+      heightPx = Math.max(1, Math.round((opts.clipRect.top - opts.clipRect.bottom) * scale));
+    } else {
+      const bitmapSize = mapper.getBitmapSize();
+      widthPx = bitmapSize.width;
+      heightPx = bitmapSize.height;
+    }
 
     // Check cancellation again
     if (signal?.aborted) {
@@ -204,17 +215,17 @@ export class MockPdfEngine implements PdfEngine {
 
     // In browser context: use browser's createImageBitmap if available
     if (typeof createImageBitmap === 'function' && typeof ImageData === 'function') {
-      const clamped = new Uint8ClampedArray(bitmapSize.width * bitmapSize.height * 4);
+      const clamped = new Uint8ClampedArray(widthPx * heightPx * 4);
       // Fill with mock white background
       clamped.fill(255);
-      const imgData = new ImageData(clamped, bitmapSize.width, bitmapSize.height);
+      const imgData = new ImageData(clamped, widthPx, heightPx);
       return await createImageBitmap(imgData);
     }
 
     // In node/test environment fallback: return ImageBitmap polyfill object
     return {
-      width: bitmapSize.width,
-      height: bitmapSize.height,
+      width: widthPx,
+      height: heightPx,
       close: () => {}
     } as unknown as ImageBitmap;
   }
