@@ -28,4 +28,9 @@ test('Spike 0.1, 0.2, 0.3: PDFium init, render 3 PDFs, and object enumeration + 
   await expect(textStatus).toContainText('Sample Contract Agreement', { timeout: 15000 });
   await expect(textStatus).toContainText('Research on Modern Document Layout Algorithms', { timeout: 15000 });
   await expect(textStatus).toContainText('INVOICE #98213', { timeout: 15000 });
+
+  // Spike 0.5: Mutation & Zero Ghost Text
+  const mutateStatus = page.locator('#mutate-save-status');
+  await expect(mutateStatus).toContainText('Ghost text detected: NO (PASSED)', { timeout: 15000 });
+  await expect(mutateStatus).toContainText('New text present: YES (PASSED)', { timeout: 15000 });
 });

@@ -313,6 +313,107 @@ self.onmessage = async (e: MessageEvent) => {
       return;
     }
 
+    if (type === 'MUTATE_AND_SAVE_TEXT') {
+      if (!pdfiumModule) throw new Error('PDFium not initialized');
+      const { pdfBytes, removeIndex = 0, newText, x = 50, y = 790, fontSize = 20.0 } = payload;
+      const heap = getHeap(pdfiumModule);
+      const pData = pdfiumModule.pdfium.wasmExports.malloc(pdfBytes.byteLength);
+      new Uint8Array(heap.buffer, pData, pdfBytes.byteLength).set(new Uint8Array(pdfBytes));
+
+      const doc = pdfiumModule.FPDF_LoadMemDocument(pData, pdfBytes.byteLength, '');
+      const page = pdfiumModule.FPDF_LoadPage(doc, 0);
+
+      // Remove target object
+      const targetObj = pdfiumModule.FPDFPage_GetObject(page, removeIndex);
+      const removeOk = pdfiumModule.FPDFPage_RemoveObject(page, targetObj);
+
+      // Load font & create new text object
+      const font = pdfiumModule.FPDFText_LoadStandardFont(doc, 'Helvetica-Bold');
+      const newTextObj = pdfiumModule.FPDFPageObj_CreateTextObj(doc, font, fontSize);
+
+      // Set UTF-16LE text
+      const bufLen = (newText.length + 1) * 2;
+      const utf16Ptr = pdfiumModule.pdfium.wasmExports.malloc(bufLen);
+      for (let i = 0; i < newText.length; i++) {
+        const code = newText.charCodeAt(i);
+        heap[utf16Ptr + i * 2] = code & 0xff;
+        heap[utf16Ptr + i * 2 + 1] = (code >> 8) & 0xff;
+      }
+      heap[utf16Ptr + newText.length * 2] = 0;
+      heap[utf16Ptr + newText.length * 2 + 1] = 0;
+
+      pdfiumModule.FPDFText_SetText(newTextObj, utf16Ptr);
+      pdfiumModule.pdfium.wasmExports.free(utf16Ptr);
+
+      // Set FS_MATRIX (a=1, b=0, c=0, d=1, e=x, f=y)
+      const pMatrix = pdfiumModule.pdfium.wasmExports.malloc(24);
+      const view = new DataView(heap.buffer);
+      view.setFloat32(pMatrix, 1, true);
+      view.setFloat32(pMatrix + 4, 0, true);
+      view.setFloat32(pMatrix + 8, 0, true);
+      view.setFloat32(pMatrix + 12, 1, true);
+      view.setFloat32(pMatrix + 16, x, true);
+      view.setFloat32(pMatrix + 20, y, true);
+      pdfiumModule.FPDFPageObj_SetMatrix(newTextObj, pMatrix);
+      pdfiumModule.pdfium.wasmExports.free(pMatrix);
+
+      pdfiumModule.FPDFPage_InsertObject(page, newTextObj);
+      pdfiumModule.FPDFPage_GenerateContent(page);
+
+      // Save as copy
+      const writer = pdfiumModule.PDFiumExt_OpenFileWriter();
+      pdfiumModule.PDFiumExt_SaveAsCopy(doc, writer);
+      const savedSize = pdfiumModule.PDFiumExt_GetFileWriterSize(writer);
+
+      const pOutBuf = pdfiumModule.pdfium.wasmExports.malloc(savedSize);
+      pdfiumModule.PDFiumExt_GetFileWriterData(writer, pOutBuf, savedSize);
+      const savedBytes = new Uint8Array(heap.buffer, pOutBuf, savedSize).slice();
+
+      pdfiumModule.pdfium.wasmExports.free(pOutBuf);
+      pdfiumModule.PDFiumExt_CloseFileWriter(writer);
+      pdfiumModule.FPDF_ClosePage(page);
+      pdfiumModule.FPDF_CloseDocument(doc);
+      pdfiumModule.pdfium.wasmExports.free(pData);
+
+      // Verify the saved PDF immediately
+      const pCheck = pdfiumModule.pdfium.wasmExports.malloc(savedBytes.byteLength);
+      new Uint8Array(heap.buffer, pCheck, savedBytes.byteLength).set(savedBytes);
+      const doc2 = pdfiumModule.FPDF_LoadMemDocument(pCheck, savedBytes.byteLength, '');
+      const page2 = pdfiumModule.FPDF_LoadPage(doc2, 0);
+      const textPage2 = pdfiumModule.FPDFText_LoadPage(page2);
+      const len2 = pdfiumModule.FPDFText_CountChars(textPage2);
+
+      const pBuf = pdfiumModule.pdfium.wasmExports.malloc((len2 + 1) * 2);
+      pdfiumModule.FPDFText_GetText(textPage2, 0, len2, pBuf);
+
+      let extracted = '';
+      for (let i = 0; i < len2; i++) {
+        const code = heap[pBuf + i * 2] | (heap[pBuf + i * 2 + 1] << 8);
+        if (code > 0) extracted += String.fromCharCode(code);
+      }
+      pdfiumModule.pdfium.wasmExports.free(pBuf);
+      pdfiumModule.FPDFText_ClosePage(textPage2);
+      pdfiumModule.FPDF_ClosePage(page2);
+      pdfiumModule.FPDF_CloseDocument(doc2);
+      pdfiumModule.pdfium.wasmExports.free(pCheck);
+
+      const hasGhost = extracted.includes('Sample Contract Agreement');
+      const hasNew = extracted.includes(newText);
+
+      self.postMessage({
+        id,
+        type: 'MUTATE_AND_SAVE_TEXT_SUCCESS',
+        result: {
+          savedSize,
+          hasGhost,
+          hasNew,
+          extractedPreview: extracted.slice(0, 120),
+          savedBytes: savedBytes.buffer
+        }
+      }, [savedBytes.buffer]);
+      return;
+    }
+
     throw new Error(`Unknown command type: ${type}`);
   } catch (err: any) {
     self.postMessage({ id, type: 'ERROR', error: err.message || String(err) });

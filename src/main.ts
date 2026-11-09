@@ -149,7 +149,27 @@ async function run() {
       `• PDF 2: "${t2.runs[0]?.text}" (Font: ${t2.runs[0]?.fontName}, Size: ${t2.runs[0]?.fontSize}pt)<br/>` +
       `• PDF 3: "${t3.runs[0]?.text}" (Font: ${t3.runs[0]?.fontName}, Size: ${t3.runs[0]?.fontSize}pt)`;
 
-    log('[Success] Spikes 0.1, 0.2, 0.3, and 0.4 verified!');
+    // Spike 0.5: Delete text object, insert new text with bundled font, regenerate, save, verify NO ghost text
+    log('[0.5] Executing text mutation and zero-ghost-text save test...');
+    const mutateStatus = document.getElementById('mutate-save-status')!;
+    const newTitle = 'Amended Contract Agreement (2026)';
+    const mutateRes = await send('MUTATE_AND_SAVE_TEXT', {
+      pdfBytes: r1.pdfBytes,
+      removeIndex: 0,
+      newText: newTitle,
+      x: 50,
+      y: 790,
+      fontSize: 20.0
+    });
+
+    log(`[0.5] Mutate & save completed: ${mutateRes.savedSize} bytes. Ghost text detected: ${mutateRes.hasGhost}, New text detected: ${mutateRes.hasNew}`);
+    mutateStatus.innerHTML = `<strong>Spike 0.5 Text Mutation & Save:</strong><br/>` +
+      `• Saved file size: ${mutateRes.savedSize} bytes<br/>` +
+      `• Ghost text detected: <strong>${mutateRes.hasGhost ? 'YES (FAIL)' : 'NO (PASSED)'}</strong><br/>` +
+      `• New text present: <strong>${mutateRes.hasNew ? 'YES (PASSED)' : 'NO (FAIL)'}</strong><br/>` +
+      `• Extracted preview: "${mutateRes.extractedPreview}..."`;
+
+    log('[Success] Spikes 0.1, 0.2, 0.3, 0.4, and 0.5 verified!');
   } catch (err: any) {
     log(`[Error] ${err.message}`);
     workerStatus.className = 'status-badge status-err';
