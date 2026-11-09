@@ -60,4 +60,9 @@ test('Spike 0.1, 0.2, 0.3: PDFium init, render 3 PDFs, and object enumeration + 
   await expect(memStatus).toContainText('100 pages', { timeout: 15000 });
   await expect(memStatus).toContainText('Hard limits decided', { timeout: 15000 });
   await expect(memStatus).toContainText('Warning at 50 MB', { timeout: 15000 });
+
+  // Spike 0.10: Hosting Headers & OPFS
+  const hostingStatus = page.locator('#hosting-status');
+  await expect(hostingStatus).toContainText('crossOriginIsolated: TRUE (PASSED)', { timeout: 15000 });
+  await expect(hostingStatus).toContainText('FUNCTIONAL', { timeout: 15000 });
 });
