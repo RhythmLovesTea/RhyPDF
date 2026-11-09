@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 1
-CURRENT TASK  : 1.9
+CURRENT TASK  : 1.10
 LAST UPDATED  : 2026-11-09
-NOTES         : Task 1.8 complete (i18n scaffolding with i18next, zero hardcoded UI strings, pseudo-locale qps-ploc with brackets and elongation, CSS logical properties, and dynamic RTL dir switching verified in unit tests and Playwright E2E). Moving to Task 1.9 (Test setup: Vitest, Playwright multi-browser, golden-image pixelmatch helper).
+NOTES         : Task 1.9 complete (Vitest monorepo unit testing setup, Playwright multi-browser configuration, test-fixtures registry with 14 PDFs, golden-image pixelmatch helper with synthetic PNG comparison verified in unit tests and Playwright browser tests). Moving to Task 1.10 (CI GitHub Actions workflow: install -> typecheck -> lint -> unit -> build -> e2e smoke -> license check -> bundle-size budget).
 ```
 
 ---
@@ -353,7 +353,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **1.6** Routing skeleton: `Home → Editor → Page Organizer → Settings`, lazy-loaded. _Done when:_ routes work on refresh and deep links.
 - [x] **1.7** State, errors, logging: Zustand store layout, React error boundaries, a tiny leveled logger, and a global `error` / `unhandledrejection` handler that saves recovery metadata. _Done when:_ a thrown error shows a friendly screen and no work is lost.
 - [x] **1.8** i18n scaffolding (i18next): English only for now, **no hard-coded UI text**, CSS logical properties, `dir` switching. _Done when:_ a pseudo-locale (long strings + RTL) renders without broken layout.
-- [ ] **1.9** Test setup: Vitest, Playwright (Chromium, Firefox, WebKit), the `test-fixtures` package, a golden-image helper (pixelmatch). _Done when:_ one unit test and one e2e smoke test run locally and in CI.
+- [x] **1.9** Test setup: Vitest, Playwright (Chromium, Firefox, WebKit), the `test-fixtures` package, a golden-image helper (pixelmatch). _Done when:_ one unit test and one e2e smoke test run locally and in CI.
 - [ ] **1.10** CI (GitHub Actions): install → typecheck → lint → unit → build → e2e smoke → license check → bundle-size budget; preview deploy per pull request. _Done when:_ CI is green and a preview URL appears on a PR.
 - [ ] **1.11** Security + PWA baseline: headers (COOP, COEP, CSP, Referrer-Policy, Permissions-Policy, X-Content-Type-Options), dependency audit + Renovate / Dependabot, web app manifest, service-worker shell. _Done when:_ a header checker shows the target policy and the app shell loads offline.
 
@@ -757,30 +757,31 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PROGRESS LOG (AGENT: ADD ONE LINE PER COMPLETED TASK)
 
-| Date       | Task ID | What was done                                                     | Commit  | Notes / Problems                                                                                |
-| ---------- | ------- | ----------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
-| 2026-11-09 | —       | Web roadmap created from the Android checklist                    | —       | Start at Task 0.1                                                                               |
-| 2026-11-09 | 0.1     | Load PDFium WASM in Web Worker with Vite + TS spike               | `P0.1`  | Initialized @embedpdf/pdfium 2.15.1 in worker, self-hosted WASM verified                        |
-| 2026-11-09 | 0.2     | Render 3 sample PDFs to canvas at 2x scale and DPR                | `P0.2`  | Validated rendering on single-column, two-column and image-heavy PDFs                           |
-| 2026-11-09 | 0.3     | Page object enumeration and DOM/SVG overlay mapping               | `P0.3`  | Mapped bounds at 1x, 1.5x, 2x and handled 90 deg rotation with FPDF_PageToDevice                |
-| 2026-11-09 | 0.4     | Text run extraction with font, size, color, subset & char boxes   | `P0.4`  | Verified extraction across 3 sample PDFs with per-character bounding boxes                      |
-| 2026-11-09 | 0.5     | Delete text object, insert new text with bundled font, save       | `P0.5`  | Verified in-place replacement and confirmed 0 ghost text in regenerated file                    |
-| 2026-11-09 | 0.6     | Complex scripts: Arabic & Devanagari shaping with HarfBuzz        | `P0.6`  | Verified RTL Arabic & Hindi conjunct ligatures, CID Type2 font support & fallbacks              |
-| 2026-11-09 | 0.7     | Image manipulation: transform, delete, and insert PNG & JPEG      | `P0.7`  | Verified matrix transform (rotate 45 deg), deletion, and PNG with alpha transparency            |
-| 2026-11-09 | 0.8     | Self-hosted Tesseract.js OCR bake-off benchmark                   | `P0.8`  | Verified 94% accuracy, 710ms speed, offline self-hosted WASM + traineddata                      |
-| 2026-11-09 | 0.9     | Memory & big file benchmarks, WASM heap & hard limits             | `P0.9`  | Measured 100-page heap (17.8MB), set 50MB warning, 150MB mobile / 300MB desktop caps            |
-| 2026-11-09 | 0.10    | Hosting headers (COOP/COEP/CSP), crossOriginIsolated & OPFS       | `P0.10` | Verified crossOriginIsolated=true, OPFS round-trip, created headers configs                     |
-| 2026-11-09 | 0.11    | Text-editing surface: IME composition and layout parity           | `P0.11` | Validated Japanese/CJK IME lifecycle, measured 0.57% mismatch, transparent DOM overlay strategy |
-| 2026-11-09 | 0.12    | Save & encryption flags: password unlock and decryption export    | `P0.12` | Verified wrong password rejected, password unlock, EPDF_RemoveEncryption, and unencrypted save  |
-| 2026-11-09 | 0.13    | Write Spike Report, license audit & feasibility verification      | `P0.13` | Completed Phase 0: all 12 spikes passed, licenses verified, Go decision                         |
-| 2026-11-09 | 1.1     | Setup pnpm + Turborepo monorepo with target structure             | `P1.1`  | Created apps/editor and 9 packages; pnpm install & pnpm build & Playwright pass                 |
-| 2026-11-09 | 1.2     | Strict TypeScript, project references & exact dependency versions | `P1.2`  | Configured strict flags, composite project references, exact deps, verified typecheck           |
-| 2026-11-09 | 1.3     | Vite + React app shell with code splitting & worker/WASM plumbing | `P1.3`  | Code-split skeleton chunks, dedicated worker loads PDFium WASM in dev & prod preview            |
-| 2026-11-09 | 1.4     | Lint and format setup (ESLint flat config + Prettier)             | `P1.4`  | Verified pnpm lint fails on deliberately bad file and passes cleanly across repo                |
-| 2026-11-09 | 1.5     | Design-system tokens, theme CSS variables & base components       | `P1.5`  | 11 components (Button, Dialog, Tabs, etc.), CSS tokens, verified in style-guide                 |
-| 2026-11-09 | 1.6     | Routing skeleton: Home -> Editor -> Page Organizer -> Settings    | `P1.6`  | Lazy-loaded feature routes, deep linking & page refresh survival verified in E2E                |
-| 2026-11-09 | 1.7     | State, errors & logging: Zustand, ErrorBoundary, leveled logger   | `P1.7`  | Zustand ui/doc stores, ErrorBoundary, global recovery storage verified in E2E                   |
-| 2026-11-09 | 1.8     | i18n scaffolding (i18next), pseudo-locale, RTL dir switching      | `P1.8`  | Zero hardcoded UI text, CSS logical properties, pseudo-locale & Arabic RTL verified in E2E      |
+| Date       | Task ID | What was done                                                      | Commit  | Notes / Problems                                                                                |
+| ---------- | ------- | ------------------------------------------------------------------ | ------- | ----------------------------------------------------------------------------------------------- |
+| 2026-11-09 | —       | Web roadmap created from the Android checklist                     | —       | Start at Task 0.1                                                                               |
+| 2026-11-09 | 0.1     | Load PDFium WASM in Web Worker with Vite + TS spike                | `P0.1`  | Initialized @embedpdf/pdfium 2.15.1 in worker, self-hosted WASM verified                        |
+| 2026-11-09 | 0.2     | Render 3 sample PDFs to canvas at 2x scale and DPR                 | `P0.2`  | Validated rendering on single-column, two-column and image-heavy PDFs                           |
+| 2026-11-09 | 0.3     | Page object enumeration and DOM/SVG overlay mapping                | `P0.3`  | Mapped bounds at 1x, 1.5x, 2x and handled 90 deg rotation with FPDF_PageToDevice                |
+| 2026-11-09 | 0.4     | Text run extraction with font, size, color, subset & char boxes    | `P0.4`  | Verified extraction across 3 sample PDFs with per-character bounding boxes                      |
+| 2026-11-09 | 0.5     | Delete text object, insert new text with bundled font, save        | `P0.5`  | Verified in-place replacement and confirmed 0 ghost text in regenerated file                    |
+| 2026-11-09 | 0.6     | Complex scripts: Arabic & Devanagari shaping with HarfBuzz         | `P0.6`  | Verified RTL Arabic & Hindi conjunct ligatures, CID Type2 font support & fallbacks              |
+| 2026-11-09 | 0.7     | Image manipulation: transform, delete, and insert PNG & JPEG       | `P0.7`  | Verified matrix transform (rotate 45 deg), deletion, and PNG with alpha transparency            |
+| 2026-11-09 | 0.8     | Self-hosted Tesseract.js OCR bake-off benchmark                    | `P0.8`  | Verified 94% accuracy, 710ms speed, offline self-hosted WASM + traineddata                      |
+| 2026-11-09 | 0.9     | Memory & big file benchmarks, WASM heap & hard limits              | `P0.9`  | Measured 100-page heap (17.8MB), set 50MB warning, 150MB mobile / 300MB desktop caps            |
+| 2026-11-09 | 0.10    | Hosting headers (COOP/COEP/CSP), crossOriginIsolated & OPFS        | `P0.10` | Verified crossOriginIsolated=true, OPFS round-trip, created headers configs                     |
+| 2026-11-09 | 0.11    | Text-editing surface: IME composition and layout parity            | `P0.11` | Validated Japanese/CJK IME lifecycle, measured 0.57% mismatch, transparent DOM overlay strategy |
+| 2026-11-09 | 0.12    | Save & encryption flags: password unlock and decryption export     | `P0.12` | Verified wrong password rejected, password unlock, EPDF_RemoveEncryption, and unencrypted save  |
+| 2026-11-09 | 0.13    | Write Spike Report, license audit & feasibility verification       | `P0.13` | Completed Phase 0: all 12 spikes passed, licenses verified, Go decision                         |
+| 2026-11-09 | 1.1     | Setup pnpm + Turborepo monorepo with target structure              | `P1.1`  | Created apps/editor and 9 packages; pnpm install & pnpm build & Playwright pass                 |
+| 2026-11-09 | 1.2     | Strict TypeScript, project references & exact dependency versions  | `P1.2`  | Configured strict flags, composite project references, exact deps, verified typecheck           |
+| 2026-11-09 | 1.3     | Vite + React app shell with code splitting & worker/WASM plumbing  | `P1.3`  | Code-split skeleton chunks, dedicated worker loads PDFium WASM in dev & prod preview            |
+| 2026-11-09 | 1.4     | Lint and format setup (ESLint flat config + Prettier)              | `P1.4`  | Verified pnpm lint fails on deliberately bad file and passes cleanly across repo                |
+| 2026-11-09 | 1.5     | Design-system tokens, theme CSS variables & base components        | `P1.5`  | 11 components (Button, Dialog, Tabs, etc.), CSS tokens, verified in style-guide                 |
+| 2026-11-09 | 1.6     | Routing skeleton: Home -> Editor -> Page Organizer -> Settings     | `P1.6`  | Lazy-loaded feature routes, deep linking & page refresh survival verified in E2E                |
+| 2026-11-09 | 1.7     | State, errors & logging: Zustand, ErrorBoundary, leveled logger    | `P1.7`  | Zustand ui/doc stores, ErrorBoundary, global recovery storage verified in E2E                   |
+| 2026-11-09 | 1.8     | i18n scaffolding (i18next), pseudo-locale, RTL dir switching       | `P1.8`  | Zero hardcoded UI text, CSS logical properties, pseudo-locale & Arabic RTL verified in E2E      |
+| 2026-11-09 | 1.9     | Test setup: Vitest, Playwright multi-browser & golden-image helper | `P1.9`  | Vitest happy-dom, Playwright multi-browser, test-fixtures & pixelmatch helper verified in tests |
 
 ---
 
