@@ -12,20 +12,31 @@ import type {
   RenderOptions,
   PageMutation,
   MutationResult,
-  SaveOptions
+  SaveOptions,
+  MemoryStats
 } from '../index';
 import { PdfError } from '../index';
 import type { PdfEngineWorkerApi } from '../protocol';
 
+export interface WorkerPdfEngineOptions {
+  workerFactory?: () => Worker;
+  heapThresholdBytes?: number;
+}
+
 export class WorkerPdfEngine implements PdfEngine {
   private remote: Comlink.Remote<PdfEngineWorkerApi>;
   private workerInstance?: Worker;
+  private workerFactory?: () => Worker;
+  private heapThresholdBytes: number;
   private idCounter = 0;
 
-  constructor(endpointOrWorker: Worker | Comlink.Endpoint) {
+  constructor(endpointOrWorker: Worker | Comlink.Endpoint, options?: WorkerPdfEngineOptions) {
     if (typeof Worker !== 'undefined' && endpointOrWorker instanceof Worker) {
       this.workerInstance = endpointOrWorker;
     }
+    this.workerFactory = options?.workerFactory;
+    // Default threshold: 150 MB (standard mobile/Safari threshold)
+    this.heapThresholdBytes = options?.heapThresholdBytes ?? 150 * 1024 * 1024;
     this.remote = Comlink.wrap<PdfEngineWorkerApi>(endpointOrWorker);
   }
 
@@ -48,7 +59,13 @@ export class WorkerPdfEngine implements PdfEngine {
 
   async close(doc: DocumentHandle): Promise<void> {
     const reqId = this.nextId('close');
-    return this.remote.close(reqId, doc);
+    await this.remote.close(reqId, doc);
+    await this.checkAndRestartWorkerIfThresholdExceeded();
+  }
+
+  async closePage(doc: DocumentHandle, page: number): Promise<void> {
+    const reqId = this.nextId('closePage');
+    return this.remote.closePage(reqId, doc, page);
   }
 
   async pageCount(doc: DocumentHandle): Promise<number> {
@@ -130,9 +147,43 @@ export class WorkerPdfEngine implements PdfEngine {
     return this.remote.getQueueLength();
   }
 
+  async getMemoryStats(): Promise<MemoryStats> {
+    const reqId = this.nextId('memoryStats');
+    return this.remote.getMemoryStats(reqId);
+  }
+
+  async checkAndRestartWorkerIfThresholdExceeded(): Promise<boolean> {
+    if (!this.workerFactory) return false;
+    try {
+      const stats = await this.getMemoryStats();
+      if (stats.wasmHeapTotal >= this.heapThresholdBytes && stats.activeDocuments === 0) {
+        await this.restartWorker();
+        return true;
+      }
+    } catch {
+      // Ignore if worker is busy
+    }
+    return false;
+  }
+
+  async restartWorker(): Promise<void> {
+    if (!this.workerFactory) return;
+    this.terminate();
+    const newWorker = this.workerFactory();
+    this.workerInstance = newWorker;
+    this.remote = Comlink.wrap<PdfEngineWorkerApi>(newWorker);
+    await this.init();
+  }
+
   terminate(): void {
     if (this.workerInstance) {
-      this.workerInstance.terminate();
+      if (typeof this.workerInstance.terminate === 'function') {
+        this.workerInstance.terminate();
+      } else if (
+        typeof (this.workerInstance as unknown as { close?: () => void }).close === 'function'
+      ) {
+        (this.workerInstance as unknown as { close: () => void }).close();
+      }
     }
   }
 }

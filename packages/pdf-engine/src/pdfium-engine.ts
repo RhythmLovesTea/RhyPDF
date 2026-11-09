@@ -24,7 +24,9 @@ import type {
   RenderOptions,
   PageMutation,
   MutationResult,
-  SaveOptions
+  SaveOptions,
+  MemoryStats,
+  LeakReport
 } from './index';
 import { PdfError } from './index';
 import { loadPdfiumWasm, type WasmLoaderOptions } from './wasm-loader';
@@ -55,6 +57,7 @@ export class PdfiumEngine implements PdfEngine {
   private pdfium: WrappedPdfiumModule;
   private documents = new Map<DocumentHandle, ActiveDocument>();
   private handleCounter = 0;
+  private enableLeakWarnings = false;
 
   constructor(pdfiumModule: WrappedPdfiumModule) {
     this.pdfium = pdfiumModule;
@@ -242,6 +245,15 @@ export class PdfiumEngine implements PdfEngine {
     }
 
     this.documents.delete(docHandle);
+  }
+
+  async closePage(docHandle: DocumentHandle, pageIndex: number): Promise<void> {
+    const doc = this.getDocument(docHandle);
+    const pagePtr = doc.openPages.get(pageIndex);
+    if (pagePtr) {
+      this.pdfium.FPDF_ClosePage(pagePtr);
+      doc.openPages.delete(pageIndex);
+    }
   }
 
   async pageCount(docHandle: DocumentHandle): Promise<number> {
@@ -1599,5 +1611,49 @@ export class PdfiumEngine implements PdfEngine {
       doc.openPages.set(pageIndex, pagePtr);
     }
     return pagePtr;
+  }
+
+  async getMemoryStats(): Promise<MemoryStats> {
+    let activePages = 0;
+    for (const doc of this.documents.values()) {
+      activePages += doc.openPages.size;
+    }
+    const wasmHeapTotal = this.emscripten.HEAPU8?.buffer?.byteLength ?? 0;
+    return {
+      wasmHeapTotal,
+      activeDocuments: this.documents.size,
+      activePages
+    };
+  }
+
+  setLeakDetector(enabled: boolean): void {
+    this.enableLeakWarnings = enabled;
+  }
+
+  checkLeaks(): LeakReport {
+    let activePages = 0;
+    const details: string[] = [];
+    for (const [handle, doc] of this.documents.entries()) {
+      activePages += doc.openPages.size;
+      details.push(
+        `Document '${handle}' still open with ${doc.openPages.size} cached pages (docPtr: ${doc.docPtr})`
+      );
+    }
+    return {
+      hasLeaks: this.documents.size > 0 || activePages > 0,
+      activeDocuments: this.documents.size,
+      activePages,
+      details
+    };
+  }
+
+  dispose(): void {
+    const report = this.checkLeaks();
+    if (report.hasLeaks && this.enableLeakWarnings) {
+      console.warn(`[PdfiumEngine DevLeakDetector] Resource leaks detected:`, report.details);
+    }
+    for (const handle of Array.from(this.documents.keys())) {
+      this.close(handle).catch(() => {});
+    }
   }
 }

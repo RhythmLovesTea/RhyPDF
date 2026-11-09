@@ -19,7 +19,9 @@ import type {
   RenderOptions,
   PageMutation,
   MutationResult,
-  SaveOptions
+  SaveOptions,
+  MemoryStats,
+  LeakReport
 } from './index';
 import { PdfError } from './index';
 
@@ -38,6 +40,7 @@ interface MockDocState {
   password?: string;
   isEncrypted: boolean;
   pages: MockPageState[];
+  openPages: Set<number>;
 }
 
 export class MockPdfEngine implements PdfEngine {
@@ -199,7 +202,8 @@ export class MockPdfEngine implements PdfEngine {
       id: handle,
       password: opts?.password,
       isEncrypted: isEncryptedSim,
-      pages: [defaultPage, secondPage]
+      pages: [defaultPage, secondPage],
+      openPages: new Set()
     });
 
     return handle;
@@ -213,6 +217,11 @@ export class MockPdfEngine implements PdfEngine {
       );
     }
     this.documents.delete(doc);
+  }
+
+  async closePage(doc: DocumentHandle, page: number): Promise<void> {
+    const docState = this.getDoc(doc);
+    docState.openPages.delete(page);
   }
 
   async pageCount(doc: DocumentHandle): Promise<number> {
@@ -484,6 +493,38 @@ export class MockPdfEngine implements PdfEngine {
         `Page index ${page} is out of range [0, ${docState.pages.length - 1}]`
       );
     }
+    docState.openPages.add(page);
     return pageState;
+  }
+
+  async getMemoryStats(): Promise<MemoryStats> {
+    let activePages = 0;
+    for (const doc of this.documents.values()) {
+      activePages += doc.openPages.size;
+    }
+    return {
+      wasmHeapTotal: 16 * 1024 * 1024,
+      activeDocuments: this.documents.size,
+      activePages
+    };
+  }
+
+  checkLeaks(): LeakReport {
+    const details: string[] = [];
+    let activePages = 0;
+    for (const [handle, doc] of this.documents.entries()) {
+      activePages += doc.openPages.size;
+      details.push(`Document '${handle}' still open with ${doc.openPages.size} cached pages`);
+    }
+    return {
+      hasLeaks: this.documents.size > 0 || activePages > 0,
+      activeDocuments: this.documents.size,
+      activePages,
+      details
+    };
+  }
+
+  dispose(): void {
+    this.documents.clear();
   }
 }

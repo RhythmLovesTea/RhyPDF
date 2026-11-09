@@ -11,7 +11,8 @@ import type {
   RenderOptions,
   PageMutation,
   MutationResult,
-  SaveOptions
+  SaveOptions,
+  MemoryStats
 } from '../index';
 import type { PdfEngineWorkerApi } from '../protocol';
 import { SerializedQueue } from '../queue';
@@ -39,6 +40,14 @@ export class EngineService implements PdfEngineWorkerApi {
 
   async close(requestId: string, doc: DocumentHandle): Promise<void> {
     return this.queue.enqueue(requestId, () => this.engine.close(doc));
+  }
+
+  async closePage(requestId: string, doc: DocumentHandle, page: number): Promise<void> {
+    return this.queue.enqueue(requestId, async () => {
+      if (typeof this.engine.closePage === 'function') {
+        await this.engine.closePage(doc, page);
+      }
+    });
   }
 
   async pageCount(requestId: string, doc: DocumentHandle): Promise<number> {
@@ -100,5 +109,14 @@ export class EngineService implements PdfEngineWorkerApi {
 
   async getQueueLength(): Promise<number> {
     return this.queue.length;
+  }
+
+  async getMemoryStats(requestId: string): Promise<MemoryStats> {
+    return this.queue.enqueue(requestId, async () => {
+      if (typeof this.engine.getMemoryStats === 'function') {
+        return this.engine.getMemoryStats();
+      }
+      return { wasmHeapTotal: 0, activeDocuments: 0, activePages: 0 };
+    });
   }
 }

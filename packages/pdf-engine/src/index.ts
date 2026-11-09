@@ -95,6 +95,19 @@ export interface SaveOptions {
   destination?: WritableStream<Uint8Array>;
 }
 
+export interface MemoryStats {
+  wasmHeapTotal: number;
+  activeDocuments: number;
+  activePages: number;
+}
+
+export interface LeakReport {
+  hasLeaks: boolean;
+  activeDocuments: number;
+  activePages: number;
+  details: string[];
+}
+
 export type PdfErrorCode =
   | 'Corrupt'
   | 'WrongPassword'
@@ -130,6 +143,9 @@ export interface PdfEngine {
   extractText(doc: DocumentHandle, page: number): Promise<TextRun[]>;
   mutate(doc: DocumentHandle, page: number, ops: PageMutation[]): Promise<MutationResult>;
   save(doc: DocumentHandle, opts?: SaveOptions): Promise<Blob>;
+  closePage?(doc: DocumentHandle, page: number): Promise<void>;
+  getMemoryStats?(): Promise<MemoryStats>;
+  checkLeaks?(): LeakReport;
 }
 
 export { MockPdfEngine } from './mock';
