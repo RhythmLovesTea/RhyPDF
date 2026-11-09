@@ -1,19 +1,15 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "useDefineForClassFields": true,
-    "module": "ESNext",
-    "lib": ["ESNext", "DOM", "DOM.Iterable", "WebWorker"],
-    "skipLibCheck": true,
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "strict": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": true
-  },
-  "include": ["src", "spikes", "tests"]
+  "files": [],
+  "references": [
+    { "path": "./packages/pdf-model" },
+    { "path": "./packages/test-fixtures" },
+    { "path": "./packages/pdf-engine" },
+    { "path": "./packages/text-layout" },
+    { "path": "./packages/fonts" },
+    { "path": "./packages/ocr" },
+    { "path": "./packages/edit-core" },
+    { "path": "./packages/ui" },
+    { "path": "./packages/i18n" },
+    { "path": "./apps/editor" }
+  ]
 }

@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 1
-CURRENT TASK  : 1.1
+CURRENT TASK  : 1.2
 LAST UPDATED  : 2026-11-09
-NOTES         : Phase 0 fully complete! All feasibility spikes (0.1 to 0.13) passed and verified. Ready to begin Phase 1 (Project setup & monorepo tooling).
+NOTES         : Task 1.1 complete (pnpm + Turborepo monorepo with 10 packages & apps). Moving to Task 1.2 (TypeScript strict everywhere, project references, path aliases, exact versions).
 ```
 
 ---
@@ -339,7 +339,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PHASE 1 — PROJECT SETUP AND TOOLING
 
-- [ ] **1.1** Create the pnpm + Turborepo monorepo with the structure from Section 3. *Done when:* `pnpm install && pnpm build` works from a clean clone.
+- [x] **1.1** Create the pnpm + Turborepo monorepo with the structure from Section 3. *Done when:* `pnpm install && pnpm build` works from a clean clone.
 - [ ] **1.2** TypeScript `strict` everywhere, project references, path aliases, **exact** dependency versions, committed lockfile. *Done when:* `pnpm typecheck` passes in every package.
 - [ ] **1.3** Vite + React app shell (`apps/editor`) with code splitting and worker / WASM plumbing (`new Worker(new URL(...), import.meta.url)`). *Done when:* a worker loads and replies in dev **and** in a production build.
 - [ ] **1.4** Lint + format (ESLint flat config + Prettier, or Biome) with a command that fails on violations. *Done when:* `pnpm lint` fails on a deliberately bad file and passes on the repo.
@@ -765,6 +765,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-09 | 0.11 | Text-editing surface: IME composition and layout parity | `P0.11` | Validated Japanese/CJK IME lifecycle, measured 0.57% mismatch, transparent DOM overlay strategy |
 | 2026-11-09 | 0.12 | Save & encryption flags: password unlock and decryption export | `P0.12` | Verified wrong password rejected, password unlock, EPDF_RemoveEncryption, and unencrypted save |
 | 2026-11-09 | 0.13 | Write Spike Report, license audit & feasibility verification | `P0.13` | Completed Phase 0: all 12 spikes passed, licenses verified, Go decision |
+| 2026-11-09 | 1.1 | Setup pnpm + Turborepo monorepo with target structure | `P1.1` | Created apps/editor and 9 packages; pnpm install & pnpm build & Playwright pass |
 
 ---
 

@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "noEmit": true
+  },
+  "references": [
+    { "path": "../../packages/pdf-model" },
+    { "path": "../../packages/pdf-engine" },
+    { "path": "../../packages/text-layout" },
+    { "path": "../../packages/fonts" },
+    { "path": "../../packages/ocr" },
+    { "path": "../../packages/edit-core" },
+    { "path": "../../packages/ui" },
+    { "path": "../../packages/i18n" },
+    { "path": "../../packages/test-fixtures" }
+  ],
+  "include": ["src"]
+}
