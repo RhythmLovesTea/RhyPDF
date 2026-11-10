@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 3
-CURRENT TASK  : 3.12
+CURRENT TASK  : 3.13
 LAST UPDATED  : 2026-11-10
-NOTES         : Task 3.11 completed: FitModeSelector with fitWidth, fitPage, actualSize modes, rotation-aware scale calculation, and localStorage persistence per document. Moving to Task 3.12 (Page layout modes: continuous, single, two-page spread).
+NOTES         : Task 3.12 completed: LayoutModeSelector with continuous (default), single-page, and two-page spread layouts. Moving to Task 3.13 (Password-protected PDFs: dialog, retry, cancel).
 ```
 
 ---
@@ -396,7 +396,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **3.9** Text search: find bar, highlight all, next / previous, case / whole-word options.
 - [x] **3.10** Text selection and copy in view mode (own selection layer built from engine character boxes).
 - [x] **3.11** Fit modes: fit width, fit page, actual size; remembered per document.
-- [ ] **3.12** Page layout modes: continuous (default), single page, two-page spread (optional).
+- [x] **3.12** Page layout modes: continuous (default), single page, two-page spread (optional).
 - [ ] **3.13** Password-protected PDFs: dialog, retry, cancel.
 - [ ] **3.14** Corrupt or unsupported files: friendly error screen with a way back.
 - [ ] **3.15** Resize / orientation / DPR-change survival: keep scroll and zoom, no flash; restore last position per document.
@@ -809,7 +809,8 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-10 | 3.8     | Page indicator ("3 / 24"), go to page, and keyboard navigation      | `P3.8`  | PageNavigation "3 / 24" badge, direct input go-to-page, boundary clamping, and PgUp/PgDn/Home/End keyboard   |
 | 2026-11-10 | 3.9     | Text search find bar, match highlighting, next/prev & options       | `P3.9`  | FindBar search UI, searchPageText exact rect extraction, case/word options, and SearchHighlightLayer         |
 | 2026-11-10 | 3.10    | Text selection and copy in view mode (character boxes)              | `P3.10` | TextSelectionLayer character box hit-testing, drag range selection, highlight overlay & clipboard copy       |
-| 2026-11-10 | 3.11    | Fit modes: fit width, fit page, actual size per document            | `P3.11` | FitModeSelector with fitWidth/fitPage/actualSize, rotation support, and document localStorage persistence      |
+| 2026-11-10 | 3.11    | Fit modes: fit width, fit page, actual size per document            | `P3.11` | FitModeSelector with fitWidth/fitPage/actualSize, rotation support, and document localStorage persistence    |
+| 2026-11-10 | 3.12    | Page layout modes: continuous (default), single, two-page spread    | `P3.12` | LayoutModeSelector with continuous/single/two-page layouts, row chunking & tests                             |
 
 ---
 
