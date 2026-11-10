@@ -37,7 +37,7 @@ export interface PdfViewerProps {
   pageCount: number;
   getPageMetric?: (pageIndex: number) => PageMetric;
   theme?: 'light' | 'dark';
-  renderThumbnail?: (pageIndex: number) => Promise<ImageBitmap> | ImageBitmap | null;
+  renderThumbnail?: (pageIndex: number) => Promise<ImageBitmap | null> | ImageBitmap | null;
   renderPageBitmap?: (
     pageIndex: number,
     scale: number,
@@ -56,6 +56,98 @@ export interface PdfViewerProps {
   className?: string;
   style?: React.CSSProperties;
 }
+
+interface ViewerPageCanvasProps {
+  pageIndex: number;
+  dim: PageDimension;
+  scale: number;
+  dpr: number;
+  theme?: 'light' | 'dark';
+  isVisible: boolean;
+  docId: string;
+  scheduler: RenderScheduler;
+  renderPageBitmap?: (
+    pageIndex: number,
+    scale: number,
+    dpr: number,
+    signal?: AbortSignal
+  ) => Promise<ImageBitmap>;
+  children?: React.ReactNode;
+}
+
+const ViewerPageCanvas: React.FC<ViewerPageCanvasProps> = ({
+  pageIndex,
+  dim,
+  scale,
+  dpr,
+  theme = 'light',
+  isVisible,
+  docId,
+  scheduler,
+  renderPageBitmap,
+  children
+}) => {
+  const [bitmap, setBitmap] = useState<ImageBitmap | null>(null);
+
+  useEffect(() => {
+    if (!renderPageBitmap) return;
+    let cancelled = false;
+    const jobId = `${docId}:page:${pageIndex}:scale:${scale}:dpr:${dpr}`;
+
+    void scheduler
+      .schedule({
+        id: jobId,
+        pageIndex,
+        priority: isVisible ? RenderPriority.VISIBLE : RenderPriority.NEAR,
+        render: (signal) => renderPageBitmap(pageIndex, scale, dpr, signal)
+      })
+      .then((bmp) => {
+        if (!cancelled) {
+          setBitmap(bmp);
+        }
+      })
+      .catch(() => {
+        // Ignored or cancelled
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [renderPageBitmap, pageIndex, docId, scale, dpr, scheduler, isVisible]);
+
+  if (scale > 2.0) {
+    return (
+      <TiledPageCanvas
+        pageNumber={pageIndex + 1}
+        width={dim.width}
+        height={dim.height}
+        rotation={dim.rotation}
+        scale={scale}
+        dpr={dpr}
+        baseBitmap={bitmap}
+        theme={theme}
+      >
+        {children}
+      </TiledPageCanvas>
+    );
+  }
+
+  return (
+    <PageCanvas
+      pageNumber={pageIndex + 1}
+      width={dim.width}
+      height={dim.height}
+      rotation={dim.rotation}
+      scale={scale}
+      dpr={dpr}
+      bitmap={bitmap}
+      theme={theme}
+      isLoading={!isVisible || !bitmap}
+    >
+      {children}
+    </PageCanvas>
+  );
+};
 
 export const PdfViewer: React.FC<PdfViewerProps> = ({
   docId,
@@ -98,7 +190,6 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   // LRU cache and scheduler
   const bitmapCache = useMemo(() => new BitmapLruCache(), []);
   const scheduler = useMemo(() => new RenderScheduler({ cache: bitmapCache }), [bitmapCache]);
-  const [activeBitmap, setActiveBitmap] = useState<ImageBitmap | null>(null);
 
   // Page dimension helper
   const getPageDimension = useCallback(
@@ -144,34 +235,6 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     maxScale: 8.0,
     enableKeyboard: true
   });
-
-  // Schedule visible page rendering via scheduler when renderPageBitmap is provided
-  useEffect(() => {
-    if (!renderPageBitmap) return;
-    let cancelled = false;
-    const pageIdx = currentPage - 1;
-    const jobId = `${docId}:page:${pageIdx}:scale:${scale}:dpr:${dpr}`;
-
-    void scheduler
-      .schedule({
-        id: jobId,
-        pageIndex: pageIdx,
-        priority: RenderPriority.VISIBLE,
-        render: (signal) => renderPageBitmap(pageIdx, scale, dpr, signal)
-      })
-      .then((bmp) => {
-        if (!cancelled) {
-          setActiveBitmap(bmp);
-        }
-      })
-      .catch(() => {
-        // Ignored or cancelled
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [renderPageBitmap, currentPage, docId, scale, dpr, scheduler]);
 
   // Handle keyboard shortcut for search (Ctrl+F / Cmd+F)
   useEffect(() => {
@@ -277,53 +340,18 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     const activeMatchId =
       activeItem && activeItem.pageIndex === pageIdx ? activeItem.match.id : undefined;
 
-    // Use TiledPageCanvas when zoomed in above 200% for high-zoom fidelity
-    if (scale > 2.0) {
-      return (
-        <TiledPageCanvas
-          pageNumber={pageIdx + 1}
-          width={dim.width}
-          height={dim.height}
-          rotation={dim.rotation}
-          scale={scale}
-          dpr={dpr}
-          theme={theme}
-        >
-          <SearchHighlightLayer
-            pageIndex={pageIdx}
-            matches={pageMatches}
-            currentMatchId={activeMatchId}
-            pageWidthPt={dim.width}
-            pageHeightPt={dim.height}
-            rotation={dim.rotation}
-            scale={scale}
-          />
-          {pageRuns.length > 0 && (
-            <TextSelectionLayer
-              pageIndex={pageIdx}
-              textRuns={pageRuns}
-              pageWidthPt={dim.width}
-              pageHeightPt={dim.height}
-              rotation={dim.rotation}
-              scale={scale}
-            />
-          )}
-          {renderOverlay?.(pageIdx, dim)}
-        </TiledPageCanvas>
-      );
-    }
-
     return (
-      <PageCanvas
-        pageNumber={pageIdx + 1}
-        width={dim.width}
-        height={dim.height}
-        rotation={dim.rotation}
+      <ViewerPageCanvas
+        key={`page-canvas-${pageIdx}`}
+        pageIndex={pageIdx}
+        dim={dim}
         scale={scale}
         dpr={dpr}
-        bitmap={pageIdx === currentPage - 1 ? activeBitmap : null}
         theme={theme}
-        isLoading={!isVisible}
+        isVisible={isVisible}
+        docId={docId}
+        scheduler={scheduler}
+        renderPageBitmap={renderPageBitmap}
       >
         <SearchHighlightLayer
           pageIndex={pageIdx}
@@ -345,7 +373,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           />
         )}
         {renderOverlay?.(pageIdx, dim)}
-      </PageCanvas>
+      </ViewerPageCanvas>
     );
   };
 

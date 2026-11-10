@@ -25,7 +25,8 @@ import {
 import type { PageObject, ImageObject, Rect } from '@rhypdf/pdf-model';
 import { useDocStore } from '../../stores/docStore';
 import { useUIStore } from '../../stores/uiStore';
-import { PdfViewer } from '../viewer/PdfViewer';
+import { PdfViewer, PageMetric } from '../viewer/PdfViewer';
+import { PdfiumEngine, MockPdfEngine, type PdfEngine, type DocumentHandle } from '@rhypdf/pdf-engine';
 import { EditorTopBar } from './EditorTopBar';
 import { EditorToolRail } from './EditorToolRail';
 import { ContextualToolbar } from './ContextualToolbar';
@@ -70,6 +71,7 @@ export default function EditorPage({
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const activePageIdx = currentPage - 1;
   const [scale, setScale] = useState(1.0);
   const [fitMode, setFitMode] = useState<FitMode>('fitWidth');
   const [selectedObject, setSelectedObject] = useState<SelectedObjectProps | null>(null);
@@ -91,8 +93,147 @@ export default function EditorPage({
   const [cropBoxPdf, setCropBoxPdf] = useState<Rect | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Active page index
-  const activePageIdx = currentPage - 1;
+  // PDF Engine & Document Handle
+  const [engine, setEngine] = useState<PdfEngine | null>(null);
+  const [docHandle, setDocHandle] = useState<DocumentHandle | null>(null);
+  const [pageMetricsMap, setPageMetricsMap] = useState<Map<number, PageMetric>>(new Map());
+  const [isLoadingDoc, setIsLoadingDoc] = useState(false);
+  const [docError, setDocError] = useState<{ code: string; message?: string } | null>(null);
+
+  // Initialize engine and open document working copy
+  useEffect(() => {
+    if (!currentDocId) {
+      setDocHandle(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function initAndOpen() {
+      setIsLoadingDoc(true);
+      setDocError(null);
+      try {
+        let eng = engine;
+        if (!eng) {
+          try {
+            eng = await PdfiumEngine.create({ wasmUrl: '/pdfium.wasm' });
+          } catch (e) {
+            console.warn('[EditorPage] PdfiumEngine.create fallback to MockPdfEngine', e);
+            eng = new MockPdfEngine();
+          }
+          if (cancelled) return;
+          setEngine(eng);
+        }
+
+        const bytes = await loadWorkingCopy(currentDocId!);
+        let handle: DocumentHandle;
+        let totalPages = 1;
+
+        if (bytes && bytes.byteLength > 0) {
+          handle = await eng.open(bytes);
+          totalPages = await eng.pageCount(handle);
+        } else {
+          // Fallback empty document
+          try {
+            const emptyBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0x0a]);
+            handle = await eng.open(emptyBytes.buffer);
+            totalPages = await eng.pageCount(handle);
+          } catch {
+            const mock = new MockPdfEngine();
+            eng = mock;
+            setEngine(mock);
+            handle = await mock.open(new Uint8Array(10).buffer);
+            totalPages = pageCount || 1;
+          }
+        }
+
+        if (cancelled) {
+          await eng.close(handle).catch(() => {});
+          return;
+        }
+        setDocHandle(handle);
+
+        // Update docStore with actual page count
+        if (totalPages > 0) {
+          const store = useDocStore.getState();
+          store.setDoc(
+            currentDocId!,
+            store.filename || filename || 'document.pdf',
+            totalPages,
+            store.fileHandle,
+            store.storageType || 'opfs'
+          );
+        }
+
+        // Cache page metrics
+        const metrics = new Map<number, PageMetric>();
+        for (let i = 0; i < totalPages; i++) {
+          try {
+            const info = await eng.pageInfo(handle, i);
+            metrics.set(i, {
+              width: info.width,
+              height: info.height,
+              rotation: (info.rotation as 0 | 90 | 180 | 270) ?? 0
+            });
+          } catch {
+            metrics.set(i, { width: 595.28, height: 841.89, rotation: 0 });
+          }
+        }
+        if (cancelled) return;
+        setPageMetricsMap(metrics);
+
+        // Preload page objects for initial page
+        try {
+          const initialObjs = await eng.getPageObjects(handle, 0);
+          if (!cancelled) {
+            setPageObjectsMap((prev) => new Map(prev).set(0, initialObjs));
+          }
+        } catch {
+          // Ignore
+        }
+      } catch (err: unknown) {
+        console.error('[EditorPage] Failed to load document into engine:', err);
+        if (!cancelled) {
+          setDocError({
+            code: 'LoadError',
+            message: err instanceof Error ? err.message : String(err)
+          });
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingDoc(false);
+        }
+      }
+    }
+
+    void initAndOpen();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentDocId]);
+
+  // Preload page objects when active page index changes
+  useEffect(() => {
+    if (!engine || !docHandle) return;
+    if (pageObjectsMap.has(activePageIdx)) return;
+
+    let cancelled = false;
+    void engine
+      .getPageObjects(docHandle, activePageIdx)
+      .then((objs) => {
+        if (!cancelled) {
+          setPageObjectsMap((prev) => new Map(prev).set(activePageIdx, objs));
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [engine, docHandle, activePageIdx, pageObjectsMap]);
+
+  // Current page objects
   const currentObjects = useMemo(
     () => pageObjectsMap.get(activePageIdx) || [],
     [pageObjectsMap, activePageIdx]
@@ -885,6 +1026,47 @@ export default function EditorPage({
     void editSession.redo();
   }, [editSession]);
 
+  const renderPageBitmap = useCallback(
+    async (pageIdx: number, scaleFactor: number, dprVal: number, signal?: AbortSignal) => {
+      if (!engine || !docHandle) {
+        throw new Error('Engine or document handle not available');
+      }
+      return engine.renderPage(docHandle, pageIdx, { scale: scaleFactor, dpr: dprVal }, signal);
+    },
+    [engine, docHandle]
+  );
+
+  const renderThumbnail = useCallback(
+    async (pageIdx: number) => {
+      if (!engine || !docHandle) return null;
+      try {
+        return await engine.renderPage(docHandle, pageIdx, { scale: 0.18, dpr: 1 });
+      } catch {
+        return null;
+      }
+    },
+    [engine, docHandle]
+  );
+
+  const getPageMetric = useCallback(
+    (pageIdx: number): PageMetric => {
+      return pageMetricsMap.get(pageIdx) ?? { width: 595.28, height: 841.89, rotation: 0 };
+    },
+    [pageMetricsMap]
+  );
+
+  const getPageTextRuns = useCallback(
+    async (pageIdx: number) => {
+      if (!engine || !docHandle) return [];
+      try {
+        return await engine.extractText(docHandle, pageIdx);
+      } catch {
+        return [];
+      }
+    },
+    [engine, docHandle]
+  );
+
   // Commands list for CommandPalette
   const commands: CommandItem[] = useMemo(
     () => [
@@ -1098,8 +1280,15 @@ export default function EditorPage({
           {currentDocId ? (
             <PdfViewer
               docId={currentDocId}
+              docHandle={docHandle}
+              engine={engine ?? undefined}
               pageCount={pageCount || 1}
               theme={theme}
+              getPageMetric={getPageMetric}
+              renderPageBitmap={renderPageBitmap}
+              renderThumbnail={renderThumbnail}
+              getPageTextRuns={getPageTextRuns}
+              error={docError}
               onBackToHome={() => closeDoc()}
               renderOverlay={(pageIdx, metric) => {
                 if (pageIdx !== activePageIdx) return null;
@@ -1140,6 +1329,36 @@ export default function EditorPage({
               <p style={{ fontSize: 16 }}>{t('home.openDocumentDesc')}</p>
               <span style={{ fontSize: 12 }}>
                 PDFium WASM: {wasmStatus} ({wasmPhase})
+              </span>
+            </div>
+          )}
+
+          {isLoadingDoc && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                backgroundColor: 'rgba(255, 255, 255, 0.75)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'column',
+                gap: 12,
+                zIndex: 30
+              }}
+            >
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  border: '3px solid var(--bg-border)',
+                  borderTopColor: 'var(--bg-primary)',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite'
+                }}
+              />
+              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--bg-foreground)' }}>
+                {t('common.loading', { defaultValue: 'Loading document...' })}
               </span>
             </div>
           )}

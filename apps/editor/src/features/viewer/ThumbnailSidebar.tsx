@@ -8,7 +8,7 @@ export interface ThumbnailSidebarProps {
   currentPage: number; // 1-indexed
   getPageDimension: (pageIndex: number) => PageDimension;
   onSelectPage: (pageIndex: number) => void;
-  renderThumbnail?: (pageIndex: number) => Promise<ImageBitmap> | ImageBitmap | null;
+  renderThumbnail?: (pageIndex: number) => Promise<ImageBitmap | null> | ImageBitmap | null;
   theme?: 'light' | 'dark';
   isOpen?: boolean;
   className?: string;
@@ -20,7 +20,7 @@ interface ThumbnailItemProps {
   isActive: boolean;
   dimension: PageDimension;
   onSelect: (pageIndex: number) => void;
-  renderThumbnail?: (pageIndex: number) => Promise<ImageBitmap> | ImageBitmap | null;
+  renderThumbnail?: (pageIndex: number) => Promise<ImageBitmap | null> | ImageBitmap | null;
   theme: 'light' | 'dark';
 }
 
