@@ -11,3 +11,4 @@ export * from './snapping';
 export * from './selection';
 export * from './clipboard';
 export * from './EditSession';
+export * from './images';

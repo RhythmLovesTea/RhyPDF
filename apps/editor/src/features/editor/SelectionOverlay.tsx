@@ -12,12 +12,16 @@ export interface SelectionOverlayProps {
   dpr?: number;
   pageObjects: PageObject[];
   selectedIds: string[];
+  activeMode?: string;
+  isCropping?: boolean;
+  cropBoxPdf?: Rect | null;
   snappingEnabled?: boolean;
   onSelectIds?: (ids: string[]) => void;
   onMove?: (deltaXPt: number, deltaYPt: number) => void;
   onResize?: (newBoundsPdf: Rect) => void;
   onRotate?: (newAngleDeg: number) => void;
   onClearSelection?: () => void;
+  onCropChange?: (newCropPdf: Rect) => void;
 }
 
 export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
@@ -28,12 +32,16 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   dpr = 1.0,
   pageObjects,
   selectedIds,
+  activeMode = 'view',
+  isCropping = false,
+  cropBoxPdf = null,
   snappingEnabled = true,
   onSelectIds,
   onMove,
   onResize,
   onRotate,
-  onClearSelection
+  onClearSelection,
+  onCropChange: _onCropChange
 }) => {
   const mapper = new CoordinateMapper(pageWidthPt, pageHeightPt, rotation, scale, dpr);
   const cssSize = mapper.getCssSize();
@@ -45,13 +53,18 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
 
   const svgRef = useRef<SVGSVGElement | null>(null);
 
+  // Filter selectable objects if in mode-specific views
+  const eligibleObjects =
+    activeMode === 'edit-images' ? pageObjects.filter((o) => o.type === 'image') : pageObjects;
+
   // Compute union selection bounds
-  const boundsPdf = computeSelectionBounds(pageObjects, selectedIds);
+  const boundsPdf = computeSelectionBounds(eligibleObjects, selectedIds);
   const boxCss = boundsPdf ? mapper.pdfRectToCss(boundsPdf) : null;
+  const cropBoxCss = cropBoxPdf ? mapper.pdfRectToCss(cropBoxPdf) : null;
 
   // Sibling objects for snapping (non-selected objects)
   const selectedSet = new Set(selectedIds);
-  const siblingObjects = pageObjects.filter((o) => !selectedSet.has(o.id));
+  const siblingObjects = eligibleObjects.filter((o) => !selectedSet.has(o.id));
 
   const handlePointerDown = (e: React.PointerEvent, handle: HandleType) => {
     e.stopPropagation();
@@ -133,8 +146,11 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
       onMove?.(finalDxPt, finalDyPt);
       setDragStart({ x: e.clientX, y: e.clientY });
     } else if (activeHandle && activeHandle !== 'rotate') {
-      // Resize handles
+      // Resize handles (Task 6.4: keep aspect ratio by default on corner handles; Shift toggles)
       const newBoxCss = { ...boxCss };
+      const isCorner = ['nw', 'ne', 'se', 'sw'].includes(activeHandle);
+      const keepRatio = isCorner ? !e.shiftKey : e.shiftKey;
+
       if (activeHandle.includes('w')) {
         newBoxCss.x += dxScreen;
         newBoxCss.width -= dxScreen;
@@ -148,6 +164,15 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
       }
       if (activeHandle.includes('s')) {
         newBoxCss.height += dyScreen;
+      }
+
+      if (keepRatio && boxCss.height > 0 && boxCss.width > 0) {
+        const origRatio = boxCss.width / boxCss.height;
+        if (Math.abs(dxScreen) >= Math.abs(dyScreen)) {
+          newBoxCss.height = newBoxCss.width / origRatio;
+        } else {
+          newBoxCss.width = newBoxCss.height * origRatio;
+        }
       }
 
       if (newBoxCss.width > 5 && newBoxCss.height > 5) {
@@ -168,7 +193,7 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   const handlePointerUp = () => {
     if (marqueeBox && marqueeBox.width > 3 && marqueeBox.height > 3) {
       const marqueePdf = mapper.cssRectToPdf(marqueeBox);
-      const selected = marqueeSelect(pageObjects, marqueePdf, 'intersect');
+      const selected = marqueeSelect(eligibleObjects, marqueePdf, 'intersect');
       if (selected.length > 0) {
         onSelectIds?.(selected);
       }
@@ -253,6 +278,21 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
       {/* Selection Bounding Box & Handles */}
       {boxCss && (
         <g data-testid="selection-box-group">
+          {/* Crop Rectangle Overlay (Task 6.6) */}
+          {isCropping && cropBoxCss && (
+            <rect
+              data-testid="crop-overlay-rect"
+              x={cropBoxCss.x}
+              y={cropBoxCss.y}
+              width={cropBoxCss.width}
+              height={cropBoxCss.height}
+              fill="rgba(16, 185, 129, 0.12)"
+              stroke="#10b981"
+              strokeWidth={2}
+              strokeDasharray="6 3"
+            />
+          )}
+
           {/* Bounding box drag-to-move body */}
           <rect
             data-testid="selection-bounds-rect"

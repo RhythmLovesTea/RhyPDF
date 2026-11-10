@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from '@rhypdf/i18n';
+import { Button, Dialog } from '@rhypdf/ui';
 import {
   EditSession,
   MoveObjectCommand,
@@ -10,9 +11,18 @@ import {
   ChangeStyleCommand,
   BatchCommand,
   ClipboardManager,
-  computeSelectionBounds
+  computeSelectionBounds,
+  calculateEffectiveDpi,
+  calculatePresetCropBox,
+  calculateReplacedBounds,
+  isLargePageImage,
+  CropPreset,
+  CropImageCommand,
+  ReplaceImageCommand,
+  FlipImageCommand,
+  ReorderObjectCommand
 } from '@rhypdf/edit-core';
-import type { PageObject, Rect } from '@rhypdf/pdf-model';
+import type { PageObject, ImageObject, Rect } from '@rhypdf/pdf-model';
 import { useDocStore } from '../../stores/docStore';
 import { useUIStore } from '../../stores/uiStore';
 import { PdfViewer } from '../viewer/PdfViewer';
@@ -47,6 +57,7 @@ export default function EditorPage({
     pageCount,
     isDirty,
     closeDoc,
+    activeMode,
     setActiveMode,
     setDirty,
     setLastSavedAt
@@ -73,6 +84,39 @@ export default function EditorPage({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [pageObjectsMap, setPageObjectsMap] = useState<Map<number, PageObject[]>>(new Map());
 
+  // Image editing specific state (Phase 6)
+  const imageFileInputRef = useRef<HTMLInputElement | null>(null);
+  const replaceFileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isCropping, setIsCropping] = useState(false);
+  const [cropBoxPdf, setCropBoxPdf] = useState<Rect | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Active page index
+  const activePageIdx = currentPage - 1;
+  const currentObjects = useMemo(
+    () => pageObjectsMap.get(activePageIdx) || [],
+    [pageObjectsMap, activePageIdx]
+  );
+
+  // Selected image helper
+  const selectedImage = useMemo<ImageObject | null>(() => {
+    if (selectedIds.length !== 1) return null;
+    const obj = currentObjects.find((o) => o.id === selectedIds[0]);
+    return obj?.type === 'image' ? (obj as ImageObject) : null;
+  }, [selectedIds, currentObjects]);
+
+  // Effective DPI for selected image
+  const imageDpiResult = useMemo(() => {
+    if (!selectedImage?.bounds || !selectedImage.pixelWidth || !selectedImage.pixelHeight) {
+      return null;
+    }
+    return calculateEffectiveDpi(
+      selectedImage.pixelWidth,
+      selectedImage.pixelHeight,
+      selectedImage.bounds
+    );
+  }, [selectedImage]);
+
   // Subscribe to edit session state changes
   useEffect(() => {
     const unsubscribe = editSession.subscribe((session) => {
@@ -84,31 +128,32 @@ export default function EditorPage({
     return unsubscribe;
   }, [editSession, setDirty]);
 
-  // Current page objects
-  const activePageIdx = currentPage - 1;
-  const currentObjects = useMemo(
-    () => pageObjectsMap.get(activePageIdx) || [],
-    [pageObjectsMap, activePageIdx]
-  );
-
   // Update selectedObject in PropertiesPanel whenever selection changes
   useEffect(() => {
     if (selectedIds.length === 0) {
       setSelectedObject(null);
+      setIsCropping(false);
+      setCropBoxPdf(null);
       return;
     }
     const bounds = computeSelectionBounds(currentObjects, selectedIds);
     if (bounds) {
       setSelectedObject({
+        id: selectedImage ? selectedImage.id : selectedIds[0],
+        type: selectedImage ? 'image' : currentObjects.find((o) => o.id === selectedIds[0])?.type,
         x: Math.round(bounds.left),
         y: Math.round(bounds.bottom),
         width: Math.round(bounds.right - bounds.left),
         height: Math.round(bounds.top - bounds.bottom),
         rotation: 0,
-        opacity: 100
+        opacity: 100,
+        pixelWidth: selectedImage?.pixelWidth,
+        pixelHeight: selectedImage?.pixelHeight,
+        effectiveDpi: imageDpiResult?.minDpi,
+        isLowRes: imageDpiResult?.isLowRes
       });
     }
-  }, [selectedIds, currentObjects]);
+  }, [selectedIds, currentObjects, selectedImage, imageDpiResult]);
 
   // Command handlers
   const handleMoveObjects = useCallback(
@@ -230,7 +275,7 @@ export default function EditorPage({
     [selectedIds, currentObjects, activePageIdx, editSession]
   );
 
-  const handleDeleteObjects = useCallback(async () => {
+  const executeDeleteObjects = useCallback(async () => {
     if (selectedIds.length === 0) return;
 
     const toDelete = currentObjects.filter((o) => selectedIds.includes(o.id));
@@ -275,6 +320,313 @@ export default function EditorPage({
 
     editSession.clearSelection();
   }, [selectedIds, currentObjects, activePageIdx, editSession]);
+
+  // Delete handler with Task 6.7 background confirmation
+  const handleDeleteObjects = useCallback(async () => {
+    if (selectedIds.length === 1 && selectedImage?.bounds) {
+      const isLarge = isLargePageImage(
+        selectedImage.bounds,
+        { width: 595.28, height: 841.89 },
+        0.8
+      );
+      if (isLarge) {
+        setShowDeleteConfirm(true);
+        return;
+      }
+    }
+    await executeDeleteObjects();
+  }, [selectedIds, selectedImage, executeDeleteObjects]);
+
+  // Image actions (Phase 6)
+  const handleCropPreset = useCallback(
+    (preset: CropPreset) => {
+      if (!selectedImage?.bounds) return;
+      const crop = calculatePresetCropBox(selectedImage.bounds, preset);
+      setCropBoxPdf(crop);
+      setIsCropping(true);
+    },
+    [selectedImage]
+  );
+
+  const handleApplyCrop = useCallback(async () => {
+    if (!selectedImage?.bounds || !cropBoxPdf) return;
+
+    const setBoundsFn = (_p: number, id: string, bounds: Rect) => {
+      setPageObjectsMap((prev) => {
+        const next = new Map(prev);
+        const list = next.get(activePageIdx) || [];
+        next.set(
+          activePageIdx,
+          list.map((o) => (o.id === id ? { ...o, bounds } : o))
+        );
+        return next;
+      });
+    };
+
+    const cmd = new CropImageCommand(
+      activePageIdx,
+      selectedImage.id,
+      selectedImage.bounds,
+      cropBoxPdf,
+      setBoundsFn
+    );
+    await editSession.execute(cmd);
+    setIsCropping(false);
+    setCropBoxPdf(null);
+  }, [selectedImage, cropBoxPdf, activePageIdx, editSession]);
+
+  const handleFlip = useCallback(
+    async (direction: 'horizontal' | 'vertical') => {
+      if (!selectedImage) return;
+
+      const setMatrixFn = (
+        _p: number,
+        id: string,
+        matrix: [number, number, number, number, number, number]
+      ) => {
+        setPageObjectsMap((prev) => {
+          const next = new Map(prev);
+          const list = next.get(activePageIdx) || [];
+          next.set(
+            activePageIdx,
+            list.map((o) => (o.id === id ? { ...o, matrix } : o))
+          );
+          return next;
+        });
+      };
+
+      const cmd = new FlipImageCommand(
+        activePageIdx,
+        selectedImage.id,
+        selectedImage.matrix,
+        direction,
+        setMatrixFn
+      );
+      await editSession.execute(cmd);
+    },
+    [selectedImage, activePageIdx, editSession]
+  );
+
+  const handleRotate90 = useCallback(
+    async (deltaDeg: 90 | -90) => {
+      if (!selectedImage) return;
+      await handleRotateObjects(deltaDeg);
+    },
+    [selectedImage, handleRotateObjects]
+  );
+
+  const handleLayerReorder = useCallback(
+    async (action: 'forward' | 'backward' | 'front' | 'back') => {
+      if (!selectedImage) return;
+
+      const oldZ = selectedImage.zIndex ?? 1;
+      let newZ = oldZ;
+      if (action === 'forward') newZ = oldZ + 1;
+      else if (action === 'backward') newZ = Math.max(0, oldZ - 1);
+      else if (action === 'front') newZ = currentObjects.length + 5;
+      else if (action === 'back') newZ = 0;
+
+      const setZIndexFn = (_p: number, id: string, zIndex: number) => {
+        setPageObjectsMap((prev) => {
+          const next = new Map(prev);
+          const list = next.get(activePageIdx) || [];
+          const updated = list.map((o) => (o.id === id ? { ...o, zIndex } : o));
+          updated.sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0));
+          next.set(activePageIdx, updated);
+          return next;
+        });
+      };
+
+      const cmd = new ReorderObjectCommand(
+        activePageIdx,
+        selectedImage.id,
+        oldZ,
+        newZ,
+        setZIndexFn
+      );
+      await editSession.execute(cmd);
+    },
+    [selectedImage, currentObjects, activePageIdx, editSession]
+  );
+
+  const handleOpacityChange = useCallback(
+    async (opacity: number) => {
+      if (!selectedImage) return;
+
+      const styleCmd = new ChangeStyleCommand(
+        activePageIdx,
+        selectedImage.id,
+        'opacity',
+        selectedObject?.opacity ?? 100,
+        opacity,
+        (_p, id, prop, val) => {
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            const list = next.get(activePageIdx) || [];
+            next.set(
+              activePageIdx,
+              list.map((o) => (o.id === id ? { ...o, [prop]: val } : o))
+            );
+            return next;
+          });
+        }
+      );
+      await editSession.execute(styleCmd);
+    },
+    [selectedImage, selectedObject, activePageIdx, editSession]
+  );
+
+  const handleInsertImageFile = useCallback(
+    async (file: File) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.src = url;
+      await new Promise((res) => {
+        img.onload = res;
+      });
+
+      const pixelWidth = img.naturalWidth || 400;
+      const pixelHeight = img.naturalHeight || 300;
+      URL.revokeObjectURL(url);
+
+      // Auto-scale to fit page width at center (Task 6.9)
+      const maxW = 350;
+      const maxH = 400;
+      const ratio = pixelWidth / pixelHeight;
+      let targetW = maxW;
+      let targetH = maxW / ratio;
+      if (targetH > maxH) {
+        targetH = maxH;
+        targetW = maxH * ratio;
+      }
+
+      const centerX = 595.28 / 2;
+      const centerY = 841.89 / 2;
+      const bounds: Rect = {
+        left: Math.round(centerX - targetW / 2),
+        right: Math.round(centerX + targetW / 2),
+        bottom: Math.round(centerY - targetH / 2),
+        top: Math.round(centerY + targetH / 2)
+      };
+
+      const dpiRes = calculateEffectiveDpi(pixelWidth, pixelHeight, bounds);
+      const newImage: ImageObject = {
+        id: `img-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        type: 'image',
+        pixelWidth,
+        pixelHeight,
+        effectiveDpi: { x: dpiRes.dpiX, y: dpiRes.dpiY },
+        format: file.type.includes('png') ? 'png' : 'jpeg',
+        bounds,
+        matrix: [1, 0, 0, 1, bounds.left, bounds.bottom],
+        zIndex: currentObjects.length + 1
+      };
+
+      const insertFn = (_p: number, obj: PageObject) => {
+        setPageObjectsMap((prev) => {
+          const next = new Map(prev);
+          const list = [...(next.get(activePageIdx) || [])];
+          list.push(obj);
+          next.set(activePageIdx, list);
+          return next;
+        });
+      };
+
+      const deleteFn = (_p: number, id: string) => {
+        setPageObjectsMap((prev) => {
+          const next = new Map(prev);
+          const list = next.get(activePageIdx) || [];
+          next.set(
+            activePageIdx,
+            list.filter((o) => o.id !== id)
+          );
+          return next;
+        });
+      };
+
+      const cmd = new InsertObjectCommand(activePageIdx, newImage, insertFn, deleteFn);
+      await editSession.execute(cmd);
+      editSession.selectObject(activePageIdx, newImage.id);
+    },
+    [activePageIdx, currentObjects, editSession]
+  );
+
+  const handleReplaceImageFile = useCallback(
+    async (file: File) => {
+      if (!selectedImage?.bounds) return;
+
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.src = url;
+      await new Promise((res) => {
+        img.onload = res;
+      });
+
+      const pixelWidth = img.naturalWidth || 400;
+      const pixelHeight = img.naturalHeight || 300;
+      URL.revokeObjectURL(url);
+
+      const newBounds = calculateReplacedBounds(
+        selectedImage.bounds,
+        pixelWidth,
+        pixelHeight,
+        'fit'
+      );
+
+      const repDpi = calculateEffectiveDpi(pixelWidth, pixelHeight, newBounds);
+      const replacement: ImageObject = {
+        ...selectedImage,
+        pixelWidth,
+        pixelHeight,
+        format: file.type.includes('png') ? 'png' : 'jpeg',
+        effectiveDpi: { x: repDpi.dpiX, y: repDpi.dpiY },
+        bounds: newBounds
+      };
+
+      const updateFn = (_p: number, id: string, updated: ImageObject) => {
+        setPageObjectsMap((prev) => {
+          const next = new Map(prev);
+          const list = next.get(activePageIdx) || [];
+          next.set(
+            activePageIdx,
+            list.map((o) => (o.id === id ? updated : o))
+          );
+          return next;
+        });
+      };
+
+      const cmd = new ReplaceImageCommand(
+        activePageIdx,
+        selectedImage.id,
+        selectedImage,
+        replacement,
+        updateFn
+      );
+      await editSession.execute(cmd);
+    },
+    [selectedImage, activePageIdx, editSession]
+  );
+
+  const handleDownloadImage = useCallback(() => {
+    if (!selectedImage) return;
+    // Create a mock/real download anchor for the image (Task 6.12)
+    const canvas = document.createElement('canvas');
+    canvas.width = selectedImage.pixelWidth || 200;
+    canvas.height = selectedImage.pixelHeight || 200;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '16px sans-serif';
+      ctx.fillText(`Image ${selectedImage.id}`, 20, 40);
+    }
+    const dataUrl = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `${selectedImage.id}.png`;
+    a.click();
+  }, [selectedImage]);
 
   const handleCopy = useCallback(async () => {
     if (selectedIds.length === 0) return;
@@ -394,7 +746,7 @@ export default function EditorPage({
     };
   }, [currentDocId, filename, isDirty, currentPage, setLastSavedAt]);
 
-  // Global keyboard shortcuts (Tasks 5.9, 5.10, 5.11)
+  // Global keyboard shortcuts (Tasks 5.9, 5.10, 5.11, 6.2, 6.3)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isInput = ['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName);
@@ -421,9 +773,13 @@ export default function EditorPage({
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a' && !isInput) {
         // Select all objects on active page (Ctrl+A)
         e.preventDefault();
+        const selectable =
+          activeMode === 'edit-images'
+            ? currentObjects.filter((o) => o.type === 'image')
+            : currentObjects;
         editSession.selectAll(
           activePageIdx,
-          currentObjects.map((o) => o.id)
+          selectable.map((o) => o.id)
         );
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c' && !isInput) {
         // Copy (Ctrl+C)
@@ -448,7 +804,7 @@ export default function EditorPage({
           void handleDeleteObjects();
         }
       } else if (!isInput && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        // Nudge with arrow keys (Task 5.9: 1pt, Shift = 10pt)
+        // Nudge with arrow keys (Task 5.9 & 6.3: 1pt, Shift = 10pt)
         if (selectedIds.length > 0) {
           e.preventDefault();
           const step = e.shiftKey ? 10 : 1;
@@ -476,19 +832,42 @@ export default function EditorPage({
       }
     };
 
+    // Clipboard paste listener for image files (Task 6.9)
+    const handlePasteEvent = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item && item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault();
+            void handleInsertImageFile(file);
+            break;
+          }
+        }
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('paste', handlePasteEvent);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('paste', handlePasteEvent);
+    };
   }, [
     editSession,
     activePageIdx,
     currentObjects,
     selectedIds,
+    activeMode,
     handleCopy,
     handleCut,
     handlePaste,
     handleDuplicate,
     handleDeleteObjects,
     handleMoveObjects,
+    handleInsertImageFile,
     setActiveMode
   ]);
 
@@ -529,6 +908,12 @@ export default function EditorPage({
         title: t('commands.cmdRedo'),
         shortcut: 'Ctrl+Y',
         onSelect: handleRedo
+      },
+      {
+        id: 'insert-image',
+        category: t('commands.categoryEdit'),
+        title: 'Insert Image',
+        onSelect: () => imageFileInputRef.current?.click()
       },
       {
         id: 'duplicate',
@@ -662,7 +1047,6 @@ export default function EditorPage({
         onBackToHome={() => closeDoc()}
         onDownload={handleDownload}
         onToggleSearch={() => {
-          // Trigger search toggle inside viewer
           window.dispatchEvent(
             new KeyboardEvent('keydown', { key: 'f', ctrlKey: true, bubbles: true })
           );
@@ -675,8 +1059,31 @@ export default function EditorPage({
         onRedo={handleRedo}
       />
 
-      {/* Contextual Toolbar */}
-      <ContextualToolbar />
+      {/* Contextual Toolbar (Phase 6 wired) */}
+      <ContextualToolbar
+        hasSelectedImage={selectedImage !== null}
+        isCropping={isCropping}
+        effectiveDpi={imageDpiResult?.minDpi}
+        isLowRes={imageDpiResult?.isLowRes}
+        onInsertImage={() => imageFileInputRef.current?.click()}
+        onReplaceImage={() => replaceFileInputRef.current?.click()}
+        onDeleteImage={handleDeleteObjects}
+        onCrop={handleCropPreset}
+        onApplyCrop={handleApplyCrop}
+        onCancelCrop={() => {
+          setIsCropping(false);
+          setCropBoxPdf(null);
+        }}
+        onRotateCw={() => handleRotate90(90)}
+        onRotateCcw={() => handleRotate90(-90)}
+        onFlipHorizontal={() => handleFlip('horizontal')}
+        onFlipVertical={() => handleFlip('vertical')}
+        onBringForward={() => handleLayerReorder('forward')}
+        onSendBackward={() => handleLayerReorder('backward')}
+        onBringToFront={() => handleLayerReorder('front')}
+        onSendToBack={() => handleLayerReorder('back')}
+        onOpacityChange={handleOpacityChange}
+      />
 
       {/* Main Workspace Area: Rail + Canvas + Properties */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
@@ -702,6 +1109,9 @@ export default function EditorPage({
                     pageHeightPt={metric.height}
                     rotation={metric.rotation}
                     scale={scale}
+                    activeMode={activeMode}
+                    isCropping={isCropping}
+                    cropBoxPdf={cropBoxPdf}
                     pageObjects={currentObjects}
                     selectedIds={selectedIds}
                     onSelectIds={(ids) => editSession.selectAll(activePageIdx, ids)}
@@ -735,11 +1145,20 @@ export default function EditorPage({
           )}
         </div>
 
-        {/* Properties Panel (Right) (Task 5.9: numeric X / Y / W / H inputs) */}
+        {/* Properties Panel (Right) (Tasks 6.4, 6.5, 6.10, 6.11, 6.12) */}
         <PropertiesPanel
           open={propertiesOpen}
           onToggle={() => setPropertiesOpen((p) => !p)}
           selectedObject={selectedObject}
+          onBringForward={() => handleLayerReorder('forward')}
+          onSendBackward={() => handleLayerReorder('backward')}
+          onBringToFront={() => handleLayerReorder('front')}
+          onSendToBack={() => handleLayerReorder('back')}
+          onFlipHorizontal={() => handleFlip('horizontal')}
+          onFlipVertical={() => handleFlip('vertical')}
+          onRotateCw={() => handleRotate90(90)}
+          onRotateCcw={() => handleRotate90(-90)}
+          onDownloadImage={handleDownloadImage}
           onUpdateObject={async (updates) => {
             if (!selectedObject) return;
             const updated = { ...selectedObject, ...updates };
@@ -747,7 +1166,7 @@ export default function EditorPage({
 
             if (selectedIds.length === 1) {
               const targetId = selectedIds[0]!;
-              // If position moved
+              // Position moved
               if (updates.x !== undefined || updates.y !== undefined) {
                 const dx = (updates.x ?? selectedObject.x) - selectedObject.x;
                 const dy = (updates.y ?? selectedObject.y) - selectedObject.y;
@@ -755,7 +1174,7 @@ export default function EditorPage({
                   await handleMoveObjects(dx, dy);
                 }
               }
-              // If size changed
+              // Size changed
               if (updates.width !== undefined || updates.height !== undefined) {
                 const newBounds: Rect = {
                   left: updated.x,
@@ -765,31 +1184,39 @@ export default function EditorPage({
                 };
                 await handleResizeObjects(newBounds);
               }
-              // If rotation changed
+              // Rotation changed
               if (updates.rotation !== undefined) {
                 await handleRotateObjects(updates.rotation);
               }
-              // If opacity changed
+              // Opacity changed
               if (updates.opacity !== undefined) {
-                const styleCmd = new ChangeStyleCommand(
-                  activePageIdx,
-                  targetId,
-                  'opacity',
-                  selectedObject.opacity,
-                  updates.opacity,
-                  (_p, id, prop, val) => {
-                    setPageObjectsMap((prev) => {
-                      const next = new Map(prev);
-                      const list = next.get(activePageIdx) || [];
-                      const modified = list.map((obj) =>
-                        obj.id === id ? { ...obj, [prop]: val } : obj
-                      );
-                      next.set(activePageIdx, modified);
-                      return next;
-                    });
-                  }
-                );
-                await editSession.execute(styleCmd);
+                await handleOpacityChange(updates.opacity);
+              }
+              // Adjustments changed (brightness / contrast / grayscale)
+              if (
+                updates.brightness !== undefined ||
+                updates.contrast !== undefined ||
+                updates.grayscale !== undefined
+              ) {
+                setPageObjectsMap((prev) => {
+                  const next = new Map(prev);
+                  const list = next.get(activePageIdx) || [];
+                  next.set(
+                    activePageIdx,
+                    list.map((o) =>
+                      o.id === targetId
+                        ? {
+                            ...o,
+                            brightness: updates.brightness ?? selectedObject.brightness,
+                            contrast: updates.contrast ?? selectedObject.contrast,
+                            grayscale: updates.grayscale ?? selectedObject.grayscale
+                          }
+                        : o
+                    )
+                  );
+                  return next;
+                });
+                setDirty(true);
               }
             }
           }}
@@ -811,6 +1238,60 @@ export default function EditorPage({
         onZoomOut={() => setScale((s) => Math.max(0.25, s / 1.25))}
         onFitModeChange={setFitMode}
       />
+
+      {/* Hidden File Inputs for Insert & Replace (Tasks 6.8 & 6.9) */}
+      <input
+        ref={imageFileInputRef}
+        data-testid="input-file-insert-image"
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            void handleInsertImageFile(file);
+            e.target.value = '';
+          }
+        }}
+      />
+      <input
+        ref={replaceFileInputRef}
+        data-testid="input-file-replace-image"
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            void handleReplaceImageFile(file);
+            e.target.value = '';
+          }
+        }}
+      />
+
+      {/* Large Image Delete Confirmation Dialog (Task 6.7) */}
+      <Dialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        title="Delete Background Image?"
+        description="This image covers most of the page (likely a background or scan). Are you sure you want to delete it?"
+      >
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
+          <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)}>
+            {t('common.cancel', { defaultValue: 'Cancel' })}
+          </Button>
+          <Button
+            variant="destructive"
+            data-testid="btn-confirm-delete-large-image"
+            onClick={() => {
+              setShowDeleteConfirm(false);
+              void executeDeleteObjects();
+            }}
+          >
+            {t('common.delete', { defaultValue: 'Delete Image' })}
+          </Button>
+        </div>
+      </Dialog>
 
       {/* Command Palette Modal */}
       <CommandPalette

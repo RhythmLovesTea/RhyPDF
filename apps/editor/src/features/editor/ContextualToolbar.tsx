@@ -17,11 +17,59 @@ import {
   Trash2,
   Crop,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  FlipHorizontal,
+  FlipVertical,
+  Image as ImageIcon,
+  Check,
+  X,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import { useDocStore } from '../../stores/docStore';
+import type { CropPreset } from '@rhypdf/edit-core';
 
-export const ContextualToolbar: React.FC = () => {
+export interface ContextualToolbarProps {
+  onRotateCw?: () => void;
+  onRotateCcw?: () => void;
+  onFlipHorizontal?: () => void;
+  onFlipVertical?: () => void;
+  onCrop?: (preset: CropPreset) => void;
+  onApplyCrop?: () => void;
+  onCancelCrop?: () => void;
+  isCropping?: boolean;
+  onReplaceImage?: () => void;
+  onInsertImage?: () => void;
+  onDeleteImage?: () => void;
+  onBringForward?: () => void;
+  onSendBackward?: () => void;
+  onBringToFront?: () => void;
+  onSendToBack?: () => void;
+  onOpacityChange?: (opacity: number) => void;
+  effectiveDpi?: number | null;
+  isLowRes?: boolean;
+  hasSelectedImage?: boolean;
+}
+
+export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
+  onRotateCw,
+  onRotateCcw,
+  onFlipHorizontal,
+  onFlipVertical,
+  onCrop,
+  onApplyCrop,
+  onCancelCrop,
+  isCropping = false,
+  onReplaceImage,
+  onInsertImage,
+  onDeleteImage,
+  onBringForward,
+  onSendBackward,
+  onOpacityChange,
+  effectiveDpi = null,
+  isLowRes = false,
+  hasSelectedImage = false
+}) => {
   const { t } = useTranslation();
   const { activeMode } = useDocStore();
 
@@ -279,10 +327,12 @@ export const ContextualToolbar: React.FC = () => {
       {activeMode === 'edit-images' && (
         <div
           data-testid="contextual-image-tools"
-          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+          style={{ display: 'flex', alignItems: 'center', gap: 6 }}
         >
+          {/* Add Image */}
           <button
-            data-testid="btn-image-crop"
+            data-testid="btn-insert-image"
+            onClick={onInsertImage}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -290,83 +340,285 @@ export const ContextualToolbar: React.FC = () => {
               padding: '6px 10px',
               borderRadius: 'var(--radius-sm)',
               border: '1px solid var(--bg-border)',
-              backgroundColor: 'var(--bg-card)',
+              backgroundColor: 'var(--bg-secondary)',
               cursor: 'pointer',
-              fontSize: 13
+              fontSize: 12,
+              fontWeight: 500
             }}
           >
-            <Crop size={16} />
-            <span>{t('editor.toolbar.cropImage')}</span>
+            <ImageIcon size={15} />
+            <span>Add Image</span>
           </button>
 
-          <button
-            data-testid="btn-image-forward"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '6px 10px',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--bg-border)',
-              backgroundColor: 'var(--bg-card)',
-              cursor: 'pointer',
-              fontSize: 13
-            }}
-          >
-            <ArrowUp size={16} />
-            <span>{t('editor.toolbar.bringForward')}</span>
-          </button>
+          {/* Crop Controls (Task 6.6) */}
+          {!isCropping ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <button
+                data-testid="btn-image-crop"
+                disabled={!hasSelectedImage}
+                onClick={() => onCrop?.('free')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '6px 10px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--bg-border)',
+                  backgroundColor: 'var(--bg-card)',
+                  cursor: hasSelectedImage ? 'pointer' : 'not-allowed',
+                  opacity: hasSelectedImage ? 1 : 0.5,
+                  fontSize: 12
+                }}
+              >
+                <Crop size={14} />
+                <span>{t('editor.toolbar.cropImage')}</span>
+              </button>
+              {hasSelectedImage && (
+                <select
+                  data-testid="select-crop-preset"
+                  onChange={(e) => onCrop?.(e.target.value as CropPreset)}
+                  defaultValue="free"
+                  style={{
+                    padding: '4px 6px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--bg-border)',
+                    backgroundColor: 'var(--bg-card)',
+                    fontSize: 11
+                  }}
+                >
+                  <option value="free">Free</option>
+                  <option value="1:1">1:1</option>
+                  <option value="4:3">4:3</option>
+                  <option value="16:9">16:9</option>
+                </select>
+              )}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <button
+                data-testid="btn-apply-crop"
+                onClick={onApplyCrop}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '5px 8px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: 'none',
+                  backgroundColor: '#10b981',
+                  color: '#ffffff',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                <Check size={14} />
+                <span>Apply</span>
+              </button>
+              <button
+                data-testid="btn-cancel-crop"
+                onClick={onCancelCrop}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '5px 8px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--bg-border)',
+                  backgroundColor: 'var(--bg-card)',
+                  fontSize: 11,
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={14} />
+                <span>Cancel</span>
+              </button>
+            </div>
+          )}
 
-          <button
-            data-testid="btn-image-backward"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '6px 10px',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--bg-border)',
-              backgroundColor: 'var(--bg-card)',
-              cursor: 'pointer',
-              fontSize: 13
-            }}
-          >
-            <ArrowDown size={16} />
-            <span>{t('editor.toolbar.sendBackward')}</span>
-          </button>
+          {hasSelectedImage && (
+            <>
+              {/* Replace Image (Task 6.8) */}
+              <button
+                data-testid="btn-replace-image"
+                onClick={onReplaceImage}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '6px 10px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--bg-border)',
+                  backgroundColor: 'var(--bg-card)',
+                  cursor: 'pointer',
+                  fontSize: 12
+                }}
+              >
+                <RefreshCw size={14} />
+                <span>Replace</span>
+              </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-            <span>{t('editor.toolbar.opacity')}:</span>
-            <input
-              data-testid="input-image-opacity"
-              type="range"
-              min="10"
-              max="100"
-              value={imageOpacity}
-              onChange={(e) => setImageOpacity(parseInt(e.target.value))}
-              style={{ width: 80 }}
-            />
-            <span>{imageOpacity}%</span>
-          </div>
+              {/* 90° Rotate Buttons (Task 6.5) */}
+              <button
+                data-testid="btn-image-rotate-ccw"
+                onClick={onRotateCcw}
+                title="Rotate 90° CCW"
+                style={{
+                  padding: '6px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--bg-border)',
+                  backgroundColor: 'var(--bg-card)',
+                  cursor: 'pointer'
+                }}
+              >
+                <RotateCcw size={14} />
+              </button>
+              <button
+                data-testid="btn-image-rotate-cw"
+                onClick={onRotateCw}
+                title="Rotate 90° CW"
+                style={{
+                  padding: '6px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--bg-border)',
+                  backgroundColor: 'var(--bg-card)',
+                  cursor: 'pointer'
+                }}
+              >
+                <RotateCw size={14} />
+              </button>
 
-          <button
-            data-testid="btn-image-delete"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '6px 10px',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid #fee2e2',
-              backgroundColor: '#fef2f2',
-              color: '#dc2626',
-              cursor: 'pointer',
-              fontSize: 13
-            }}
-          >
-            <Trash2 size={16} />
-            <span>{t('editor.toolbar.deleteImage')}</span>
-          </button>
+              {/* Flip Buttons (Task 6.5) */}
+              <button
+                data-testid="btn-image-flip-h"
+                onClick={onFlipHorizontal}
+                title="Flip Horizontal"
+                style={{
+                  padding: '6px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--bg-border)',
+                  backgroundColor: 'var(--bg-card)',
+                  cursor: 'pointer'
+                }}
+              >
+                <FlipHorizontal size={14} />
+              </button>
+              <button
+                data-testid="btn-image-flip-v"
+                onClick={onFlipVertical}
+                title="Flip Vertical"
+                style={{
+                  padding: '6px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--bg-border)',
+                  backgroundColor: 'var(--bg-card)',
+                  cursor: 'pointer'
+                }}
+              >
+                <FlipVertical size={14} />
+              </button>
+
+              {/* Layer Order (Task 6.11) */}
+              <button
+                data-testid="btn-image-forward"
+                onClick={onBringForward}
+                title="Bring Forward"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  padding: '6px 8px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--bg-border)',
+                  backgroundColor: 'var(--bg-card)',
+                  cursor: 'pointer',
+                  fontSize: 12
+                }}
+              >
+                <ArrowUp size={14} />
+              </button>
+              <button
+                data-testid="btn-image-backward"
+                onClick={onSendBackward}
+                title="Send Backward"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  padding: '6px 8px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--bg-border)',
+                  backgroundColor: 'var(--bg-card)',
+                  cursor: 'pointer',
+                  fontSize: 12
+                }}
+              >
+                <ArrowDown size={14} />
+              </button>
+
+              {/* Opacity */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+                <span>{t('editor.toolbar.opacity')}:</span>
+                <input
+                  data-testid="input-image-opacity"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={imageOpacity}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    setImageOpacity(val);
+                    onOpacityChange?.(val);
+                  }}
+                  style={{ width: 70 }}
+                />
+                <span>{imageOpacity}%</span>
+              </div>
+
+              {/* Low Resolution Warning Badge (Task 6.4) */}
+              {isLowRes && effectiveDpi && (
+                <div
+                  data-testid="toolbar-low-dpi-warning"
+                  title="Low resolution: image may appear pixelated when printed"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    padding: '4px 8px',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                    color: '#b45309',
+                    fontSize: 11,
+                    fontWeight: 600
+                  }}
+                >
+                  <AlertTriangle size={13} color="#f59e0b" />
+                  <span>{effectiveDpi} DPI</span>
+                </div>
+              )}
+
+              {/* Delete Image (Task 6.7) */}
+              <button
+                data-testid="btn-image-delete"
+                onClick={onDeleteImage}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '6px 10px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid #fee2e2',
+                  backgroundColor: '#fef2f2',
+                  color: '#dc2626',
+                  cursor: 'pointer',
+                  fontSize: 12
+                }}
+              >
+                <Trash2 size={14} />
+                <span>{t('editor.toolbar.deleteImage')}</span>
+              </button>
+            </>
+          )}
         </div>
       )}
 
