@@ -98,10 +98,10 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 ## CURRENT TASK POINTER
 
 ```
-CURRENT PHASE : 5
-CURRENT TASK  : 5.1
+CURRENT PHASE : 6
+CURRENT TASK  : 6.1
 LAST UPDATED  : 2026-11-10
-NOTES         : Phase 4 completed with all 14 subtasks (4.1 to 4.14). Built and verified: Home screen drop zone & recents grid, file picker / global drop / paste / PWA launchQueue open, IndexedDB recents service with permission re-request, recent actions (remove, rename, delete, download), compliant blank PDF generator, OPFS working-copy system with IndexedDB fallback, autosave engine on interval / visibilitychange / pagehide, crash & tab-close recovery, full Section 3B editor layout shell (top bar, tool rail, contextual toolbar, properties panel, status bar), mode switcher, Command Palette (Ctrl+K) & Shortcuts help, 3-step skippable onboarding tour with privacy promise, settings suite with privacy statement & licenses, and responsive/reduced-motion polish. All 231 tests green, production builds and bundle size budgets verified. Ready for Phase 5.
+NOTES         : Phase 5 completed with all 12 subtasks (5.1 to 5.12). Built and verified: EditSession with working-copy handle & transaction grouping (commit/rollback), reversible EditCommand interface with snapshot restoration, coalescing mergeWith & periodic checkpoints every N commands, complete command suite (Move, Resize, Rotate, Delete, Insert, EditTextBlock, ChangeStyle, Reorder, PageOperation, Batch), enhanced CoordinateMapper with rotations (0, 90, 180, 270), cropBox offsets & UserUnit scaling, hit-testing with tolerance & Alt-click overlap cycling, SelectionOverlay with 8 constant-size handles & rotation handle, multi-select with Shift-click, marquee & Ctrl+A, snapping engine with page center, margins & sibling object guides, arrow key nudging & PropertiesPanel numeric inputs, clipboard manager with cut/copy/paste & duplicate (+20pt), reactive undo/redo wiring on top bar & shortcuts, and 50+ undo/redo stress test with 0 corruption. All 264 unit tests green, production builds and bundle budgets verified. Ready for Phase 6.
 ```
 
 ---
@@ -430,18 +430,18 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PHASE 5 — EDIT MODEL, SELECTION, UNDO / REDO (BUILD BEFORE EDITING FEATURES)
 
-- [ ] **5.1** `EditSession`: working-copy handle, command stack, dirty flag, transaction grouping.
-- [ ] **5.2** `EditCommand` interface (`apply`, `revert`, `mergeWith` for coalescing) + undo / redo stacks. Undo uses **serialized object snapshots** (recreate objects) plus a full-document checkpoint every N commands for safety; history is capped by memory.
-- [ ] **5.3** Commands: `MoveObject`, `ResizeObject`, `RotateObject`, `DeleteObject`, `InsertObject`, `EditTextBlock`, `ChangeStyle`, `ReorderObject`, `PageOperation`, `Batch`.
-- [ ] **5.4** `CoordinateMapper` (PDF ↔ bitmap ↔ CSS px) with unit tests for rotated pages, crop boxes, `UserUnit`, DPR and zoom.
-- [ ] **5.5** Hit-testing: click → topmost object under the pointer (with tolerance); `Alt`-click or long-press cycles through overlapping objects.
-- [ ] **5.6** Selection overlay (SVG / canvas layer): bounding box, 8 resize handles, rotate handle, drag-to-move; handles keep a constant on-screen size at any zoom.
-- [ ] **5.7** Multi-select (Shift-click, marquee, `Ctrl/Cmd + A`) and group move / delete.
-- [ ] **5.8** Snapping and alignment guides (page center, margins, other objects), toggleable.
-- [ ] **5.9** Nudge with arrow keys (1 pt, `Shift` = 10 pt) and numeric X / Y / W / H inputs in the properties panel.
-- [ ] **5.10** Copy / cut / paste / duplicate (within a page, across pages, across documents); system clipboard for text and images.
-- [ ] **5.11** Wire undo / redo to the top bar and shortcuts (`Ctrl/Cmd + Z`, `Shift + Z` / `Ctrl + Y`) with enabled / disabled state; keep history across mode changes.
-- [ ] **5.12** Unit tests for all commands: `apply` then `revert` returns the exact original state (compare serialized model + render checksum).
+- [x] **5.1** `EditSession`: working-copy handle, command stack, dirty flag, transaction grouping.
+- [x] **5.2** `EditCommand` interface (`apply`, `revert`, `mergeWith` for coalescing) + undo / redo stacks. Undo uses **serialized object snapshots** (recreate objects) plus a full-document checkpoint every N commands for safety; history is capped by memory.
+- [x] **5.3** Commands: `MoveObject`, `ResizeObject`, `RotateObject`, `DeleteObject`, `InsertObject`, `EditTextBlock`, `ChangeStyle`, `ReorderObject`, `PageOperation`, `Batch`.
+- [x] **5.4** `CoordinateMapper` (PDF ↔ bitmap ↔ CSS px) with unit tests for rotated pages, crop boxes, `UserUnit`, DPR and zoom.
+- [x] **5.5** Hit-testing: click → topmost object under the pointer (with tolerance); `Alt`-click or long-press cycles through overlapping objects.
+- [x] **5.6** Selection overlay (SVG / canvas layer): bounding box, 8 resize handles, rotate handle, drag-to-move; handles keep a constant on-screen size at any zoom.
+- [x] **5.7** Multi-select (Shift-click, marquee, `Ctrl/Cmd + A`) and group move / delete.
+- [x] **5.8** Snapping and alignment guides (page center, margins, other objects), toggleable.
+- [x] **5.9** Nudge with arrow keys (1 pt, `Shift` = 10 pt) and numeric X / Y / W / H inputs in the properties panel.
+- [x] **5.10** Copy / cut / paste / duplicate (within a page, across pages, across documents); system clipboard for text and images.
+- [x] **5.11** Wire undo / redo to the top bar and shortcuts (`Ctrl/Cmd + Z`, `Shift + Z` / `Ctrl + Y`) with enabled / disabled state; keep history across mode changes.
+- [x] **5.12** Unit tests for all commands: `apply` then `revert` returns the exact original state (compare serialized model + render checksum).
 
 **Done when:** any object can be selected, moved, resized and deleted, and every action can be undone / redone 50+ times without corruption.
 
@@ -828,6 +828,18 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-10 | 4.12    | Onboarding modal: 3 skippable screens with client privacy promise    | `P4.12` | First-launch tour, step indicator, privacy assurance & localStorage flag                                      |
 | 2026-11-10 | 4.13    | Settings page: theme, font, units, save behavior, data clear & legal | `P4.13` | Preference persistence, purge OPFS/IDB/recovery storage, licenses list & privacy statement                    |
 | 2026-11-10 | 4.14    | Responsive layouts, >=44px touch targets, dark mode & reduced motion | `P4.14` | Mobile/tablet responsive layout, WCAG touch target sizes & prefers-reduced-motion CSS                         |
+| 2026-11-10 | 5.1     | EditSession: command stack, dirty tracking, transactions & rollback  | `P5.1`  | Working-copy handle, transaction grouping, nested transactions & reactive listeners                           |
+| 2026-11-10 | 5.2     | EditCommand interface, snapshot undo/redo & periodic checkpoints     | `P5.2`  | Serialized object snapshots, mergeWith coalescing, checkpoint every N commands, bounded memory cap            |
+| 2026-11-10 | 5.3     | Command suite: Move, Resize, Rotate, Delete, Insert, Text, Style     | `P5.3`  | 10 reversible commands: Move, Resize, Rotate, Delete, Insert, EditText, Style, Reorder, PageOperation, Batch  |
+| 2026-11-10 | 5.4     | CoordinateMapper: PDF ↔ bitmap ↔ CSS px, cropBox, UserUnit, DPR      | `P5.4`  | Rotated pages (0, 90, 180, 270), cropBox offsets, UserUnit factor, DPR and zoom round-trip stability          |
+| 2026-11-10 | 5.5     | Hit-testing with tolerance & Alt-click overlap cycling               | `P5.5`  | Topmost candidate selection, tolerance margin, descending zIndex sorting & Alt-click cycling                  |
+| 2026-11-10 | 5.6     | Selection overlay with 8 resize handles & rotation handle            | `P5.6`  | SVG selection overlay, 8 constant on-screen handles, rotation handle & drag-to-move body                      |
+| 2026-11-10 | 5.7     | Multi-select: Shift-click, marquee rectangle drag & Ctrl+A           | `P5.7`  | Marquee rubber-band selection (contain/intersect), Shift-click toggle & group operations                      |
+| 2026-11-10 | 5.8     | Snapping and alignment guides (center, margins, objects)             | `P5.8`  | Snapping engine with threshold clamping, page center, margins, sibling edges & cyan guideline overlays        |
+| 2026-11-10 | 5.9     | Arrow key nudge (1pt / 10pt) & PropertiesPanel numeric inputs        | `P5.9`  | Keyboard nudge (1pt / 10pt with Shift), numeric X/Y/W/H/rotation/opacity binding in PropertiesPanel           |
+| 2026-11-10 | 5.10    | Clipboard manager: copy, cut, paste, duplicate & system clipboard    | `P5.10` | Internal object clipboard, clone with +20pt offset, duplicate (Ctrl+D), system clipboard text bridge          |
+| 2026-11-10 | 5.11    | Top bar undo/redo wiring, mode persistence & shortcut mapping        | `P5.11` | Reactive canUndo/canRedo top bar buttons, Ctrl+Z / Ctrl+Y shortcuts, preserved across all 5 modes             |
+| 2026-11-10 | 5.12    | Unit tests: model invariance, apply/revert & 50+ undo/redo stress    | `P5.12` | 22 comprehensive unit tests in edit-core, exact serialization equality & 50+ stress test with 0 corruption    |
 
 ---
 

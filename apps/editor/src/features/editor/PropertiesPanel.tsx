@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from '@rhypdf/i18n';
 import { ChevronRight, ChevronLeft, Sliders, Info } from 'lucide-react';
 import { useDocStore } from '../../stores/docStore';
@@ -38,6 +38,17 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   const [h, setH] = useState<number>(selectedObject?.height ?? 100);
   const [rotation, setRotation] = useState<number>(selectedObject?.rotation ?? 0);
   const [opacity, setOpacity] = useState<number>(selectedObject?.opacity ?? 100);
+
+  useEffect(() => {
+    if (selectedObject) {
+      setX(selectedObject.x);
+      setY(selectedObject.y);
+      setW(selectedObject.width);
+      setH(selectedObject.height);
+      setRotation(selectedObject.rotation);
+      setOpacity(selectedObject.opacity);
+    }
+  }, [selectedObject]);
 
   if (!open) {
     return (

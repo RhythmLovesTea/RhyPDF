@@ -52,6 +52,7 @@ export interface PdfViewerProps {
   error?: { code: string; message?: string } | null;
   onBackToHome?: () => void;
   onRetry?: () => void;
+  renderOverlay?: (pageIndex: number, metric: PageMetric) => React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -71,6 +72,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   error = null,
   onBackToHome,
   onRetry,
+  renderOverlay,
   className = '',
   style
 }) => {
@@ -306,6 +308,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
               scale={scale}
             />
           )}
+          {renderOverlay?.(pageIdx, dim)}
         </TiledPageCanvas>
       );
     }
@@ -341,6 +344,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             scale={scale}
           />
         )}
+        {renderOverlay?.(pageIdx, dim)}
       </PageCanvas>
     );
   };

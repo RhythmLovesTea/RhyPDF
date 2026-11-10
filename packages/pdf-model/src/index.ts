@@ -146,6 +146,11 @@ export interface AnnotationObject extends BasePageObject {
 
 export type PageObject = TextRun | ImageObject | PathObject | FormObject | AnnotationObject;
 
+export interface CoordinateMapperOptions {
+  cropBox?: Rect;
+  userUnit?: number;
+}
+
 /**
  * CoordinateMapper
  * Converts coordinates between PDF points (origin bottom-left, Y up),
@@ -153,42 +158,100 @@ export type PageObject = TextRun | ImageObject | PathObject | FormObject | Annot
  * screen / CSS pixels (origin top-left, Y down).
  */
 export class CoordinateMapper {
+  public readonly cropBox: Rect;
+  public readonly userUnit: number;
+  public readonly effectiveWidthPt: number;
+  public readonly effectiveHeightPt: number;
+
   constructor(
     public readonly pageWidthPt: number,
     public readonly pageHeightPt: number,
     public readonly rotation: RotationAngle = 0,
     public readonly scale: number = 1.0,
-    public readonly dpr: number = 1.0
-  ) {}
+    public readonly dpr: number = 1.0,
+    options?: CoordinateMapperOptions
+  ) {
+    this.cropBox = options?.cropBox ?? {
+      left: 0,
+      bottom: 0,
+      right: pageWidthPt,
+      top: pageHeightPt
+    };
+    this.userUnit = options?.userUnit ?? 1.0;
+    this.effectiveWidthPt = (this.cropBox.right - this.cropBox.left) * this.userUnit;
+    this.effectiveHeightPt = (this.cropBox.top - this.cropBox.bottom) * this.userUnit;
+  }
 
   /**
    * PDF point (x, y) to CSS viewport pixel (x, y)
    */
   pdfPointToCss(ptX: number, ptY: number): Point {
     const s = this.scale;
+    const u = this.userUnit;
+    const relX = (ptX - this.cropBox.left) * u;
+    const relY = (ptY - this.cropBox.bottom) * u;
+
     switch (this.rotation) {
       case 90:
         return {
-          x: ptY * s,
-          y: ptX * s
+          x: relY * s,
+          y: relX * s
         };
       case 180:
         return {
-          x: (this.pageWidthPt - ptX) * s,
-          y: ptY * s
+          x: (this.effectiveWidthPt - relX) * s,
+          y: relY * s
         };
       case 270:
         return {
-          x: (this.pageHeightPt - ptY) * s,
-          y: (this.pageWidthPt - ptX) * s
+          x: (this.effectiveHeightPt - relY) * s,
+          y: (this.effectiveWidthPt - relX) * s
         };
       case 0:
       default:
         return {
-          x: ptX * s,
-          y: (this.pageHeightPt - ptY) * s
+          x: relX * s,
+          y: (this.effectiveHeightPt - relY) * s
         };
     }
+  }
+
+  /**
+   * CSS pixel (x, y) to PDF point (x, y)
+   */
+  cssPointToPdf(cssX: number, cssY: number): Point {
+    const s = this.scale;
+    const invS = 1 / s;
+    const u = this.userUnit;
+    const invU = 1 / u;
+
+    let relX: number;
+    let relY: number;
+
+    switch (this.rotation) {
+      case 90:
+        relY = cssX * invS;
+        relX = cssY * invS;
+        break;
+      case 180:
+        relX = this.effectiveWidthPt - cssX * invS;
+        relY = cssY * invS;
+        break;
+      case 270:
+        relY = this.effectiveHeightPt - cssX * invS;
+        relX = this.effectiveWidthPt - cssY * invS;
+        break;
+      case 0:
+      default:
+        relX = cssX * invS;
+        relY = this.effectiveHeightPt - cssY * invS;
+        break;
+    }
+
+    return {
+      x: this.cropBox.left + relX * invU,
+      y: this.cropBox.bottom + relY * invU
+    };
   }
 
   /**
@@ -205,34 +268,80 @@ export class CoordinateMapper {
   }
 
   /**
-   * CSS pixel (x, y) to PDF point (x, y)
+   * CSS BoundingBox (x, y, width, height) to PDF Rect (left, bottom, right, top)
    */
-  cssPointToPdf(cssX: number, cssY: number): Point {
-    const s = this.scale;
-    const invS = 1 / s;
-    switch (this.rotation) {
-      case 90:
-        return {
-          x: cssY * invS,
-          y: cssX * invS
-        };
-      case 180:
-        return {
-          x: this.pageWidthPt - cssX * invS,
-          y: cssY * invS
-        };
-      case 270:
-        return {
-          x: this.pageWidthPt - cssY * invS,
-          y: this.pageHeightPt - cssX * invS
-        };
-      case 0:
-      default:
-        return {
-          x: cssX * invS,
-          y: this.pageHeightPt - cssY * invS
-        };
-    }
+  cssRectToPdf(box: BoundingBox): Rect {
+    const p1 = this.cssPointToPdf(box.x, box.y);
+    const p2 = this.cssPointToPdf(box.x + box.width, box.y + box.height);
+    return {
+      left: Math.min(p1.x, p2.x),
+      right: Math.max(p1.x, p2.x),
+      bottom: Math.min(p1.y, p2.y),
+      top: Math.max(p1.y, p2.y)
+    };
+  }
+
+  /**
+   * PDF point (x, y) to Bitmap physical pixel (x, y)
+   */
+  pdfPointToBitmap(ptX: number, ptY: number): Point {
+    const css = this.pdfPointToCss(ptX, ptY);
+    return {
+      x: css.x * this.dpr,
+      y: css.y * this.dpr
+    };
+  }
+
+  /**
+   * Bitmap physical pixel (x, y) to PDF point (x, y)
+   */
+  bitmapPointToPdf(bmX: number, bmY: number): Point {
+    return this.cssPointToPdf(bmX / this.dpr, bmY / this.dpr);
+  }
+
+  /**
+   * PDF Rect to Bitmap BoundingBox in physical pixels
+   */
+  pdfRectToBitmap(rect: Rect): BoundingBox {
+    const css = this.pdfRectToCss(rect);
+    return {
+      x: css.x * this.dpr,
+      y: css.y * this.dpr,
+      width: css.width * this.dpr,
+      height: css.height * this.dpr
+    };
+  }
+
+  /**
+   * Bitmap BoundingBox to PDF Rect
+   */
+  bitmapRectToPdf(bmBox: BoundingBox): Rect {
+    return this.cssRectToPdf({
+      x: bmBox.x / this.dpr,
+      y: bmBox.y / this.dpr,
+      width: bmBox.width / this.dpr,
+      height: bmBox.height / this.dpr
+    });
+  }
+
+  /**
+   * CSS pixel (x, y) to Bitmap pixel (x, y)
+   */
+  cssPointToBitmap(cssX: number, cssY: number): Point {
+    return {
+      x: cssX * this.dpr,
+      y: cssY * this.dpr
+    };
+  }
+
+  /**
+   * Bitmap pixel (x, y) to CSS pixel (x, y)
+   */
+  bitmapPointToCss(bmX: number, bmY: number): Point {
+    return {
+      x: bmX / this.dpr,
+      y: bmY / this.dpr
+    };
   }
 
   /**
@@ -240,8 +349,8 @@ export class CoordinateMapper {
    */
   getCssSize(): Size {
     const isSideways = this.rotation === 90 || this.rotation === 270;
-    const w = isSideways ? this.pageHeightPt : this.pageWidthPt;
-    const h = isSideways ? this.pageWidthPt : this.pageHeightPt;
+    const w = isSideways ? this.effectiveHeightPt : this.effectiveWidthPt;
+    const h = isSideways ? this.effectiveWidthPt : this.effectiveHeightPt;
     return {
       width: Math.round(w * this.scale),
       height: Math.round(h * this.scale)
