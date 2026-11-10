@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 3
-CURRENT TASK  : 3.14
+CURRENT TASK  : 3.15
 LAST UPDATED  : 2026-11-10
-NOTES         : Task 3.13 completed: PasswordDialog component with retry state, wrong-password error alerts, auto-focus, Esc/Enter key handling, and cancel callback. Moving to Task 3.14 (Corrupt or unsupported files: friendly error screen with a way back).
+NOTES         : Task 3.14 completed: ViewerErrorScreen friendly error screen for corrupt, unsupported, OOM, and IO errors with back-to-home, retry, and technical details accordion. Moving to Task 3.15 (Resize / orientation / DPR-change survival and Viewer integration).
 ```
 
 ---
@@ -398,7 +398,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **3.11** Fit modes: fit width, fit page, actual size; remembered per document.
 - [x] **3.12** Page layout modes: continuous (default), single page, two-page spread (optional).
 - [x] **3.13** Password-protected PDFs: dialog, retry, cancel.
-- [ ] **3.14** Corrupt or unsupported files: friendly error screen with a way back.
+- [x] **3.14** Corrupt or unsupported files: friendly error screen with a way back.
 - [ ] **3.15** Resize / orientation / DPR-change survival: keep scroll and zoom, no flash; restore last position per document.
 
 **Done when:** a 300-page PDF shows page 1 in under 2 seconds on a mid-range laptop, scrolls at ~60 fps, and does not crash on zoom spam.
@@ -812,6 +812,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-10 | 3.11    | Fit modes: fit width, fit page, actual size per document            | `P3.11` | FitModeSelector with fitWidth/fitPage/actualSize, rotation support, and document localStorage persistence    |
 | 2026-11-10 | 3.12    | Page layout modes: continuous (default), single, two-page spread    | `P3.12` | LayoutModeSelector with continuous/single/two-page layouts, row chunking & tests                             |
 | 2026-11-10 | 3.13    | Password-protected PDFs: dialog, retry, cancel                      | `P3.13` | PasswordDialog modal with retry state, submit validation, Esc cancel & i18n                                  |
+| 2026-11-10 | 3.14    | Corrupt or unsupported files: friendly error screen with a way back | `P3.14` | ViewerErrorScreen with error categories, technical details, home return & retry                              |
 
 ---
 

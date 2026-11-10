@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
 import React, { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
+import { initI18n, i18n, I18nextProvider } from '@rhypdf/i18n';
 import { PasswordDialog } from '../../src/features/viewer/PasswordDialog';
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -8,6 +9,10 @@ import { PasswordDialog } from '../../src/features/viewer/PasswordDialog';
 describe('Task 3.13: Password-protected PDFs: dialog, retry, cancel', () => {
   let container: HTMLDivElement;
   let root: Root;
+
+  beforeAll(() => {
+    initI18n('en');
+  });
 
   beforeEach(() => {
     container = document.createElement('div');
@@ -22,19 +27,21 @@ describe('Task 3.13: Password-protected PDFs: dialog, retry, cancel', () => {
     container.remove();
   });
 
-  it('does not render dialog content when open is false', () => {
+  const renderWithI18n = (ui: React.ReactElement) => {
     act(() => {
-      root.render(<PasswordDialog open={false} onSubmit={vi.fn()} onCancel={vi.fn()} />);
+      root.render(<I18nextProvider i18n={i18n}>{ui}</I18nextProvider>);
     });
+  };
+
+  it('does not render dialog content when open is false', () => {
+    renderWithI18n(<PasswordDialog open={false} onSubmit={vi.fn()} onCancel={vi.fn()} />);
 
     const form = container.querySelector('[data-testid="password-dialog-form"]');
     expect(form).toBeNull();
   });
 
   it('renders dialog, input, and buttons when open is true', () => {
-    act(() => {
-      root.render(<PasswordDialog open={true} onSubmit={vi.fn()} onCancel={vi.fn()} />);
-    });
+    renderWithI18n(<PasswordDialog open={true} onSubmit={vi.fn()} onCancel={vi.fn()} />);
 
     const input = container.querySelector('[data-testid="pdf-password-input"]') as HTMLInputElement;
     const submitBtn = container.querySelector(
@@ -53,9 +60,7 @@ describe('Task 3.13: Password-protected PDFs: dialog, retry, cancel', () => {
 
   it('enables submit button and calls onSubmit with password', async () => {
     const handleSubmit = vi.fn();
-    act(() => {
-      root.render(<PasswordDialog open={true} onSubmit={handleSubmit} onCancel={vi.fn()} />);
-    });
+    renderWithI18n(<PasswordDialog open={true} onSubmit={handleSubmit} onCancel={vi.fn()} />);
 
     const input = container.querySelector('[data-testid="pdf-password-input"]') as HTMLInputElement;
     const submitBtn = container.querySelector(
@@ -82,22 +87,18 @@ describe('Task 3.13: Password-protected PDFs: dialog, retry, cancel', () => {
   });
 
   it('displays error message on retry when isWrongPassword is true', () => {
-    act(() => {
-      root.render(
-        <PasswordDialog open={true} isWrongPassword={true} onSubmit={vi.fn()} onCancel={vi.fn()} />
-      );
-    });
+    renderWithI18n(
+      <PasswordDialog open={true} isWrongPassword={true} onSubmit={vi.fn()} onCancel={vi.fn()} />
+    );
 
     const errorAlert = container.querySelector('[data-testid="password-error-message"]');
     expect(errorAlert).not.toBeNull();
-    expect(errorAlert?.textContent).toContain('password');
+    expect(errorAlert?.textContent).toContain('Incorrect password');
   });
 
   it('calls onCancel when cancel button is clicked or Escape is pressed', () => {
     const handleCancel = vi.fn();
-    act(() => {
-      root.render(<PasswordDialog open={true} onSubmit={vi.fn()} onCancel={handleCancel} />);
-    });
+    renderWithI18n(<PasswordDialog open={true} onSubmit={vi.fn()} onCancel={handleCancel} />);
 
     const cancelBtn = container.querySelector(
       '[data-testid="password-cancel-button"]'
@@ -115,11 +116,9 @@ describe('Task 3.13: Password-protected PDFs: dialog, retry, cancel', () => {
   });
 
   it('disables input and buttons when isSubmitting is true', () => {
-    act(() => {
-      root.render(
-        <PasswordDialog open={true} isSubmitting={true} onSubmit={vi.fn()} onCancel={vi.fn()} />
-      );
-    });
+    renderWithI18n(
+      <PasswordDialog open={true} isSubmitting={true} onSubmit={vi.fn()} onCancel={vi.fn()} />
+    );
 
     const input = container.querySelector('[data-testid="pdf-password-input"]') as HTMLInputElement;
     const submitBtn = container.querySelector(

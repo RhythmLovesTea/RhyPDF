@@ -70,7 +70,12 @@ export const arTranslations = {
       errorTitle: 'تعذر فتح ملف PDF',
       errorCorrupt: 'هذا الملف تالف أو غير صالح كملف PDF.',
       errorUnsupported: 'يحتوي هذا المستند على ميزات أو تشفير غير مدعوم.',
+      errorOutOfMemory: 'المستند كبير جدًا بحيث لا يمكن فتحه ضمن ذاكرة الجهاز المتاحة.',
+      errorIO: 'فشل في قراءة ملف المستند. يرجى التحقق من أذونات الملف وإعادة المحاولة.',
       backToHome: 'العودة إلى الرئيسية',
+      tryAgain: 'إعادة المحاولة',
+      openAnotherFile: 'فتح ملف آخر',
+      technicalDetails: 'التفاصيل التقنية',
       goToPage: 'الانتقال إلى صفحة',
       pageJumpPrompt: 'أدخل رقم الصفحة (١-{{total}}):'
     }

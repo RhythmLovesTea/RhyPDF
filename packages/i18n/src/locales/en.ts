@@ -71,7 +71,12 @@ export const enTranslations = {
       errorTitle: 'Unable to open PDF',
       errorCorrupt: 'This file is corrupt or not a valid PDF document.',
       errorUnsupported: 'This document contains unsupported features or encryption.',
+      errorOutOfMemory: 'The document is too large to open within available device memory.',
+      errorIO: 'Failed to read the document file. Please check file permissions and try again.',
       backToHome: 'Return to Home',
+      tryAgain: 'Try Again',
+      openAnotherFile: 'Open Another File',
+      technicalDetails: 'Technical details',
       goToPage: 'Go to page',
       pageJumpPrompt: 'Enter page number (1-{{total}}):'
     }
