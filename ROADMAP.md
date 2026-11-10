@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 3
-CURRENT TASK  : 3.7
+CURRENT TASK  : 3.8
 LAST UPDATED  : 2026-11-10
-NOTES         : Task 3.6 completed: RenderScheduler with multi-tier priority queue (visible > near > thumbnails), fast-scroll cancellation, and cache integration. Moving to Task 3.7 (Thumbnail sidebar with click-to-jump).
+NOTES         : Task 3.7 completed: ThumbnailSidebar with lazy IntersectionObserver rendering, click-to-jump, active page highlighting, and a11y keyboard support. Moving to Task 3.8 (Page indicator, go to page, keyboard navigation).
 ```
 
 ---
@@ -391,7 +391,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **3.4** Zoom and pan: Ctrl / Cmd + wheel, trackpad pinch, touch pinch, double-tap, keyboard `+` / `-`; clamp 25% to 800%. _Done when:_ works with mouse, trackpad and touch.
 - [x] **3.5** Bitmap LRU cache with a memory budget (use `navigator.deviceMemory` when available); always call `ImageBitmap.close()` on eviction.
 - [x] **3.6** Render scheduler: priority queue (visible > near > thumbnails), cancel stale jobs on fast scroll, shimmer placeholder.
-- [ ] **3.7** Thumbnail sidebar with click-to-jump (lazy rendered).
+- [x] **3.7** Thumbnail sidebar with click-to-jump (lazy rendered).
 - [ ] **3.8** Page indicator (`3 / 24`), "go to page", keyboard navigation (PgUp / PgDn / Home / End).
 - [ ] **3.9** Text search: find bar, highlight all, next / previous, case / whole-word options.
 - [ ] **3.10** Text selection and copy in view mode (own selection layer built from engine character boxes).
@@ -804,7 +804,8 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-10 | 3.3     | Tile-based rendering for high zoom (800%) with bounded memory       | `P3.3`  | TiledPageCanvas visible-tile computation, 800% zoom sharp with bounded memory allocation                     |
 | 2026-11-10 | 3.4     | Zoom and pan with mouse, trackpad, touch pinch & keyboard shortcuts | `P3.4`  | useZoomPan hook, cursor-anchored zoom, clamped 25%-800%, touch pinch & unit tests                            |
 | 2026-11-10 | 3.5     | Bitmap LRU cache with memory budget and ImageBitmap.close()         | `P3.5`  | BitmapLruCache adaptive budget based on deviceMemory, close() called on every eviction to prevent leaks      |
-| 2026-11-10 | 3.6     | Render scheduler with priority queue & fast scroll cancellation     | `P3.6`  | RenderScheduler priority tiers (visible > near > thumbnails), stale job abort & cache integration             |
+| 2026-11-10 | 3.6     | Render scheduler with priority queue & fast scroll cancellation     | `P3.6`  | RenderScheduler priority tiers (visible > near > thumbnails), stale job abort & cache integration            |
+| 2026-11-10 | 3.7     | Thumbnail sidebar with click-to-jump (lazy rendered)                | `P3.7`  | ThumbnailSidebar with lazy IntersectionObserver, click-to-jump, active highlighting & a11y keyboard support   |
 
 ---
 
