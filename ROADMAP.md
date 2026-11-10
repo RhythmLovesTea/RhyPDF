@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 3
-CURRENT TASK  : 3.8
+CURRENT TASK  : 3.9
 LAST UPDATED  : 2026-11-10
-NOTES         : Task 3.7 completed: ThumbnailSidebar with lazy IntersectionObserver rendering, click-to-jump, active page highlighting, and a11y keyboard support. Moving to Task 3.8 (Page indicator, go to page, keyboard navigation).
+NOTES         : Task 3.8 completed: PageNavigation with "3 / 24" indicator, click-to-edit go-to-page input, clamped boundaries, and PgUp/PgDn/Home/End keyboard shortcuts. Moving to Task 3.9 (Text search find bar).
 ```
 
 ---
@@ -392,7 +392,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **3.5** Bitmap LRU cache with a memory budget (use `navigator.deviceMemory` when available); always call `ImageBitmap.close()` on eviction.
 - [x] **3.6** Render scheduler: priority queue (visible > near > thumbnails), cancel stale jobs on fast scroll, shimmer placeholder.
 - [x] **3.7** Thumbnail sidebar with click-to-jump (lazy rendered).
-- [ ] **3.8** Page indicator (`3 / 24`), "go to page", keyboard navigation (PgUp / PgDn / Home / End).
+- [x] **3.8** Page indicator (`3 / 24`), "go to page", keyboard navigation (PgUp / PgDn / Home / End).
 - [ ] **3.9** Text search: find bar, highlight all, next / previous, case / whole-word options.
 - [ ] **3.10** Text selection and copy in view mode (own selection layer built from engine character boxes).
 - [ ] **3.11** Fit modes: fit width, fit page, actual size; remembered per document.
@@ -805,7 +805,8 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-10 | 3.4     | Zoom and pan with mouse, trackpad, touch pinch & keyboard shortcuts | `P3.4`  | useZoomPan hook, cursor-anchored zoom, clamped 25%-800%, touch pinch & unit tests                            |
 | 2026-11-10 | 3.5     | Bitmap LRU cache with memory budget and ImageBitmap.close()         | `P3.5`  | BitmapLruCache adaptive budget based on deviceMemory, close() called on every eviction to prevent leaks      |
 | 2026-11-10 | 3.6     | Render scheduler with priority queue & fast scroll cancellation     | `P3.6`  | RenderScheduler priority tiers (visible > near > thumbnails), stale job abort & cache integration            |
-| 2026-11-10 | 3.7     | Thumbnail sidebar with click-to-jump (lazy rendered)                | `P3.7`  | ThumbnailSidebar with lazy IntersectionObserver, click-to-jump, active highlighting & a11y keyboard support   |
+| 2026-11-10 | 3.7     | Thumbnail sidebar with click-to-jump (lazy rendered)                | `P3.7`  | ThumbnailSidebar with lazy IntersectionObserver, click-to-jump, active highlighting & a11y keyboard support  |
+| 2026-11-10 | 3.8     | Page indicator ("3 / 24"), go to page, and keyboard navigation      | `P3.8`  | PageNavigation "3 / 24" badge, direct input go-to-page, boundary clamping, and PgUp/PgDn/Home/End keyboard   |
 
 ---
 
