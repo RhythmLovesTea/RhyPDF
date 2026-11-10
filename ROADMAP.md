@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 3
-CURRENT TASK  : 3.10
+CURRENT TASK  : 3.11
 LAST UPDATED  : 2026-11-10
-NOTES         : Task 3.9 completed: FindBar search UI, searchPageText exact rect extraction, matchCase and wholeWord filters, next/prev cycling, and SearchHighlightLayer. Moving to Task 3.10 (Text selection and copy in view mode).
+NOTES         : Task 3.10 completed: TextSelectionLayer with character-box hit testing, drag selection, visual highlights, and system clipboard copy (Ctrl+C). Moving to Task 3.11 (Fit modes: fit width, fit page, actual size).
 ```
 
 ---
@@ -394,7 +394,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **3.7** Thumbnail sidebar with click-to-jump (lazy rendered).
 - [x] **3.8** Page indicator (`3 / 24`), "go to page", keyboard navigation (PgUp / PgDn / Home / End).
 - [x] **3.9** Text search: find bar, highlight all, next / previous, case / whole-word options.
-- [ ] **3.10** Text selection and copy in view mode (own selection layer built from engine character boxes).
+- [x] **3.10** Text selection and copy in view mode (own selection layer built from engine character boxes).
 - [ ] **3.11** Fit modes: fit width, fit page, actual size; remembered per document.
 - [ ] **3.12** Page layout modes: continuous (default), single page, two-page spread (optional).
 - [ ] **3.13** Password-protected PDFs: dialog, retry, cancel.
@@ -807,7 +807,8 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-10 | 3.6     | Render scheduler with priority queue & fast scroll cancellation     | `P3.6`  | RenderScheduler priority tiers (visible > near > thumbnails), stale job abort & cache integration            |
 | 2026-11-10 | 3.7     | Thumbnail sidebar with click-to-jump (lazy rendered)                | `P3.7`  | ThumbnailSidebar with lazy IntersectionObserver, click-to-jump, active highlighting & a11y keyboard support  |
 | 2026-11-10 | 3.8     | Page indicator ("3 / 24"), go to page, and keyboard navigation      | `P3.8`  | PageNavigation "3 / 24" badge, direct input go-to-page, boundary clamping, and PgUp/PgDn/Home/End keyboard   |
-| 2026-11-10 | 3.9     | Text search find bar, match highlighting, next/prev & options       | `P3.9`  | FindBar search UI, searchPageText exact rect extraction, case/word options, and SearchHighlightLayer          |
+| 2026-11-10 | 3.9     | Text search find bar, match highlighting, next/prev & options       | `P3.9`  | FindBar search UI, searchPageText exact rect extraction, case/word options, and SearchHighlightLayer         |
+| 2026-11-10 | 3.10    | Text selection and copy in view mode (character boxes)              | `P3.10` | TextSelectionLayer character box hit-testing, drag range selection, highlight overlay & clipboard copy        |
 
 ---
 
