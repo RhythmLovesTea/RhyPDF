@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 3
-CURRENT TASK  : 3.6
+CURRENT TASK  : 3.7
 LAST UPDATED  : 2026-11-10
-NOTES         : Task 3.5 completed: BitmapLruCache adaptive budget based on deviceMemory, LRU eviction with guaranteed ImageBitmap.close() to prevent GPU/memory leaks. Moving to Task 3.6 (Render scheduler).
+NOTES         : Task 3.6 completed: RenderScheduler with multi-tier priority queue (visible > near > thumbnails), fast-scroll cancellation, and cache integration. Moving to Task 3.7 (Thumbnail sidebar with click-to-jump).
 ```
 
 ---
@@ -390,7 +390,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **3.3** Tile-based rendering for high zoom (render only the visible region at the current scale). _Done when:_ 800% zoom stays sharp with bounded memory.
 - [x] **3.4** Zoom and pan: Ctrl / Cmd + wheel, trackpad pinch, touch pinch, double-tap, keyboard `+` / `-`; clamp 25% to 800%. _Done when:_ works with mouse, trackpad and touch.
 - [x] **3.5** Bitmap LRU cache with a memory budget (use `navigator.deviceMemory` when available); always call `ImageBitmap.close()` on eviction.
-- [ ] **3.6** Render scheduler: priority queue (visible > near > thumbnails), cancel stale jobs on fast scroll, shimmer placeholder.
+- [x] **3.6** Render scheduler: priority queue (visible > near > thumbnails), cancel stale jobs on fast scroll, shimmer placeholder.
 - [ ] **3.7** Thumbnail sidebar with click-to-jump (lazy rendered).
 - [ ] **3.8** Page indicator (`3 / 24`), "go to page", keyboard navigation (PgUp / PgDn / Home / End).
 - [ ] **3.9** Text search: find bar, highlight all, next / previous, case / whole-word options.
@@ -803,7 +803,8 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-10 | 3.2     | Virtualized continuous page list with 1-page lookahead              | `P3.2`  | VirtualPageList virtual scrolling, dynamic heights, 300-page file scrolls with bounded rendered window       |
 | 2026-11-10 | 3.3     | Tile-based rendering for high zoom (800%) with bounded memory       | `P3.3`  | TiledPageCanvas visible-tile computation, 800% zoom sharp with bounded memory allocation                     |
 | 2026-11-10 | 3.4     | Zoom and pan with mouse, trackpad, touch pinch & keyboard shortcuts | `P3.4`  | useZoomPan hook, cursor-anchored zoom, clamped 25%-800%, touch pinch & unit tests                            |
-| 2026-11-10 | 3.5     | Bitmap LRU cache with memory budget and ImageBitmap.close()         | `P3.5`  | BitmapLruCache adaptive budget based on deviceMemory, close() called on every eviction to prevent leaks       |
+| 2026-11-10 | 3.5     | Bitmap LRU cache with memory budget and ImageBitmap.close()         | `P3.5`  | BitmapLruCache adaptive budget based on deviceMemory, close() called on every eviction to prevent leaks      |
+| 2026-11-10 | 3.6     | Render scheduler with priority queue & fast scroll cancellation     | `P3.6`  | RenderScheduler priority tiers (visible > near > thumbnails), stale job abort & cache integration             |
 
 ---
 
