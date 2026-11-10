@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 3
-CURRENT TASK  : 3.1
+CURRENT TASK  : 3.2
 LAST UPDATED  : 2026-11-10
-NOTES         : PHASE 2 IS 100% COMPLETE! Task 2.15 completed and verified (integration test suite across 10-PDF sample set with open, render all pages, enumerate, mutate, save full rewrite, reopen, and leak verification). Moving to Phase 3 (Viewer), Task 3.1 (PageCanvas component).
+NOTES         : Task 3.1 completed: PageCanvas component shows page bitmap with responsive aspect ratio, dark/light theme, accessible placeholder and overlay slot. Moving to Task 3.2 (Virtualized continuous page list).
 ```
 
 ---
@@ -385,7 +385,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PHASE 3 — VIEWER (OPEN, RENDER, NAVIGATE)
 
-- [ ] **3.1** `PageCanvas` component: shows one page bitmap with a placeholder, correct aspect ratio and an accessible label. _Done when:_ looks right in light and dark.
+- [x] **3.1** `PageCanvas` component: shows one page bitmap with a placeholder, correct aspect ratio and an accessible label. _Done when:_ looks right in light and dark.
 - [ ] **3.2** Virtualized continuous page list (e.g. TanStack Virtual); render only visible pages plus 1 page lookahead. _Done when:_ a 300-page file scrolls without rendering hidden pages.
 - [ ] **3.3** Tile-based rendering for high zoom (render only the visible region at the current scale). _Done when:_ 800% zoom stays sharp with bounded memory.
 - [ ] **3.4** Zoom and pan: Ctrl / Cmd + wheel, trackpad pinch, touch pinch, double-tap, keyboard `+` / `-`; clamp 25% to 800%. _Done when:_ works with mouse, trackpad and touch.
@@ -798,7 +798,8 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-10 | 2.12    | Save: new file, source immutability, full, incremental & streaming  | `P2.12` | Verified bit-for-bit source immutability, FPDF_SaveAsCopy incremental/full, versions & stream                |
 | 2026-11-10 | 2.13    | Memory management: explicit close, leak detector & heap monitoring  | `P2.13` | closePage handle lifecycle, dev-mode leak detector, getMemoryStats & worker auto-restart on heap threshold   |
 | 2026-11-10 | 2.14    | Error model: PdfError union mapped from engine errors across worker | `P2.14` | PdfError codes, mapPdfiumErrorCode, mapToPdfError, isPdfError guard & worker RPC error reconstitution        |
-| 2026-11-10 | 2.15    | Integration tests across 10-PDF sample set (Appendix A)             | `P2.15` | Full pipeline open, render all pages, enumerate, mutate, save, reopen & zero leak check across sample set     |
+| 2026-11-10 | 2.15    | Integration tests across 10-PDF sample set (Appendix A)             | `P2.15` | Full pipeline open, render all pages, enumerate, mutate, save, reopen & zero leak check across sample set    |
+| 2026-11-10 | 3.1     | PageCanvas component with bitmap, placeholder, aspect ratio & a11y  | `P3.1`  | Responsive canvas, rotation handling, CLS prevention, light/dark themes & unit tests                          |
 
 ---
 
