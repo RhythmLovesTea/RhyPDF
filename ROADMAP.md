@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 3
-CURRENT TASK  : 3.5
+CURRENT TASK  : 3.6
 LAST UPDATED  : 2026-11-10
-NOTES         : Task 3.4 completed: useZoomPan hook supports Ctrl+wheel, trackpad pinch, touch pinch, double tap, and keyboard shortcuts clamped between 25% and 800%. Moving to Task 3.5 (Bitmap LRU cache).
+NOTES         : Task 3.5 completed: BitmapLruCache adaptive budget based on deviceMemory, LRU eviction with guaranteed ImageBitmap.close() to prevent GPU/memory leaks. Moving to Task 3.6 (Render scheduler).
 ```
 
 ---
@@ -389,7 +389,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **3.2** Virtualized continuous page list (e.g. TanStack Virtual); render only visible pages plus 1 page lookahead. _Done when:_ a 300-page file scrolls without rendering hidden pages.
 - [x] **3.3** Tile-based rendering for high zoom (render only the visible region at the current scale). _Done when:_ 800% zoom stays sharp with bounded memory.
 - [x] **3.4** Zoom and pan: Ctrl / Cmd + wheel, trackpad pinch, touch pinch, double-tap, keyboard `+` / `-`; clamp 25% to 800%. _Done when:_ works with mouse, trackpad and touch.
-- [ ] **3.5** Bitmap LRU cache with a memory budget (use `navigator.deviceMemory` when available); always call `ImageBitmap.close()` on eviction.
+- [x] **3.5** Bitmap LRU cache with a memory budget (use `navigator.deviceMemory` when available); always call `ImageBitmap.close()` on eviction.
 - [ ] **3.6** Render scheduler: priority queue (visible > near > thumbnails), cancel stale jobs on fast scroll, shimmer placeholder.
 - [ ] **3.7** Thumbnail sidebar with click-to-jump (lazy rendered).
 - [ ] **3.8** Page indicator (`3 / 24`), "go to page", keyboard navigation (PgUp / PgDn / Home / End).
@@ -802,7 +802,8 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-10 | 3.1     | PageCanvas component with bitmap, placeholder, aspect ratio & a11y  | `P3.1`  | Responsive canvas, rotation handling, CLS prevention, light/dark themes & unit tests                         |
 | 2026-11-10 | 3.2     | Virtualized continuous page list with 1-page lookahead              | `P3.2`  | VirtualPageList virtual scrolling, dynamic heights, 300-page file scrolls with bounded rendered window       |
 | 2026-11-10 | 3.3     | Tile-based rendering for high zoom (800%) with bounded memory       | `P3.3`  | TiledPageCanvas visible-tile computation, 800% zoom sharp with bounded memory allocation                     |
-| 2026-11-10 | 3.4     | Zoom and pan with mouse, trackpad, touch pinch & keyboard shortcuts  | `P3.4`  | useZoomPan hook, cursor-anchored zoom, clamped 25%-800%, touch pinch & unit tests                            |
+| 2026-11-10 | 3.4     | Zoom and pan with mouse, trackpad, touch pinch & keyboard shortcuts | `P3.4`  | useZoomPan hook, cursor-anchored zoom, clamped 25%-800%, touch pinch & unit tests                            |
+| 2026-11-10 | 3.5     | Bitmap LRU cache with memory budget and ImageBitmap.close()         | `P3.5`  | BitmapLruCache adaptive budget based on deviceMemory, close() called on every eviction to prevent leaks       |
 
 ---
 
