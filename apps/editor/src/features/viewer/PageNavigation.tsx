@@ -131,11 +131,12 @@ export const PageNavigation: React.FC<PageNavigationProps> = ({
       <IconButton
         data-testid="nav-prev-page"
         aria-label={t('editor.viewer.goToPage', { defaultValue: 'Previous page' })}
-        icon={<ChevronLeft size={16} />}
         size="sm"
         disabled={currentPage <= 1}
         onClick={handlePrev}
-      />
+      >
+        <ChevronLeft size={16} />
+      </IconButton>
 
       <div
         data-testid="page-indicator-badge"
@@ -206,11 +207,12 @@ export const PageNavigation: React.FC<PageNavigationProps> = ({
       <IconButton
         data-testid="nav-next-page"
         aria-label={t('editor.viewer.goToPage', { defaultValue: 'Next page' })}
-        icon={<ChevronRight size={16} />}
         size="sm"
         disabled={currentPage >= pageCount}
         onClick={handleNext}
-      />
+      >
+        <ChevronRight size={16} />
+      </IconButton>
     </nav>
   );
 };

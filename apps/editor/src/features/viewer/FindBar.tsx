@@ -162,19 +162,21 @@ export const FindBar: React.FC<FindBarProps> = ({
       <IconButton
         data-testid="find-prev-button"
         aria-label={t('editor.viewer.findPrevious', { defaultValue: 'Previous match' })}
-        icon={<ChevronUp size={15} />}
         size="sm"
         disabled={totalMatches === 0}
         onClick={onPrevMatch}
-      />
+      >
+        <ChevronUp size={15} />
+      </IconButton>
       <IconButton
         data-testid="find-next-button"
         aria-label={t('editor.viewer.findNext', { defaultValue: 'Next match' })}
-        icon={<ChevronDown size={15} />}
         size="sm"
         disabled={totalMatches === 0}
         onClick={onNextMatch}
-      />
+      >
+        <ChevronDown size={15} />
+      </IconButton>
 
       {/* Match Case option button */}
       <button
@@ -221,10 +223,11 @@ export const FindBar: React.FC<FindBarProps> = ({
       <IconButton
         data-testid="find-close-button"
         aria-label={t('common.close', { defaultValue: 'Close' })}
-        icon={<X size={15} />}
         size="sm"
         onClick={onClose}
-      />
+      >
+        <X size={15} />
+      </IconButton>
     </div>
   );
 };

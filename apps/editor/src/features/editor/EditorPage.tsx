@@ -1,5 +1,8 @@
 import React, { lazy, Suspense } from 'react';
 import { useTranslation } from '@rhypdf/i18n';
+import { useDocStore } from '../../stores/docStore';
+import { useUIStore } from '../../stores/uiStore';
+import { PdfViewer } from '../viewer/PdfViewer';
 
 const ToolbarSkeleton = lazy(() => import('../../components/ToolbarSkeleton'));
 const SidebarSkeleton = lazy(() => import('../../components/SidebarSkeleton'));
@@ -17,6 +20,24 @@ export default function EditorPage({
   wasmPhase = 'ready'
 }: EditorPageProps): React.JSX.Element {
   const { t } = useTranslation();
+  const { currentDocId, pageCount, closeDoc } = useDocStore();
+  const theme = useUIStore((s) => (s.theme === 'dark' ? 'dark' : 'light'));
+
+  if (currentDocId) {
+    return (
+      <div
+        data-testid="page-editor"
+        style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}
+      >
+        <PdfViewer
+          docId={currentDocId}
+          pageCount={pageCount || 1}
+          theme={theme}
+          onBackToHome={() => closeDoc()}
+        />
+      </div>
+    );
+  }
 
   return (
     <div

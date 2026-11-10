@@ -24,14 +24,13 @@ export const PasswordDialog: React.FC<PasswordDialogProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (open) {
-      setPassword('');
-      // Auto-focus input on mount / dialog open
-      const timer = setTimeout(() => {
-        inputRef.current?.focus();
-      }, 50);
-      return () => clearTimeout(timer);
-    }
+    if (!open) return undefined;
+    setPassword('');
+    // Auto-focus input on mount / dialog open
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
+    return () => clearTimeout(timer);
   }, [open]);
 
   // Focus and select input if wrong password was entered
