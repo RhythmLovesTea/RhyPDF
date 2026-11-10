@@ -66,6 +66,7 @@ export const enTranslations = {
       passwordRequired: 'Password Protected Document',
       passwordPrompt: 'Please enter the password to open this PDF document.',
       passwordSubmit: 'Unlock Document',
+      passwordCancel: 'Cancel',
       passwordRetry: 'Incorrect password. Please try again.',
       errorTitle: 'Unable to open PDF',
       errorCorrupt: 'This file is corrupt or not a valid PDF document.',

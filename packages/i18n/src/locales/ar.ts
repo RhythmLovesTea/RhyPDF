@@ -65,6 +65,7 @@ export const arTranslations = {
       passwordRequired: 'مستند محمي بكلمة مرور',
       passwordPrompt: 'يرجى إدخال كلمة المرور لفتح هذا المستند.',
       passwordSubmit: 'فتح المستند',
+      passwordCancel: 'إلغاء',
       passwordRetry: 'كلمة مرور غير صحيحة. يرجى إعادة المحاولة.',
       errorTitle: 'تعذر فتح ملف PDF',
       errorCorrupt: 'هذا الملف تالف أو غير صالح كملف PDF.',
