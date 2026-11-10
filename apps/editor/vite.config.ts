@@ -22,7 +22,11 @@ const DEV_SECURITY_HEADERS = {
 export default defineConfig({
   plugins: [react()],
   resolve: {
+    dedupe: ['react', 'react-dom', 'react-i18next'],
     alias: {
+      react: path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+      'react-i18next': path.resolve(__dirname, 'node_modules/react-i18next'),
       '@rhypdf/pdf-model': path.resolve(__dirname, '../../packages/pdf-model/src/index.ts'),
       '@rhypdf/pdf-engine': path.resolve(__dirname, '../../packages/pdf-engine/src/index.ts'),
       '@rhypdf/text-layout': path.resolve(__dirname, '../../packages/text-layout/src/index.ts'),

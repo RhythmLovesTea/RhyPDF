@@ -122,9 +122,6 @@ importers:
       i18next:
         specifier: 27.0.1
         version: 27.0.1(typescript@5.6.3)
-      react-i18next:
-        specifier: 18.0.1
-        version: 18.0.1(@types/react@18.3.1)(i18next@27.0.1(typescript@5.6.3))(react@18.3.1)(typescript@5.6.3)
     devDependencies:
       '@types/react':
         specifier: 18.3.1
@@ -132,6 +129,9 @@ importers:
       react:
         specifier: 18.3.1
         version: 18.3.1
+      react-i18next:
+        specifier: 18.0.1
+        version: 18.0.1(@types/react@18.3.1)(i18next@27.0.1(typescript@5.6.3))(react@18.3.1)(typescript@5.6.3)
 
   packages/ocr:
     dependencies:
@@ -181,12 +181,6 @@ importers:
       lucide-react:
         specifier: 1.70.0
         version: 1.70.0(@types/react@18.3.12)(react@18.3.1)
-      react:
-        specifier: 18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: 18.3.1
-        version: 18.3.1(react@18.3.1)
     devDependencies:
       '@types/react':
         specifier: 18.3.12
@@ -194,6 +188,12 @@ importers:
       '@types/react-dom':
         specifier: 18.3.1
         version: 18.3.1
+      react:
+        specifier: 18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: 18.3.1
+        version: 18.3.1(react@18.3.1)
 
 packages:
 
