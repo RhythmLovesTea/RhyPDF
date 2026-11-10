@@ -99,9 +99,9 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 
 ```
 CURRENT PHASE : 3
-CURRENT TASK  : 3.4
+CURRENT TASK  : 3.5
 LAST UPDATED  : 2026-11-10
-NOTES         : Task 3.3 completed: Tile-based rendering computes viewport-intersecting tiles at 800% zoom with sharp detail and bounded memory. Moving to Task 3.4 (Zoom and pan).
+NOTES         : Task 3.4 completed: useZoomPan hook supports Ctrl+wheel, trackpad pinch, touch pinch, double tap, and keyboard shortcuts clamped between 25% and 800%. Moving to Task 3.5 (Bitmap LRU cache).
 ```
 
 ---
@@ -388,7 +388,7 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 - [x] **3.1** `PageCanvas` component: shows one page bitmap with a placeholder, correct aspect ratio and an accessible label. _Done when:_ looks right in light and dark.
 - [x] **3.2** Virtualized continuous page list (e.g. TanStack Virtual); render only visible pages plus 1 page lookahead. _Done when:_ a 300-page file scrolls without rendering hidden pages.
 - [x] **3.3** Tile-based rendering for high zoom (render only the visible region at the current scale). _Done when:_ 800% zoom stays sharp with bounded memory.
-- [ ] **3.4** Zoom and pan: Ctrl / Cmd + wheel, trackpad pinch, touch pinch, double-tap, keyboard `+` / `-`; clamp 25% to 800%. _Done when:_ works with mouse, trackpad and touch.
+- [x] **3.4** Zoom and pan: Ctrl / Cmd + wheel, trackpad pinch, touch pinch, double-tap, keyboard `+` / `-`; clamp 25% to 800%. _Done when:_ works with mouse, trackpad and touch.
 - [ ] **3.5** Bitmap LRU cache with a memory budget (use `navigator.deviceMemory` when available); always call `ImageBitmap.close()` on eviction.
 - [ ] **3.6** Render scheduler: priority queue (visible > near > thumbnails), cancel stale jobs on fast scroll, shimmer placeholder.
 - [ ] **3.7** Thumbnail sidebar with click-to-jump (lazy rendered).
@@ -801,7 +801,8 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-10 | 2.15    | Integration tests across 10-PDF sample set (Appendix A)             | `P2.15` | Full pipeline open, render all pages, enumerate, mutate, save, reopen & zero leak check across sample set    |
 | 2026-11-10 | 3.1     | PageCanvas component with bitmap, placeholder, aspect ratio & a11y  | `P3.1`  | Responsive canvas, rotation handling, CLS prevention, light/dark themes & unit tests                         |
 | 2026-11-10 | 3.2     | Virtualized continuous page list with 1-page lookahead              | `P3.2`  | VirtualPageList virtual scrolling, dynamic heights, 300-page file scrolls with bounded rendered window       |
-| 2026-11-10 | 3.3     | Tile-based rendering for high zoom (800%) with bounded memory        | `P3.3`  | TiledPageCanvas visible-tile computation, 800% zoom sharp with bounded memory allocation                       |
+| 2026-11-10 | 3.3     | Tile-based rendering for high zoom (800%) with bounded memory       | `P3.3`  | TiledPageCanvas visible-tile computation, 800% zoom sharp with bounded memory allocation                     |
+| 2026-11-10 | 3.4     | Zoom and pan with mouse, trackpad, touch pinch & keyboard shortcuts  | `P3.4`  | useZoomPan hook, cursor-anchored zoom, clamped 25%-800%, touch pinch & unit tests                            |
 
 ---
 
