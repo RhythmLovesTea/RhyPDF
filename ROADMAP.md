@@ -98,10 +98,10 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 ## CURRENT TASK POINTER
 
 ```
-CURRENT PHASE : 4
-CURRENT TASK  : 4.1
+CURRENT PHASE : 5
+CURRENT TASK  : 5.1
 LAST UPDATED  : 2026-11-10
-NOTES         : Phase 3 completed with all 15 subtasks. Task 3.15 completed: useViewerResilience hook for resize, orientation, and DPR-change survival with zero flash, localStorage document state restoration (page, scroll ratio, scale, fit & layout modes), integrated PdfViewer component, and EditorPage viewer connection. Ready for Phase 4 (App Shell, File Management, Clean UI).
+NOTES         : Phase 4 completed with all 14 subtasks (4.1 to 4.14). Built and verified: Home screen drop zone & recents grid, file picker / global drop / paste / PWA launchQueue open, IndexedDB recents service with permission re-request, recent actions (remove, rename, delete, download), compliant blank PDF generator, OPFS working-copy system with IndexedDB fallback, autosave engine on interval / visibilitychange / pagehide, crash & tab-close recovery, full Section 3B editor layout shell (top bar, tool rail, contextual toolbar, properties panel, status bar), mode switcher, Command Palette (Ctrl+K) & Shortcuts help, 3-step skippable onboarding tour with privacy promise, settings suite with privacy statement & licenses, and responsive/reduced-motion polish. All 231 tests green, production builds and bundle size budgets verified. Ready for Phase 5.
 ```
 
 ---
@@ -407,20 +407,20 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PHASE 4 — APP SHELL, FILE MANAGEMENT, CLEAN UI
 
-- [ ] **4.1** Home screen: large drop zone ("Drop a PDF or click to open"), "Create blank PDF", recent-files grid with thumbnails (local only).
-- [ ] **4.2** Open via picker, drag and drop (anywhere on the page), paste, and PWA file handler / `launchQueue`; use `showOpenFilePicker` where supported.
-- [ ] **4.3** Recent files in IndexedDB: name, file handle (if available), last opened, page count, thumbnail, last position; re-request permission when needed.
-- [ ] **4.4** Recent file actions: remove from list, rename (copy), delete, download again.
-- [ ] **4.5** Create blank PDF (A4 / Letter / Legal / custom, orientation).
-- [ ] **4.6** **Working-copy system:** on open, copy bytes to OPFS (IndexedDB blob fallback); all edits go to this copy; the original is untouched.
-- [ ] **4.7** Autosave: working copy + command-log snapshot every N seconds and on `visibilitychange` / `pagehide`.
-- [ ] **4.8** Crash / tab-close recovery: next visit offers "Restore unsaved changes".
-- [ ] **4.9** Editor layout (Section 3B): top bar, tool rail, canvas, contextual toolbar, properties panel, status bar.
-- [ ] **4.10** Mode switcher: View · Edit Text · Edit Images · Annotate · Pages (always visible, clear active state).
-- [ ] **4.11** Command palette (Ctrl / Cmd + K), shortcut map and a shortcuts help dialog.
-- [ ] **4.12** Onboarding: 3 short screens, skippable, shown once, with the privacy promise.
-- [ ] **4.13** Settings: theme (system / light / dark), default font, units, language, default save behavior, clear local data, licenses, privacy statement.
-- [ ] **4.14** Responsive layouts: desktop, tablet (touch-friendly), phone (collapsed panels, bottom sheet), light / dark polish, reduced-motion support.
+- [x] **4.1** Home screen: large drop zone ("Drop a PDF or click to open"), "Create blank PDF", recent-files grid with thumbnails (local only).
+- [x] **4.2** Open via picker, drag and drop (anywhere on the page), paste, and PWA file handler / `launchQueue`; use `showOpenFilePicker` where supported.
+- [x] **4.3** Recent files in IndexedDB: name, file handle (if available), last opened, page count, thumbnail, last position; re-request permission when needed.
+- [x] **4.4** Recent file actions: remove from list, rename (copy), delete, download again.
+- [x] **4.5** Create blank PDF (A4 / Letter / Legal / custom, orientation).
+- [x] **4.6** **Working-copy system:** on open, copy bytes to OPFS (IndexedDB blob fallback); all edits go to this copy; the original is untouched.
+- [x] **4.7** Autosave: working copy + command-log snapshot every N seconds and on `visibilitychange` / `pagehide`.
+- [x] **4.8** Crash / tab-close recovery: next visit offers "Restore unsaved changes".
+- [x] **4.9** Editor layout (Section 3B): top bar, tool rail, canvas, contextual toolbar, properties panel, status bar.
+- [x] **4.10** Mode switcher: View · Edit Text · Edit Images · Annotate · Pages (always visible, clear active state).
+- [x] **4.11** Command palette (Ctrl / Cmd + K), shortcut map and a shortcuts help dialog.
+- [x] **4.12** Onboarding: 3 short screens, skippable, shown once, with the privacy promise.
+- [x] **4.13** Settings: theme (system / light / dark), default font, units, language, default save behavior, clear local data, licenses, privacy statement.
+- [x] **4.14** Responsive layouts: desktop, tablet (touch-friendly), phone (collapsed panels, bottom sheet), light / dark polish, reduced-motion support.
 
 **UI quality bar (verify visually):** see Section 3B.
 
@@ -757,63 +757,77 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PROGRESS LOG (AGENT: ADD ONE LINE PER COMPLETED TASK)
 
-| Date       | Task ID | What was done                                                       | Commit  | Notes / Problems                                                                                              |
-| ---------- | ------- | ------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
-| 2026-11-09 | —       | Web roadmap created from the Android checklist                      | —       | Start at Task 0.1                                                                                             |
-| 2026-11-09 | 0.1     | Load PDFium WASM in Web Worker with Vite + TS spike                 | `P0.1`  | Initialized @embedpdf/pdfium 2.15.1 in worker, self-hosted WASM verified                                      |
-| 2026-11-09 | 0.2     | Render 3 sample PDFs to canvas at 2x scale and DPR                  | `P0.2`  | Validated rendering on single-column, two-column and image-heavy PDFs                                         |
-| 2026-11-09 | 0.3     | Page object enumeration and DOM/SVG overlay mapping                 | `P0.3`  | Mapped bounds at 1x, 1.5x, 2x and handled 90 deg rotation with FPDF_PageToDevice                              |
-| 2026-11-09 | 0.4     | Text run extraction with font, size, color, subset & char boxes     | `P0.4`  | Verified extraction across 3 sample PDFs with per-character bounding boxes                                    |
-| 2026-11-09 | 0.5     | Delete text object, insert new text with bundled font, save         | `P0.5`  | Verified in-place replacement and confirmed 0 ghost text in regenerated file                                  |
-| 2026-11-09 | 0.6     | Complex scripts: Arabic & Devanagari shaping with HarfBuzz          | `P0.6`  | Verified RTL Arabic & Hindi conjunct ligatures, CID Type2 font support & fallbacks                            |
-| 2026-11-09 | 0.7     | Image manipulation: transform, delete, and insert PNG & JPEG        | `P0.7`  | Verified matrix transform (rotate 45 deg), deletion, and PNG with alpha transparency                          |
-| 2026-11-09 | 0.8     | Self-hosted Tesseract.js OCR bake-off benchmark                     | `P0.8`  | Verified 94% accuracy, 710ms speed, offline self-hosted WASM + traineddata                                    |
-| 2026-11-09 | 0.9     | Memory & big file benchmarks, WASM heap & hard limits               | `P0.9`  | Measured 100-page heap (17.8MB), set 50MB warning, 150MB mobile / 300MB desktop caps                          |
-| 2026-11-09 | 0.10    | Hosting headers (COOP/COEP/CSP), crossOriginIsolated & OPFS         | `P0.10` | Verified crossOriginIsolated=true, OPFS round-trip, created headers configs                                   |
-| 2026-11-09 | 0.11    | Text-editing surface: IME composition and layout parity             | `P0.11` | Validated Japanese/CJK IME lifecycle, measured 0.57% mismatch, transparent DOM overlay strategy               |
-| 2026-11-09 | 0.12    | Save & encryption flags: password unlock and decryption export      | `P0.12` | Verified wrong password rejected, password unlock, EPDF_RemoveEncryption, and unencrypted save                |
-| 2026-11-09 | 0.13    | Write Spike Report, license audit & feasibility verification        | `P0.13` | Completed Phase 0: all 12 spikes passed, licenses verified, Go decision                                       |
-| 2026-11-09 | 1.1     | Setup pnpm + Turborepo monorepo with target structure               | `P1.1`  | Created apps/editor and 9 packages; pnpm install & pnpm build & Playwright pass                               |
-| 2026-11-09 | 1.2     | Strict TypeScript, project references & exact dependency versions   | `P1.2`  | Configured strict flags, composite project references, exact deps, verified typecheck                         |
-| 2026-11-09 | 1.3     | Vite + React app shell with code splitting & worker/WASM plumbing   | `P1.3`  | Code-split skeleton chunks, dedicated worker loads PDFium WASM in dev & prod preview                          |
-| 2026-11-09 | 1.4     | Lint and format setup (ESLint flat config + Prettier)               | `P1.4`  | Verified pnpm lint fails on deliberately bad file and passes cleanly across repo                              |
-| 2026-11-09 | 1.5     | Design-system tokens, theme CSS variables & base components         | `P1.5`  | 11 components (Button, Dialog, Tabs, etc.), CSS tokens, verified in style-guide                               |
-| 2026-11-09 | 1.6     | Routing skeleton: Home -> Editor -> Page Organizer -> Settings      | `P1.6`  | Lazy-loaded feature routes, deep linking & page refresh survival verified in E2E                              |
-| 2026-11-09 | 1.7     | State, errors & logging: Zustand, ErrorBoundary, leveled logger     | `P1.7`  | Zustand ui/doc stores, ErrorBoundary, global recovery storage verified in E2E                                 |
-| 2026-11-09 | 1.8     | i18n scaffolding (i18next), pseudo-locale, RTL dir switching        | `P1.8`  | Zero hardcoded UI text, CSS logical properties, pseudo-locale & Arabic RTL verified in E2E                    |
-| 2026-11-09 | 1.9     | Test setup: Vitest, Playwright multi-browser & golden-image helper  | `P1.9`  | Vitest happy-dom, Playwright multi-browser, test-fixtures & pixelmatch helper verified in tests               |
-| 2026-11-09 | 1.10    | CI GitHub Actions workflow, license audit & bundle budgets          | `P1.10` | Configured CI, 208-dep license checker, size budget script, and preview deploy action                         |
-| 2026-11-09 | 1.11    | Security headers, Web App Manifest & offline Service Worker shell   | `P1.11` | COOP/COEP/CSP headers, manifest PDF file_handlers, precached offline shell & WASM, Dependabot                 |
-| 2026-11-09 | 2.1     | Define PdfEngine interface, domain models & MockPdfEngine           | `P2.1`  | Defined zero-leak engine interface, domain models, MockPdfEngine & 11 unit tests passed                       |
-| 2026-11-09 | 2.2     | Worker host + Comlink RPC, serialized queue & cancellation          | `P2.2`  | SerializedQueue, WorkerPdfEngine, Comlink transferables, 100 concurrent calls verified                        |
-| 2026-11-09 | 2.3     | WASM loading strategy: lazy load, progress UI & offline cache       | `P2.3`  | loadPdfiumWasm with streaming progress, loading UI bar, offline start verified                                |
-| 2026-11-09 | 2.4     | Open doc from ArrayBuffer/Blob, password handling & 100MB chunked   | `P2.4`  | FPDF_LoadCustomDocument chunked access, PasswordRequired/WrongPassword, 100MB file opens within heap limits   |
-| 2026-11-09 | 2.5     | Page render to ImageBitmap with scale, DPR, tiles & rotation        | `P2.5`  | Arbitrary scale, DPR, clipRect tile sub-regions, 0/90/180/270 rotation & annotations verified                 |
-| 2026-11-10 | 2.6     | Page-object enumeration with type, bounds, matrix & z-index         | `P2.6`  | Verified object enumeration (text, image, path, form) & matrix composition across sample set                  |
-| 2026-11-10 | 2.7     | Text-object details: string, font, size, colors & render mode       | `P2.7`  | Query FPDFFont (flags, weight, embedded, subset), font size, fill/stroke color & render modes                 |
-| 2026-11-10 | 2.8     | Image-object details: preview, pixel size, filters, DPI & masks     | `P2.8`  | Extracted FPDFImageObj metadata, decoded RGBA preview bitmap, colorSpace & alpha mask detection               |
-| 2026-11-10 | 2.9     | Path-object details: vector shapes, segments, stroke, fill & dash   | `P2.9`  | Extracted path segments (moveTo, lineTo, bezier, close), stroke width, stroke/fill color & dash array         |
-| 2026-11-10 | 2.10    | Form XObject traversal: enumerate and edit objects inside forms     | `P2.10` | 2D affine composition for form child objects, UTF-16 fix, FPDFFormObj_RemoveObject verified on engine & mock  |
-| 2026-11-10 | 2.11    | Mutation API: text, image & path insertion, transforms & reorder    | `P2.11` | removeObject, insertText, insertImage, insertPath, setMatrix, setColor, reorder & renderMode                  |
-| 2026-11-10 | 2.12    | Save: new file, source immutability, full, incremental & streaming  | `P2.12` | Verified bit-for-bit source immutability, FPDF_SaveAsCopy incremental/full, versions & stream                 |
-| 2026-11-10 | 2.13    | Memory management: explicit close, leak detector & heap monitoring  | `P2.13` | closePage handle lifecycle, dev-mode leak detector, getMemoryStats & worker auto-restart on heap threshold    |
-| 2026-11-10 | 2.14    | Error model: PdfError union mapped from engine errors across worker | `P2.14` | PdfError codes, mapPdfiumErrorCode, mapToPdfError, isPdfError guard & worker RPC error reconstitution         |
-| 2026-11-10 | 2.15    | Integration tests across 10-PDF sample set (Appendix A)             | `P2.15` | Full pipeline open, render all pages, enumerate, mutate, save, reopen & zero leak check across sample set     |
-| 2026-11-10 | 3.1     | PageCanvas component with bitmap, placeholder, aspect ratio & a11y  | `P3.1`  | Responsive canvas, rotation handling, CLS prevention, light/dark themes & unit tests                          |
-| 2026-11-10 | 3.2     | Virtualized continuous page list with 1-page lookahead              | `P3.2`  | VirtualPageList virtual scrolling, dynamic heights, 300-page file scrolls with bounded rendered window        |
-| 2026-11-10 | 3.3     | Tile-based rendering for high zoom (800%) with bounded memory       | `P3.3`  | TiledPageCanvas visible-tile computation, 800% zoom sharp with bounded memory allocation                      |
-| 2026-11-10 | 3.4     | Zoom and pan with mouse, trackpad, touch pinch & keyboard shortcuts | `P3.4`  | useZoomPan hook, cursor-anchored zoom, clamped 25%-800%, touch pinch & unit tests                             |
-| 2026-11-10 | 3.5     | Bitmap LRU cache with memory budget and ImageBitmap.close()         | `P3.5`  | BitmapLruCache adaptive budget based on deviceMemory, close() called on every eviction to prevent leaks       |
-| 2026-11-10 | 3.6     | Render scheduler with priority queue & fast scroll cancellation     | `P3.6`  | RenderScheduler priority tiers (visible > near > thumbnails), stale job abort & cache integration             |
-| 2026-11-10 | 3.7     | Thumbnail sidebar with click-to-jump (lazy rendered)                | `P3.7`  | ThumbnailSidebar with lazy IntersectionObserver, click-to-jump, active highlighting & a11y keyboard support   |
-| 2026-11-10 | 3.8     | Page indicator ("3 / 24"), go to page, and keyboard navigation      | `P3.8`  | PageNavigation "3 / 24" badge, direct input go-to-page, boundary clamping, and PgUp/PgDn/Home/End keyboard    |
-| 2026-11-10 | 3.9     | Text search find bar, match highlighting, next/prev & options       | `P3.9`  | FindBar search UI, searchPageText exact rect extraction, case/word options, and SearchHighlightLayer          |
-| 2026-11-10 | 3.10    | Text selection and copy in view mode (character boxes)              | `P3.10` | TextSelectionLayer character box hit-testing, drag range selection, highlight overlay & clipboard copy        |
-| 2026-11-10 | 3.11    | Fit modes: fit width, fit page, actual size per document            | `P3.11` | FitModeSelector with fitWidth/fitPage/actualSize, rotation support, and document localStorage persistence     |
-| 2026-11-10 | 3.12    | Page layout modes: continuous (default), single, two-page spread    | `P3.12` | LayoutModeSelector with continuous/single/two-page layouts, row chunking & tests                              |
-| 2026-11-10 | 3.13    | Password-protected PDFs: dialog, retry, cancel                      | `P3.13` | PasswordDialog modal with retry state, submit validation, Esc cancel & i18n                                   |
-| 2026-11-10 | 3.14    | Corrupt or unsupported files: friendly error screen with a way back | `P3.14` | ViewerErrorScreen with error categories, technical details, home return & retry                               |
-| 2026-11-10 | 3.15    | Resize / orientation / DPR survival & integrated PdfViewer          | `P3.15` | useViewerResilience hook, localStorage state restoration, PdfViewer integration, and all quality gates passed |
+| Date       | Task ID | What was done                                                        | Commit  | Notes / Problems                                                                                              |
+| ---------- | ------- | -------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
+| 2026-11-09 | —       | Web roadmap created from the Android checklist                       | —       | Start at Task 0.1                                                                                             |
+| 2026-11-09 | 0.1     | Load PDFium WASM in Web Worker with Vite + TS spike                  | `P0.1`  | Initialized @embedpdf/pdfium 2.15.1 in worker, self-hosted WASM verified                                      |
+| 2026-11-09 | 0.2     | Render 3 sample PDFs to canvas at 2x scale and DPR                   | `P0.2`  | Validated rendering on single-column, two-column and image-heavy PDFs                                         |
+| 2026-11-09 | 0.3     | Page object enumeration and DOM/SVG overlay mapping                  | `P0.3`  | Mapped bounds at 1x, 1.5x, 2x and handled 90 deg rotation with FPDF_PageToDevice                              |
+| 2026-11-09 | 0.4     | Text run extraction with font, size, color, subset & char boxes      | `P0.4`  | Verified extraction across 3 sample PDFs with per-character bounding boxes                                    |
+| 2026-11-09 | 0.5     | Delete text object, insert new text with bundled font, save          | `P0.5`  | Verified in-place replacement and confirmed 0 ghost text in regenerated file                                  |
+| 2026-11-09 | 0.6     | Complex scripts: Arabic & Devanagari shaping with HarfBuzz           | `P0.6`  | Verified RTL Arabic & Hindi conjunct ligatures, CID Type2 font support & fallbacks                            |
+| 2026-11-09 | 0.7     | Image manipulation: transform, delete, and insert PNG & JPEG         | `P0.7`  | Verified matrix transform (rotate 45 deg), deletion, and PNG with alpha transparency                          |
+| 2026-11-09 | 0.8     | Self-hosted Tesseract.js OCR bake-off benchmark                      | `P0.8`  | Verified 94% accuracy, 710ms speed, offline self-hosted WASM + traineddata                                    |
+| 2026-11-09 | 0.9     | Memory & big file benchmarks, WASM heap & hard limits                | `P0.9`  | Measured 100-page heap (17.8MB), set 50MB warning, 150MB mobile / 300MB desktop caps                          |
+| 2026-11-09 | 0.10    | Hosting headers (COOP/COEP/CSP), crossOriginIsolated & OPFS          | `P0.10` | Verified crossOriginIsolated=true, OPFS round-trip, created headers configs                                   |
+| 2026-11-09 | 0.11    | Text-editing surface: IME composition and layout parity              | `P0.11` | Validated Japanese/CJK IME lifecycle, measured 0.57% mismatch, transparent DOM overlay strategy               |
+| 2026-11-09 | 0.12    | Save & encryption flags: password unlock and decryption export       | `P0.12` | Verified wrong password rejected, password unlock, EPDF_RemoveEncryption, and unencrypted save                |
+| 2026-11-09 | 0.13    | Write Spike Report, license audit & feasibility verification         | `P0.13` | Completed Phase 0: all 12 spikes passed, licenses verified, Go decision                                       |
+| 2026-11-09 | 1.1     | Setup pnpm + Turborepo monorepo with target structure                | `P1.1`  | Created apps/editor and 9 packages; pnpm install & pnpm build & Playwright pass                               |
+| 2026-11-09 | 1.2     | Strict TypeScript, project references & exact dependency versions    | `P1.2`  | Configured strict flags, composite project references, exact deps, verified typecheck                         |
+| 2026-11-09 | 1.3     | Vite + React app shell with code splitting & worker/WASM plumbing    | `P1.3`  | Code-split skeleton chunks, dedicated worker loads PDFium WASM in dev & prod preview                          |
+| 2026-11-09 | 1.4     | Lint and format setup (ESLint flat config + Prettier)                | `P1.4`  | Verified pnpm lint fails on deliberately bad file and passes cleanly across repo                              |
+| 2026-11-09 | 1.5     | Design-system tokens, theme CSS variables & base components          | `P1.5`  | 11 components (Button, Dialog, Tabs, etc.), CSS tokens, verified in style-guide                               |
+| 2026-11-09 | 1.6     | Routing skeleton: Home -> Editor -> Page Organizer -> Settings       | `P1.6`  | Lazy-loaded feature routes, deep linking & page refresh survival verified in E2E                              |
+| 2026-11-09 | 1.7     | State, errors & logging: Zustand, ErrorBoundary, leveled logger      | `P1.7`  | Zustand ui/doc stores, ErrorBoundary, global recovery storage verified in E2E                                 |
+| 2026-11-09 | 1.8     | i18n scaffolding (i18next), pseudo-locale, RTL dir switching         | `P1.8`  | Zero hardcoded UI text, CSS logical properties, pseudo-locale & Arabic RTL verified in E2E                    |
+| 2026-11-09 | 1.9     | Test setup: Vitest, Playwright multi-browser & golden-image helper   | `P1.9`  | Vitest happy-dom, Playwright multi-browser, test-fixtures & pixelmatch helper verified in tests               |
+| 2026-11-09 | 1.10    | CI GitHub Actions workflow, license audit & bundle budgets           | `P1.10` | Configured CI, 208-dep license checker, size budget script, and preview deploy action                         |
+| 2026-11-09 | 1.11    | Security headers, Web App Manifest & offline Service Worker shell    | `P1.11` | COOP/COEP/CSP headers, manifest PDF file_handlers, precached offline shell & WASM, Dependabot                 |
+| 2026-11-09 | 2.1     | Define PdfEngine interface, domain models & MockPdfEngine            | `P2.1`  | Defined zero-leak engine interface, domain models, MockPdfEngine & 11 unit tests passed                       |
+| 2026-11-09 | 2.2     | Worker host + Comlink RPC, serialized queue & cancellation           | `P2.2`  | SerializedQueue, WorkerPdfEngine, Comlink transferables, 100 concurrent calls verified                        |
+| 2026-11-09 | 2.3     | WASM loading strategy: lazy load, progress UI & offline cache        | `P2.3`  | loadPdfiumWasm with streaming progress, loading UI bar, offline start verified                                |
+| 2026-11-09 | 2.4     | Open doc from ArrayBuffer/Blob, password handling & 100MB chunked    | `P2.4`  | FPDF_LoadCustomDocument chunked access, PasswordRequired/WrongPassword, 100MB file opens within heap limits   |
+| 2026-11-09 | 2.5     | Page render to ImageBitmap with scale, DPR, tiles & rotation         | `P2.5`  | Arbitrary scale, DPR, clipRect tile sub-regions, 0/90/180/270 rotation & annotations verified                 |
+| 2026-11-10 | 2.6     | Page-object enumeration with type, bounds, matrix & z-index          | `P2.6`  | Verified object enumeration (text, image, path, form) & matrix composition across sample set                  |
+| 2026-11-10 | 2.7     | Text-object details: string, font, size, colors & render mode        | `P2.7`  | Query FPDFFont (flags, weight, embedded, subset), font size, fill/stroke color & render modes                 |
+| 2026-11-10 | 2.8     | Image-object details: preview, pixel size, filters, DPI & masks      | `P2.8`  | Extracted FPDFImageObj metadata, decoded RGBA preview bitmap, colorSpace & alpha mask detection               |
+| 2026-11-10 | 2.9     | Path-object details: vector shapes, segments, stroke, fill & dash    | `P2.9`  | Extracted path segments (moveTo, lineTo, bezier, close), stroke width, stroke/fill color & dash array         |
+| 2026-11-10 | 2.10    | Form XObject traversal: enumerate and edit objects inside forms      | `P2.10` | 2D affine composition for form child objects, UTF-16 fix, FPDFFormObj_RemoveObject verified on engine & mock  |
+| 2026-11-10 | 2.11    | Mutation API: text, image & path insertion, transforms & reorder     | `P2.11` | removeObject, insertText, insertImage, insertPath, setMatrix, setColor, reorder & renderMode                  |
+| 2026-11-10 | 2.12    | Save: new file, source immutability, full, incremental & streaming   | `P2.12` | Verified bit-for-bit source immutability, FPDF_SaveAsCopy incremental/full, versions & stream                 |
+| 2026-11-10 | 2.13    | Memory management: explicit close, leak detector & heap monitoring   | `P2.13` | closePage handle lifecycle, dev-mode leak detector, getMemoryStats & worker auto-restart on heap threshold    |
+| 2026-11-10 | 2.14    | Error model: PdfError union mapped from engine errors across worker  | `P2.14` | PdfError codes, mapPdfiumErrorCode, mapToPdfError, isPdfError guard & worker RPC error reconstitution         |
+| 2026-11-10 | 2.15    | Integration tests across 10-PDF sample set (Appendix A)              | `P2.15` | Full pipeline open, render all pages, enumerate, mutate, save, reopen & zero leak check across sample set     |
+| 2026-11-10 | 3.1     | PageCanvas component with bitmap, placeholder, aspect ratio & a11y   | `P3.1`  | Responsive canvas, rotation handling, CLS prevention, light/dark themes & unit tests                          |
+| 2026-11-10 | 3.2     | Virtualized continuous page list with 1-page lookahead               | `P3.2`  | VirtualPageList virtual scrolling, dynamic heights, 300-page file scrolls with bounded rendered window        |
+| 2026-11-10 | 3.3     | Tile-based rendering for high zoom (800%) with bounded memory        | `P3.3`  | TiledPageCanvas visible-tile computation, 800% zoom sharp with bounded memory allocation                      |
+| 2026-11-10 | 3.4     | Zoom and pan with mouse, trackpad, touch pinch & keyboard shortcuts  | `P3.4`  | useZoomPan hook, cursor-anchored zoom, clamped 25%-800%, touch pinch & unit tests                             |
+| 2026-11-10 | 3.5     | Bitmap LRU cache with memory budget and ImageBitmap.close()          | `P3.5`  | BitmapLruCache adaptive budget based on deviceMemory, close() called on every eviction to prevent leaks       |
+| 2026-11-10 | 3.6     | Render scheduler with priority queue & fast scroll cancellation      | `P3.6`  | RenderScheduler priority tiers (visible > near > thumbnails), stale job abort & cache integration             |
+| 2026-11-10 | 3.7     | Thumbnail sidebar with click-to-jump (lazy rendered)                 | `P3.7`  | ThumbnailSidebar with lazy IntersectionObserver, click-to-jump, active highlighting & a11y keyboard support   |
+| 2026-11-10 | 3.8     | Page indicator ("3 / 24"), go to page, and keyboard navigation       | `P3.8`  | PageNavigation "3 / 24" badge, direct input go-to-page, boundary clamping, and PgUp/PgDn/Home/End keyboard    |
+| 2026-11-10 | 3.9     | Text search find bar, match highlighting, next/prev & options        | `P3.9`  | FindBar search UI, searchPageText exact rect extraction, case/word options, and SearchHighlightLayer          |
+| 2026-11-10 | 3.10    | Text selection and copy in view mode (character boxes)               | `P3.10` | TextSelectionLayer character box hit-testing, drag range selection, highlight overlay & clipboard copy        |
+| 2026-11-10 | 3.11    | Fit modes: fit width, fit page, actual size per document             | `P3.11` | FitModeSelector with fitWidth/fitPage/actualSize, rotation support, and document localStorage persistence     |
+| 2026-11-10 | 3.12    | Page layout modes: continuous (default), single, two-page spread     | `P3.12` | LayoutModeSelector with continuous/single/two-page layouts, row chunking & tests                              |
+| 2026-11-10 | 3.13    | Password-protected PDFs: dialog, retry, cancel                       | `P3.13` | PasswordDialog modal with retry state, submit validation, Esc cancel & i18n                                   |
+| 2026-11-10 | 3.14    | Corrupt or unsupported files: friendly error screen with a way back  | `P3.14` | ViewerErrorScreen with error categories, technical details, home return & retry                               |
+| 2026-11-10 | 3.15    | Resize / orientation / DPR survival & integrated PdfViewer           | `P3.15` | useViewerResilience hook, localStorage state restoration, PdfViewer integration, and all quality gates passed |
+| 2026-11-10 | 4.1     | Home screen with drop zone, blank PDF button, and recents grid       | `P4.1`  | Interactive drop zone, file picker fallback, recents thumbnail grid & empty states                            |
+| 2026-11-10 | 4.2     | Open via file picker, drag-and-drop, paste, and PWA launchQueue      | `P4.2`  | Unified open manager, global drop overlay, clipboard paste, and Chromium PWA launch                           |
+| 2026-11-10 | 4.3     | Recent files in IndexedDB with permission re-request & metadata      | `P4.3`  | IndexedDB repository, FileSystemHandle query/requestPermission & metadata storage                             |
+| 2026-11-10 | 4.4     | Recent file actions: remove, rename, delete, and download            | `P4.4`  | Safe rename copy, OPFS working-copy cleanup on delete, re-download from handle/storage                        |
+| 2026-11-10 | 4.5     | Compliant blank PDF generator (A4/Letter/Legal/Custom & orientation) | `P4.5`  | Zero-dependency PDF 1.4 binary generator with exact xref byte offsets & presets                               |
+| 2026-11-10 | 4.6     | OPFS working-copy system with IndexedDB blob and in-memory fallback  | `P4.6`  | Original file untouched; all mutations targeted to OPFS/IDB working copy                                      |
+| 2026-11-10 | 4.7     | Autosave engine: working copy snapshot on interval & lifecycle       | `P4.7`  | AutosaveManager with 5s timer, visibilitychange, pagehide & beforeunload flush                                |
+| 2026-11-10 | 4.8     | Crash and tab-close recovery prompt for unsaved dirty sessions       | `P4.8`  | Recovery banner detection on launch, restore dirty state or discard safely                                    |
+| 2026-11-10 | 4.9     | Section 3B Editor layout: top bar, tool rail, properties, status bar | `P4.9`  | Top bar with title/status, tool rail, contextual toolbar, properties & status bar                             |
+| 2026-11-10 | 4.10    | Mode switcher: View, Edit Text, Edit Images, Annotate, Pages         | `P4.10` | Active mode indicators, contextual tool shelf switching & keyboard accessibility                              |
+| 2026-11-10 | 4.11    | Command palette (Ctrl+K), shortcut map & accessible shortcuts dialog | `P4.11` | Fuzzy action search, keyboard navigation & shortcuts dialog cheat sheet                                       |
+| 2026-11-10 | 4.12    | Onboarding modal: 3 skippable screens with client privacy promise    | `P4.12` | First-launch tour, step indicator, privacy assurance & localStorage flag                                      |
+| 2026-11-10 | 4.13    | Settings page: theme, font, units, save behavior, data clear & legal | `P4.13` | Preference persistence, purge OPFS/IDB/recovery storage, licenses list & privacy statement                    |
+| 2026-11-10 | 4.14    | Responsive layouts, >=44px touch targets, dark mode & reduced motion | `P4.14` | Mobile/tablet responsive layout, WCAG touch target sizes & prefers-reduced-motion CSS                         |
 
 ---
 

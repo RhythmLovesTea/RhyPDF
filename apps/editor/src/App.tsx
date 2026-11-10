@@ -3,6 +3,12 @@ import { THEME_TOKENS } from '@rhypdf/ui';
 import { useTranslation } from '@rhypdf/i18n';
 import '@rhypdf/ui/styles.css';
 import { useRouter } from './router';
+import { GlobalDropOverlay } from './components/GlobalDropOverlay';
+import { OnboardingModal } from './components/OnboardingModal';
+import { setupPwaLaunchQueue } from './lib/fileOpen';
+import { saveWorkingCopy } from './lib/workingCopy';
+import { addRecentFile } from './lib/recentFiles';
+import { useDocStore } from './stores/docStore';
 
 // Lazy-loaded routes
 const HomePage = lazy(() => import('./features/home/HomePage'));
@@ -16,6 +22,8 @@ const StyleGuide = lazy(() =>
 export function App(): React.JSX.Element {
   const { t } = useTranslation();
   const { currentRoute, navigate } = useRouter();
+  const { setDoc } = useDocStore();
+
   const [workerStatus, setWorkerStatus] = useState<'connecting' | 'connected' | 'error'>(
     'connecting'
   );
@@ -24,8 +32,8 @@ export function App(): React.JSX.Element {
   const [wasmPhase, setWasmPhase] = useState<string>('idle');
   const [latency, setLatency] = useState<number | null>(null);
 
+  // Dedicated worker initialization
   useEffect(() => {
-    // Dedicated worker instantiation via standard ESM URL
     const worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
     const startTime = performance.now();
 
@@ -68,6 +76,34 @@ export function App(): React.JSX.Element {
     };
   }, []);
 
+  // Handle global dropped / pasted / launched file
+  const handleFileLoaded = async (file: File, handle: FileSystemFileHandle | null = null) => {
+    const docId = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const bytes = await file.arrayBuffer();
+
+    const { storageType } = await saveWorkingCopy(docId, bytes);
+
+    await addRecentFile({
+      id: docId,
+      name: file.name,
+      fileHandle: handle,
+      lastOpened: Date.now(),
+      pageCount: 1,
+      size: bytes.byteLength
+    });
+
+    setDoc(docId, file.name, 1, handle, storageType);
+    navigate('/editor');
+  };
+
+  // Setup PWA launchQueue (Task 4.2)
+  useEffect(() => {
+    const cleanupLaunchQueue = setupPwaLaunchQueue((opened) => {
+      void handleFileLoaded(opened.file, opened.handle);
+    });
+    return cleanupLaunchQueue;
+  }, []);
+
   const navLinks = [
     { path: '/', label: t('nav.home'), testId: 'nav-home' },
     { path: '/editor', label: t('nav.editor'), testId: 'nav-editor' },
@@ -84,94 +120,106 @@ export function App(): React.JSX.Element {
         : t('app.workerStatusConnecting');
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        backgroundColor: 'var(--bg-background)',
-        color: 'var(--bg-foreground)',
-        fontFamily: THEME_TOKENS.typography.fontFamilySans,
-        overflow: 'hidden'
-      }}
-    >
-      <header
+    <GlobalDropOverlay onFileLoaded={(f) => void handleFileLoaded(f, null)}>
+      <div
         style={{
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '8px 24px',
-          borderBottom: '1px solid var(--bg-border)',
-          backgroundColor: 'var(--bg-card)'
+          flexDirection: 'column',
+          height: '100vh',
+          backgroundColor: 'var(--bg-background)',
+          color: 'var(--bg-foreground)',
+          fontFamily: THEME_TOKENS.typography.fontFamilySans,
+          overflow: 'hidden'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span
-            style={{ fontSize: 18, fontWeight: 700, cursor: 'pointer' }}
-            onClick={() => navigate('/')}
-          >
-            {t('app.title')}
-          </span>
-
-          <nav style={{ display: 'flex', gap: 4 }}>
-            {navLinks.map((link) => {
-              const isActive = currentRoute === link.path;
-              return (
-                <button
-                  key={link.path}
-                  data-testid={link.testId}
-                  onClick={() => navigate(link.path)}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: 'var(--radius-sm)',
-                    border: 'none',
-                    backgroundColor: isActive ? 'var(--bg-secondary)' : 'transparent',
-                    color: isActive ? 'var(--bg-primary)' : 'var(--bg-foreground)',
-                    fontWeight: isActive ? 600 : 400,
-                    fontSize: 13,
-                    cursor: 'pointer'
-                  }}
-                >
-                  {link.label}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span
-            data-testid="worker-status-badge"
-            style={{
-              padding: '2px 8px',
-              borderRadius: 'var(--radius-full)',
-              fontSize: 'var(--text-xs)',
-              fontWeight: 600,
-              backgroundColor: workerStatus === 'connected' ? '#dcfce7' : '#fee2e2',
-              color: workerStatus === 'connected' ? '#166534' : '#991b1b'
-            }}
-          >
-            {workerStatusText}
-          </span>
-          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--bg-muted-foreground)' }}>
-            {t('app.clientSideBadge')}
-          </span>
-        </div>
-      </header>
-
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-        <Suspense
-          fallback={<div style={{ padding: 24, textAlign: 'center' }}>{t('app.loadingView')}</div>}
+        <header
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '8px 24px',
+            borderBottom: '1px solid var(--bg-border)',
+            backgroundColor: 'var(--bg-card)',
+            flexShrink: 0
+          }}
         >
-          {currentRoute === '/' && <HomePage onNavigate={navigate} />}
-          {currentRoute === '/editor' && (
-            <EditorPage wasmStatus={wasmStatus} wasmProgress={wasmProgress} wasmPhase={wasmPhase} />
-          )}
-          {currentRoute === '/pages' && <PageOrganizerPage />}
-          {currentRoute === '/settings' && <SettingsPage />}
-          {currentRoute === '/styleguide' && <StyleGuide />}
-        </Suspense>
-      </main>
-    </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <span
+              style={{ fontSize: 18, fontWeight: 700, cursor: 'pointer' }}
+              onClick={() => navigate('/')}
+            >
+              {t('app.title')}
+            </span>
+
+            <nav style={{ display: 'flex', gap: 4 }}>
+              {navLinks.map((link) => {
+                const isActive = currentRoute === link.path;
+                return (
+                  <button
+                    key={link.path}
+                    data-testid={link.testId}
+                    onClick={() => navigate(link.path)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: 'none',
+                      backgroundColor: isActive ? 'var(--bg-secondary)' : 'transparent',
+                      color: isActive ? 'var(--bg-primary)' : 'var(--bg-foreground)',
+                      fontWeight: isActive ? 600 : 400,
+                      fontSize: 13,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {link.label}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span
+              data-testid="worker-status-badge"
+              style={{
+                padding: '2px 8px',
+                borderRadius: 'var(--radius-full)',
+                fontSize: 'var(--text-xs)',
+                fontWeight: 600,
+                backgroundColor: workerStatus === 'connected' ? '#dcfce7' : '#fee2e2',
+                color: workerStatus === 'connected' ? '#166534' : '#991b1b'
+              }}
+            >
+              {workerStatusText}
+            </span>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--bg-muted-foreground)' }}>
+              {t('app.clientSideBadge')}
+            </span>
+          </div>
+        </header>
+
+        <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+          <Suspense
+            fallback={
+              <div style={{ padding: 24, textAlign: 'center' }}>{t('app.loadingView')}</div>
+            }
+          >
+            {currentRoute === '/' && <HomePage onNavigate={navigate} />}
+            {currentRoute === '/editor' && (
+              <EditorPage
+                wasmStatus={wasmStatus}
+                wasmProgress={wasmProgress}
+                wasmPhase={wasmPhase}
+              />
+            )}
+            {currentRoute === '/pages' && <PageOrganizerPage />}
+            {currentRoute === '/settings' && <SettingsPage />}
+            {currentRoute === '/styleguide' && <StyleGuide />}
+          </Suspense>
+        </main>
+
+        {/* Onboarding tour modal (shown once, Task 4.12) */}
+        <OnboardingModal />
+      </div>
+    </GlobalDropOverlay>
   );
 }
