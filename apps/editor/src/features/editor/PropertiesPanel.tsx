@@ -33,6 +33,14 @@ export interface SelectedObjectProps {
   brightness?: number;
   contrast?: number;
   grayscale?: boolean;
+  textPreview?: string;
+  fontFamily?: string;
+  fontSize?: number;
+  textColor?: string;
+  alignment?: string;
+  canReuseFont?: boolean;
+  isSubset?: boolean;
+  missingGlyphs?: string[];
 }
 
 export interface PropertiesPanelProps {
@@ -580,6 +588,93 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   onUpdateObject?.({ grayscale: e.target.checked });
                 }}
               />
+            </div>
+          </section>
+        )}
+
+        {/* Text Block Properties (Phase 7) */}
+        {selectedObject?.type === 'text' && (
+          <section
+            data-testid="text-block-properties-section"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              borderTop: '1px solid var(--bg-border)',
+              paddingTop: 14
+            }}
+          >
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                color: 'var(--bg-muted-foreground)'
+              }}
+            >
+              Typography
+            </span>
+
+            {selectedObject.textPreview && (
+              <div
+                data-testid="text-preview-box"
+                style={{
+                  fontSize: 12,
+                  padding: '6px 8px',
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderRadius: 4,
+                  maxHeight: 60,
+                  overflowY: 'auto',
+                  fontStyle: 'italic',
+                  whiteSpace: 'pre-wrap'
+                }}
+              >
+                "{selectedObject.textPreview}"
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+              <span style={{ color: 'var(--bg-muted-foreground)' }}>Font:</span>
+              <span data-testid="prop-font-family" style={{ fontWeight: 500 }}>
+                {selectedObject.fontFamily || 'Helvetica'}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+              <span style={{ color: 'var(--bg-muted-foreground)' }}>Size:</span>
+              <span data-testid="prop-font-size" style={{ fontWeight: 500 }}>
+                {selectedObject.fontSize || 12} pt
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+              <span style={{ color: 'var(--bg-muted-foreground)' }}>Font Status:</span>
+              <span
+                data-testid="prop-font-status-badge"
+                style={{
+                  fontSize: 11,
+                  padding: '1px 6px',
+                  borderRadius: 3,
+                  backgroundColor:
+                    selectedObject.canReuseFont === false
+                      ? '#fee2e2'
+                      : selectedObject.isSubset
+                        ? '#fef3c7'
+                        : '#dcfce7',
+                  color:
+                    selectedObject.canReuseFont === false
+                      ? '#991b1b'
+                      : selectedObject.isSubset
+                        ? '#92400e'
+                        : '#166534'
+                }}
+              >
+                {selectedObject.canReuseFont === false
+                  ? `Missing ${selectedObject.missingGlyphs?.length || 0} glyphs`
+                  : selectedObject.isSubset
+                    ? 'Embedded Subset'
+                    : 'Full Font'}
+              </span>
             </div>
           </section>
         )}

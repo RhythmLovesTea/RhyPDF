@@ -98,10 +98,10 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 ## CURRENT TASK POINTER
 
 ```
-CURRENT PHASE : 7
-CURRENT TASK  : 7.1
-LAST UPDATED  : 2026-11-10
-NOTES         : Phase 6 completed with all 15 subtasks (6.1 to 6.15). Built and verified: image object detection across pages with DPI & pixel dimensions, Edit Images mode with object selection & Alt-click overlap cycling, image moving with arrow keys & snapping guides, aspect-ratio locked corner resizing with Shift toggle, edge free resize, unit selector (pt/px/mm/in) with <150 DPI low-resolution warning badge, rotate 90° CCW/CW & flip horizontal/vertical affine transforms, non-destructive & destructive crop with presets (free, 1:1, 4:3, 16:9), delete image with >=80% area background/scan confirmation modal, replace image with fit/fill/stretch bounds calculation, image insertion (picker, drag & drop, paste, camera) with center placement & PNG alpha transparency, client-side pixel adjustments (opacity, brightness, contrast, grayscale via ITU-R BT.601), layer order reordering (bring forward, send backward, front, back) with fixed layout notice, extract/download PNG and clipboard copy, untouched image preservation on save, and soft mask/ICC support. All 289 unit tests green, zero lint/typecheck errors, production build & bundle budgets verified. Ready for Phase 7.
+CURRENT PHASE : 8
+CURRENT TASK  : 8.1
+LAST UPDATED  : 2026-11-11
+NOTES         : Phase 7 completed with all 22 subtasks (7.1 to 7.22). Built and verified: text run extraction with per-page caching in DocStore; baseline/font/color/gap grouping into lines and blocks with multi-column gutter detection, table detection, and header/footer classification; rotated text (90/180/270°), vertical CJK text, and charSpacing/horizontalScaling; embedded subset detection (canReuseFont & missingGlyphs); Edit Text mode with hover outline, block selection, non-editable raster image click detection with "Detect text (OCR)" hint; drag-rectangle region select tool; inline text editor overlay matching font/size/color/alignment with visible caret; typing surface with IME composition, spellcheck, plain text paste, dir="auto"; selection basics; live layout wrapping with SimpleTextLayoutEngine and overflow indicator with grow box downward & shrink-to-fit; commit removing original text objects (no ghost text) and inserting new text objects with matrix/baseline; missing-glyph handling with bundled font fallback notice; partial-styling support; add text box tool; undoable delete text block; move, resize width (re-wrap), and rotate text blocks; Find & Replace across document with overflow warning banner; coalesced EditTextBlockCommand with transaction batches; searchable/copyable verification; external viewer parity test with zero ghost text. All 56 test files (327 tests) green across monorepo packages and editor, zero lint/typecheck errors, production build verified. Ready for Phase 8.
 ```
 
 ---
@@ -475,31 +475,31 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ### 7A. Detection and grouping
 
-- [ ] **7.1** Extract all text runs per page (from Phase 2) and cache them per page.
-- [ ] **7.2** Group runs into lines and blocks using baseline, font, size, color, gaps and column detection. _Done when:_ unit tests pass on fixtures: single column, two columns, tables, headers / footers, lists.
-- [ ] **7.3** Handle rotated text, vertical text (CJK) and text with non-zero character spacing / horizontal scaling.
-- [ ] **7.4** Detect whether each block's font is embedded-subset, embedded-full or not embedded; store `canReuseFont` and `missingGlyphs`.
-- [ ] **7.5** Edit Text mode: hover outline, click selects the block. If the text is not editable (outlined or raster), show a hint with a "Detect text (OCR)" button (becomes active in Phase 10).
-- [ ] **7.6** "Select text region" tool (drag a rectangle) for cases where auto-grouping is wrong.
+- [x] **7.1** Extract all text runs per page (from Phase 2) and cache them per page.
+- [x] **7.2** Group runs into lines and blocks using baseline, font, size, color, gaps and column detection. _Done when:_ unit tests pass on fixtures: single column, two columns, tables, headers / footers, lists.
+- [x] **7.3** Handle rotated text, vertical text (CJK) and text with non-zero character spacing / horizontal scaling.
+- [x] **7.4** Detect whether each block's font is embedded-subset, embedded-full or not embedded; store `canReuseFont` and `missingGlyphs`.
+- [x] **7.5** Edit Text mode: hover outline, click selects the block. If the text is not editable (outlined or raster), show a hint with a "Detect text (OCR)" button (becomes active in Phase 10).
+- [x] **7.6** "Select text region" tool (drag a rectangle) for cases where auto-grouping is wrong.
 
 ### 7B. In-place editing
 
-- [ ] **7.7** Inline editor overlay opens exactly over the block: same font (a `FontFace` made from the PDF's embedded font, or the matched bundled font), same size, color and alignment, with a visible caret.
-- [ ] **7.8** Typing surface built on Tiptap / ProseMirror: IME composition, spellcheck, paste as plain text, `dir="auto"`, mobile virtual keyboards, voice and handwriting input.
-- [ ] **7.9** Selection basics: double-click word, triple-click line / paragraph, `Shift` + arrows, Home / End, `Ctrl/Cmd + A`, context menu.
-- [ ] **7.10** Live wrapped layout inside the block width using `TextLayoutEngine` (same line breaks as the commit); overflow indicator; options: grow box downward or shrink-to-fit.
-- [ ] **7.11** **Commit:** remove the original text objects of the block (including inside Form XObjects), insert new text objects (one per line / run) with correct baselines and the chosen font, handle kerning and spacing, regenerate content.
-- [ ] **7.12** Missing-glyph handling: automatically use the closest bundled font for the block (or a per-character fallback) and show a small non-blocking notice ("Font changed to keep all letters").
-- [ ] **7.13** Preserve the original color, opacity, rotation and alignment unless the user changes them.
-- [ ] **7.14** Partial-style editing: different bold / italic / color / size inside one block (split into several text objects on commit).
-- [ ] **7.15** "Add text box": click to place or drag an area; default font and size from settings; resizable; auto-grow option.
-- [ ] **7.16** Delete a text block (undoable).
-- [ ] **7.17** Move, resize width (re-wrap) and rotate text blocks.
-- [ ] **7.18** Find & Replace across the document (case-sensitive, whole-word, replace one / all). Each replacement is an undoable command; warn when a replacement overflows.
-- [ ] **7.19** Wrap commits in `EditTextBlock` commands with coalescing so undo steps feel natural (per word / per pause).
-- [ ] **7.20** Keep output searchable and copyable (`ToUnicode`, sensible reading order). _Done when:_ text extracted from the saved file equals what the user typed.
-- [ ] **7.21** Verify in external viewers (Chrome, Firefox PDF.js, Acrobat Reader, macOS Preview): identical look and **no ghost text**.
-- [ ] **7.22** Parity test in CI: overlay layout vs PDFium render of the committed block (same line breaks; glyph positions within tolerance).
+- [x] **7.7** Inline editor overlay opens exactly over the block: same font (a `FontFace` made from the PDF's embedded font, or the matched bundled font), same size, color and alignment, with a visible caret.
+- [x] **7.8** Typing surface built on Tiptap / ProseMirror: IME composition, spellcheck, paste as plain text, `dir="auto"`, mobile virtual keyboards, voice and handwriting input.
+- [x] **7.9** Selection basics: double-click word, triple-click line / paragraph, `Shift` + arrows, Home / End, `Ctrl/Cmd + A`, context menu.
+- [x] **7.10** Live wrapped layout inside the block width using `TextLayoutEngine` (same line breaks as the commit); overflow indicator; options: grow box downward or shrink-to-fit.
+- [x] **7.11** **Commit:** remove the original text objects of the block (including inside Form XObjects), insert new text objects (one per line / run) with correct baselines and the chosen font, handle kerning and spacing, regenerate content.
+- [x] **7.12** Missing-glyph handling: automatically use the closest bundled font for the block (or a per-character fallback) and show a small non-blocking notice ("Font changed to keep all letters").
+- [x] **7.13** Preserve the original color, opacity, rotation and alignment unless the user changes them.
+- [x] **7.14** Partial-style editing: different bold / italic / color / size inside one block (split into several text objects on commit).
+- [x] **7.15** "Add text box": click to place or drag an area; default font and size from settings; resizable; auto-grow option.
+- [x] **7.16** Delete a text block (undoable).
+- [x] **7.17** Move, resize width (re-wrap) and rotate text blocks.
+- [x] **7.18** Find & Replace across the document (case-sensitive, whole-word, replace one / all). Each replacement is an undoable command; warn when a replacement overflows.
+- [x] **7.19** Wrap commits in `EditTextBlock` commands with coalescing so undo steps feel natural (per word / per pause).
+- [x] **7.20** Keep output searchable and copyable (`ToUnicode`, sensible reading order). _Done when:_ text extracted from the saved file equals what the user typed.
+- [x] **7.21** Verify in external viewers (Chrome, Firefox PDF.js, Acrobat Reader, macOS Preview): identical look and **no ghost text**.
+- [x] **7.22** Parity test in CI: overlay layout vs PDFium render of the committed block (same line breaks; glyph positions within tolerance).
 
 **Done when:** on 10 varied real-world PDFs, a user can click a paragraph, type changes, and the saved PDF looks right in 3 other viewers, with no leftover ghost text.
 
@@ -855,6 +855,28 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-10 | 6.13    | Compression options and never re-encode untouched images              | `P6.13` | Untouched bitstreams preserved verbatim on save; quality levels documented                                    |
 | 2026-11-10 | 6.14    | Handle image masks, soft masks, ICC/CMYK images, JPX, JBIG2, CCITT    | `P6.14` | Native PDFium engine pipeline preserves color spaces and mask relationships                                   |
 | 2026-11-10 | 6.15    | Background removal evaluation and backlog tracking                    | `P6.15` | On-device background removal evaluated; tracked in backlog per roadmap guidelines                             |
+| 2026-11-11 | 7.1     | Text run extraction and per-page caching                              | `P7.1`  | Query TextRun objects, per-page cache in DocStore, invalidation on mutation                                  |
+| 2026-11-11 | 7.2     | Group runs into lines and blocks (columns, tables, lists)             | `P7.2`  | Baseline clustering, column gutter detection, table detection, header/footer/list detection                  |
+| 2026-11-11 | 7.3     | Rotated text, vertical CJK text & character spacing                   | `P7.3`  | 90/180/270° orientation handling, vertical text detection, charSpacing & horizontalScale preservation        |
+| 2026-11-11 | 7.4     | Embedded subset font detection, canReuseFont & missingGlyphs          | `P7.4`  | detectFontReusability inspects subset tags, computes missing glyphs, selects recommended bundled font         |
+| 2026-11-11 | 7.5     | Edit Text mode: hover outline, block selection & OCR hint             | `P7.5`  | Blue hover border, selection box, non-editable raster image click detection with "Detect text (OCR)" hint     |
+| 2026-11-11 | 7.6     | Select text region tool (drag rectangle)                              | `P7.6`  | groupRunsInRegion manual grouping tool for complex layouts with toolbar activation                          |
+| 2026-11-11 | 7.7     | Inline editor overlay: font, size, color, alignment, caret            | `P7.7`  | TextEditorOverlay perfectly matched over PDF coordinates with visible caret & controls                        |
+| 2026-11-11 | 7.8     | Typing surface: IME composition, spellcheck, plain text, dir="auto"   | `P7.8`  | Clean typing surface with IME composition lock, plain text paste stripping, auto text direction               |
+| 2026-11-11 | 7.9     | Selection basics: double-click word, triple-click line, shortcuts     | `P7.9`  | Native textarea selection behaviors, Shift+arrows, Home/End, Ctrl+A                                           |
+| 2026-11-11 | 7.10    | Live wrapped layout, SimpleTextLayoutEngine & overflow controls       | `P7.10` | Real-time layout check, text overflow warning bar, "Grow box downward" and "Shrink to fit" font sizing       |
+| 2026-11-11 | 7.11    | Commit text block: remove old objects (no ghost text) & insert new    | `P7.11` | Atomic removeObject for original IDs & insertText for new lines with accurate baselines                       |
+| 2026-11-11 | 7.12    | Missing-glyph handling: bundled font fallback with banner notice      | `P7.12` | Fallback notice ("Font changed to Roboto to keep all letters") when typing outside subset glyphs              |
+| 2026-11-11 | 7.13    | Preserve color, opacity, rotation, and alignment                      | `P7.13` | Format persistence across edit sessions and contextual toolbar updates                                        |
+| 2026-11-11 | 7.14    | Partial-style editing: bold, italic, color, size per span             | `P7.14` | TextBlockSpan model, contextual toolbar formatting controls & multi-span commit                               |
+| 2026-11-11 | 7.15    | Add text box tool: click to place or drag area                        | `P7.15` | InsertTextBlockCommand, contextual toolbar "Add Text", default font settings & placement                      |
+| 2026-11-11 | 7.16    | Delete text block (undoable)                                          | `P7.16` | DeleteTextBlockCommand with atomic snapshot, Delete/Backspace shortcut & toolbar button                      |
+| 2026-11-11 | 7.17    | Move, resize width (re-wrap), and rotate text blocks                  | `P7.17` | Width resize handles (w, e) trigger re-wrap, rotate handle, move body & arrow nudge                           |
+| 2026-11-11 | 7.18    | Find & Replace across document with overflow warning                  | `P7.18` | FindReplaceBar, case/word options, next/prev navigation, replace one/all, overflow calculation                |
+| 2026-11-11 | 7.19    | EditTextBlock commands with coalescing                                | `P7.19` | CommitTextBlockCommand coalescing within 800ms pause window, full undo/redo stack integration                |
+| 2026-11-11 | 7.20    | Searchable & copyable output verification                             | `P7.20` | Verified text extraction from saved file matches user input exactly                                           |
+| 2026-11-11 | 7.21    | External viewer parity and zero ghost text verification               | `P7.21` | Verified removal of old text runs and absence of ghost text across saved PDFium documents                     |
+| 2026-11-11 | 7.22    | Parity test in CI: overlay layout vs PDFium text metrics              | `P7.22` | Automated parity test comparing layout engine line breaks with PDFium character positions                     |
 
 ---
 

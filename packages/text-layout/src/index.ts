@@ -57,3 +57,5 @@ export interface TextLayoutEngine {
   shape(text: string, fontData: Uint8Array, direction?: TextDirection): Promise<ShapedRun>;
   layout(text: string, options: TextLayoutOptions): Promise<LayoutResult>;
 }
+
+export { SimpleTextLayoutEngine, measureTextWidth } from './layout-engine';

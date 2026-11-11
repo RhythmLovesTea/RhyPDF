@@ -24,7 +24,10 @@ import {
   Check,
   X,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  Plus,
+  BoxSelect,
+  Search
 } from 'lucide-react';
 import { useDocStore } from '../../stores/docStore';
 import type { CropPreset } from '@rhypdf/edit-core';
@@ -49,6 +52,29 @@ export interface ContextualToolbarProps {
   effectiveDpi?: number | null;
   isLowRes?: boolean;
   hasSelectedImage?: boolean;
+  // Phase 7 Text Editing Props
+  onAddText?: () => void;
+  onSelectRegion?: () => void;
+  onToggleFindReplace?: () => void;
+  isRegionSelectActive?: boolean;
+  selectedFontFamily?: string;
+  onFontFamilyChange?: (font: string) => void;
+  selectedFontSize?: number;
+  onFontSizeChange?: (size: number) => void;
+  selectedIsBold?: boolean;
+  onToggleBold?: () => void;
+  selectedIsItalic?: boolean;
+  onToggleItalic?: () => void;
+  selectedIsUnderline?: boolean;
+  onToggleUnderline?: () => void;
+  selectedIsStrike?: boolean;
+  onToggleStrike?: () => void;
+  selectedAlignment?: 'left' | 'center' | 'right' | 'justify';
+  onAlignmentChange?: (align: 'left' | 'center' | 'right' | 'justify') => void;
+  selectedTextColor?: string;
+  onTextColorChange?: (colorHex: string) => void;
+  onDeleteText?: () => void;
+  hasSelectedTextBlock?: boolean;
 }
 
 export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
@@ -68,20 +94,51 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
   onOpacityChange,
   effectiveDpi = null,
   isLowRes = false,
-  hasSelectedImage = false
+  hasSelectedImage = false,
+  onAddText,
+  onSelectRegion,
+  onToggleFindReplace,
+  isRegionSelectActive = false,
+  selectedFontFamily,
+  onFontFamilyChange,
+  selectedFontSize,
+  onFontSizeChange,
+  selectedIsBold,
+  onToggleBold,
+  selectedIsItalic,
+  onToggleItalic,
+  selectedIsUnderline,
+  onToggleUnderline,
+  selectedIsStrike,
+  onToggleStrike,
+  selectedAlignment,
+  onAlignmentChange,
+  selectedTextColor,
+  onTextColorChange,
+  onDeleteText,
+  hasSelectedTextBlock = false
 }) => {
   const { t } = useTranslation();
   const { activeMode } = useDocStore();
 
-  // Text formatting state
-  const [fontFamily, setFontFamily] = useState('Roboto');
-  const [fontSize, setFontSize] = useState(14);
-  const [isBold, setIsBold] = useState(false);
-  const [isItalic, setIsItalic] = useState(false);
-  const [isUnderline, setIsUnderline] = useState(false);
-  const [isStrike, setIsStrike] = useState(false);
-  const [align, setAlign] = useState<'left' | 'center' | 'right' | 'justify'>('left');
-  const [textColor, setTextColor] = useState('#000000');
+  // Text formatting internal state fallback
+  const [internalFontFamily, setInternalFontFamily] = useState('Roboto');
+  const [internalFontSize, setInternalFontSize] = useState(14);
+  const [internalIsBold, setInternalIsBold] = useState(false);
+  const [internalIsItalic, setInternalIsItalic] = useState(false);
+  const [internalIsUnderline, setInternalIsUnderline] = useState(false);
+  const [internalIsStrike, setInternalIsStrike] = useState(false);
+  const [internalAlign, setInternalAlign] = useState<'left' | 'center' | 'right' | 'justify'>('left');
+  const [internalTextColor, setInternalTextColor] = useState('#000000');
+
+  const fontFamily = selectedFontFamily ?? internalFontFamily;
+  const fontSize = selectedFontSize ?? internalFontSize;
+  const isBold = selectedIsBold ?? internalIsBold;
+  const isItalic = selectedIsItalic ?? internalIsItalic;
+  const isUnderline = selectedIsUnderline ?? internalIsUnderline;
+  const isStrike = selectedIsStrike ?? internalIsStrike;
+  const align = selectedAlignment ?? internalAlign;
+  const textColor = selectedTextColor ?? internalTextColor;
 
   // Annotation state
   const [annotateTool, setAnnotateTool] = useState<'pen' | 'highlighter' | 'eraser'>('pen');
@@ -115,7 +172,10 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
           <select
             data-testid="select-font-family"
             value={fontFamily}
-            onChange={(e) => setFontFamily(e.target.value)}
+            onChange={(e) => {
+              setInternalFontFamily(e.target.value);
+              onFontFamilyChange?.(e.target.value);
+            }}
             style={{
               padding: '4px 8px',
               borderRadius: 'var(--radius-sm)',
@@ -130,6 +190,7 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
             <option value="Inter">Inter</option>
             <option value="Liberation Sans">Liberation Sans</option>
             <option value="Merriweather">Merriweather</option>
+            <option value="Courier">Courier</option>
           </select>
 
           {/* Font size stepper */}
@@ -143,7 +204,11 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
           >
             <button
               data-testid="btn-font-size-dec"
-              onClick={() => setFontSize((s) => Math.max(6, s - 1))}
+              onClick={() => {
+                const s = Math.max(6, fontSize - 1);
+                setInternalFontSize(s);
+                onFontSizeChange?.(s);
+              }}
               style={{
                 padding: '4px 8px',
                 border: 'none',
@@ -161,7 +226,11 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
             </span>
             <button
               data-testid="btn-font-size-inc"
-              onClick={() => setFontSize((s) => Math.min(144, s + 1))}
+              onClick={() => {
+                const s = Math.min(144, fontSize + 1);
+                setInternalFontSize(s);
+                onFontSizeChange?.(s);
+              }}
               style={{
                 padding: '4px 8px',
                 border: 'none',
@@ -180,7 +249,10 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
           {/* Style toggles */}
           <button
             data-testid="btn-style-bold"
-            onClick={() => setIsBold((b) => !b)}
+            onClick={() => {
+              setInternalIsBold(!isBold);
+              onToggleBold?.();
+            }}
             style={{
               width: 32,
               height: 32,
@@ -195,7 +267,10 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
           </button>
           <button
             data-testid="btn-style-italic"
-            onClick={() => setIsItalic((i) => !i)}
+            onClick={() => {
+              setInternalIsItalic(!isItalic);
+              onToggleItalic?.();
+            }}
             style={{
               width: 32,
               height: 32,
@@ -210,7 +285,10 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
           </button>
           <button
             data-testid="btn-style-underline"
-            onClick={() => setIsUnderline((u) => !u)}
+            onClick={() => {
+              setInternalIsUnderline(!isUnderline);
+              onToggleUnderline?.();
+            }}
             style={{
               width: 32,
               height: 32,
@@ -225,7 +303,10 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
           </button>
           <button
             data-testid="btn-style-strike"
-            onClick={() => setIsStrike((s) => !s)}
+            onClick={() => {
+              setInternalIsStrike(!isStrike);
+              onToggleStrike?.();
+            }}
             style={{
               width: 32,
               height: 32,
@@ -244,7 +325,10 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
             data-testid="input-text-color"
             type="color"
             value={textColor}
-            onChange={(e) => setTextColor(e.target.value)}
+            onChange={(e) => {
+              setInternalTextColor(e.target.value);
+              onTextColorChange?.(e.target.value);
+            }}
             style={{
               width: 28,
               height: 28,
@@ -262,7 +346,10 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
           {/* Alignment */}
           <button
             data-testid="btn-align-left"
-            onClick={() => setAlign('left')}
+            onClick={() => {
+              setInternalAlign('left');
+              onAlignmentChange?.('left');
+            }}
             style={{
               width: 32,
               height: 32,
@@ -277,7 +364,10 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
           </button>
           <button
             data-testid="btn-align-center"
-            onClick={() => setAlign('center')}
+            onClick={() => {
+              setInternalAlign('center');
+              onAlignmentChange?.('center');
+            }}
             style={{
               width: 32,
               height: 32,
@@ -292,7 +382,10 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
           </button>
           <button
             data-testid="btn-align-right"
-            onClick={() => setAlign('right')}
+            onClick={() => {
+              setInternalAlign('right');
+              onAlignmentChange?.('right');
+            }}
             style={{
               width: 32,
               height: 32,
@@ -307,7 +400,10 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
           </button>
           <button
             data-testid="btn-align-justify"
-            onClick={() => setAlign('justify')}
+            onClick={() => {
+              setInternalAlign('justify');
+              onAlignmentChange?.('justify');
+            }}
             style={{
               width: 32,
               height: 32,
@@ -320,6 +416,92 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
           >
             <AlignJustify size={16} />
           </button>
+
+          <div
+            style={{ width: 1, height: 20, backgroundColor: 'var(--bg-border)', margin: '0 4px' }}
+          />
+
+          {/* Task 7.15: Add Text Box */}
+          <button
+            data-testid="btn-add-text"
+            onClick={onAddText}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '4px 8px',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--bg-border)',
+              backgroundColor: 'var(--bg-secondary)',
+              cursor: 'pointer',
+              fontSize: 12
+            }}
+          >
+            <Plus size={14} />
+            <span>Add Text</span>
+          </button>
+
+          {/* Task 7.6: Select Region Tool */}
+          <button
+            data-testid="btn-select-region"
+            onClick={onSelectRegion}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '4px 8px',
+              borderRadius: 'var(--radius-sm)',
+              border: isRegionSelectActive ? '1px solid #2563eb' : '1px solid var(--bg-border)',
+              backgroundColor: isRegionSelectActive ? 'rgba(37, 99, 235, 0.1)' : 'var(--bg-secondary)',
+              color: isRegionSelectActive ? '#2563eb' : 'inherit',
+              cursor: 'pointer',
+              fontSize: 12
+            }}
+          >
+            <BoxSelect size={14} />
+            <span>Select Region</span>
+          </button>
+
+          {/* Task 7.18: Find & Replace */}
+          <button
+            data-testid="btn-find-replace"
+            onClick={onToggleFindReplace}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '4px 8px',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--bg-border)',
+              backgroundColor: 'var(--bg-secondary)',
+              cursor: 'pointer',
+              fontSize: 12
+            }}
+          >
+            <Search size={14} />
+            <span>Find & Replace</span>
+          </button>
+
+          {/* Task 7.16: Delete text block */}
+          {hasSelectedTextBlock && (
+            <button
+              data-testid="btn-delete-text"
+              onClick={onDeleteText}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '4px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid #f87171',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                color: '#dc2626',
+                cursor: 'pointer'
+              }}
+              title="Delete text block"
+            >
+              <Trash2 size={15} />
+            </button>
+          )}
         </div>
       )}
 

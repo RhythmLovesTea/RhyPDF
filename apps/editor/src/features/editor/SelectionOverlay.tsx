@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { CoordinateMapper, PageObject, Rect, RotationAngle, BoundingBox } from '@rhypdf/pdf-model';
-import { computeSelectionBounds, calculateSnap, marqueeSelect, SnapGuide } from '@rhypdf/edit-core';
+import { computeSelectionBounds, calculateSnap, marqueeSelect, SnapGuide, type TextBlock } from '@rhypdf/edit-core';
 
 export type HandleType = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'rotate' | 'body';
 
@@ -16,12 +16,19 @@ export interface SelectionOverlayProps {
   isCropping?: boolean;
   cropBoxPdf?: Rect | null;
   snappingEnabled?: boolean;
+  textBlocks?: TextBlock[];
+  activeBlockId?: string | null;
+  isRegionSelectMode?: boolean;
   onSelectIds?: (ids: string[]) => void;
+  onSelectBlock?: (blockId: string) => void;
+  onDoubleClickBlock?: (blockId: string) => void;
+  onRegionSelected?: (regionPdf: Rect) => void;
   onMove?: (deltaXPt: number, deltaYPt: number) => void;
   onResize?: (newBoundsPdf: Rect) => void;
   onRotate?: (newAngleDeg: number) => void;
   onClearSelection?: () => void;
   onCropChange?: (newCropPdf: Rect) => void;
+  onOcrDetectRequested?: () => void;
 }
 
 export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
@@ -36,12 +43,19 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   isCropping = false,
   cropBoxPdf = null,
   snappingEnabled = true,
+  textBlocks = [],
+  activeBlockId = null,
+  isRegionSelectMode = false,
   onSelectIds,
+  onSelectBlock,
+  onDoubleClickBlock,
+  onRegionSelected,
   onMove,
   onResize,
   onRotate,
   onClearSelection,
-  onCropChange: _onCropChange
+  onCropChange: _onCropChange,
+  onOcrDetectRequested
 }) => {
   const mapper = new CoordinateMapper(pageWidthPt, pageHeightPt, rotation, scale, dpr);
   const cssSize = mapper.getCssSize();
@@ -50,15 +64,31 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [marqueeBox, setMarqueeBox] = useState<BoundingBox | null>(null);
   const [activeGuides, setActiveGuides] = useState<SnapGuide[]>([]);
+  const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
+  const [showOcrHint, setShowOcrHint] = useState(false);
 
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   // Filter selectable objects if in mode-specific views
   const eligibleObjects =
-    activeMode === 'edit-images' ? pageObjects.filter((o) => o.type === 'image') : pageObjects;
+    activeMode === 'edit-images'
+      ? pageObjects.filter((o) => o.type === 'image')
+      : activeMode === 'edit-text'
+        ? pageObjects.filter((o) => o.type === 'text')
+        : pageObjects;
+
+  // Selected text block if in edit-text mode
+  const currentTextBlock =
+    activeMode === 'edit-text' && activeBlockId
+      ? textBlocks.find((b) => b.id === activeBlockId)
+      : null;
 
   // Compute union selection bounds
-  const boundsPdf = computeSelectionBounds(eligibleObjects, selectedIds);
+  const boundsPdf =
+    currentTextBlock
+      ? currentTextBlock.bounds
+      : computeSelectionBounds(eligibleObjects, selectedIds);
+
   const boxCss = boundsPdf ? mapper.pdfRectToCss(boundsPdf) : null;
   const cropBoxCss = cropBoxPdf ? mapper.pdfRectToCss(cropBoxPdf) : null;
 
@@ -77,7 +107,7 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   };
 
   const handleSvgPointerDown = (e: React.PointerEvent) => {
-    // Click on empty canvas space -> start marquee or clear selection
+    // If clicking on SVG canvas
     if (e.target === svgRef.current) {
       if (!e.shiftKey && selectedIds.length > 0) {
         onClearSelection?.();
@@ -96,7 +126,7 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!dragStart) return;
 
-    // Handle marquee dragging
+    // Handle marquee / region dragging
     if (marqueeBox && svgRef.current) {
       const rect = svgRef.current.getBoundingClientRect();
       const currentX = e.clientX - rect.left;
@@ -119,7 +149,6 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
     const dyScreen = e.clientY - dragStart.y;
 
     if (activeHandle === 'body') {
-      // Drag to move
       const dxPt = dxScreen / scale;
       const dyPt = -dyScreen / scale; // PDF Y is inverted from screen
 
@@ -129,8 +158,8 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
       if (snappingEnabled) {
         const testBounds: Rect = {
           left: boundsPdf.left + dxPt,
-          right: boundsPdf.right + dxPt,
           bottom: boundsPdf.bottom + dyPt,
+          right: boundsPdf.right + dxPt,
           top: boundsPdf.top + dyPt
         };
         const snap = calculateSnap(
@@ -138,64 +167,71 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
           { width: pageWidthPt, height: pageHeightPt },
           siblingObjects
         );
-        finalDxPt = snap.x - boundsPdf.left;
-        finalDyPt = snap.y - boundsPdf.bottom;
+        if (snap.snappedX) finalDxPt = snap.x - boundsPdf.left;
+        if (snap.snappedY) finalDyPt = snap.y - boundsPdf.bottom;
         setActiveGuides(snap.guides);
+      } else {
+        setActiveGuides([]);
       }
 
       onMove?.(finalDxPt, finalDyPt);
       setDragStart({ x: e.clientX, y: e.clientY });
-    } else if (activeHandle && activeHandle !== 'rotate') {
-      // Resize handles (Task 6.4: keep aspect ratio by default on corner handles; Shift toggles)
-      const newBoxCss = { ...boxCss };
-      const isCorner = ['nw', 'ne', 'se', 'sw'].includes(activeHandle);
-      const keepRatio = isCorner ? !e.shiftKey : e.shiftKey;
+    } else if (activeHandle === 'rotate') {
+      const centerScreenX = boxCss.x + boxCss.width / 2;
+      const centerScreenY = boxCss.y + boxCss.height / 2;
+      const curAngleRad = Math.atan2(e.clientY - centerScreenY, e.clientX - centerScreenX);
+      const startAngleRad = Math.atan2(dragStart.y - centerScreenY, dragStart.x - centerScreenX);
+      let angleDeltaDeg = ((curAngleRad - startAngleRad) * 180) / Math.PI;
 
-      if (activeHandle.includes('w')) {
-        newBoxCss.x += dxScreen;
-        newBoxCss.width -= dxScreen;
+      if (e.shiftKey) {
+        angleDeltaDeg = Math.round(angleDeltaDeg / 15) * 15;
       }
-      if (activeHandle.includes('e')) {
-        newBoxCss.width += dxScreen;
-      }
-      if (activeHandle.includes('n')) {
-        newBoxCss.y += dyScreen;
-        newBoxCss.height -= dyScreen;
-      }
-      if (activeHandle.includes('s')) {
-        newBoxCss.height += dyScreen;
-      }
+      onRotate?.(angleDeltaDeg);
+    } else if (activeHandle) {
+      // Resize handle
+      const dxPt = dxScreen / scale;
+      const dyPt = -dyScreen / scale;
 
-      if (keepRatio && boxCss.height > 0 && boxCss.width > 0) {
-        const origRatio = boxCss.width / boxCss.height;
-        if (Math.abs(dxScreen) >= Math.abs(dyScreen)) {
-          newBoxCss.height = newBoxCss.width / origRatio;
-        } else {
-          newBoxCss.width = newBoxCss.height * origRatio;
-        }
-      }
+      let newLeft = boundsPdf.left;
+      let newRight = boundsPdf.right;
+      let newBottom = boundsPdf.bottom;
+      let newTop = boundsPdf.top;
 
-      if (newBoxCss.width > 5 && newBoxCss.height > 5) {
-        const newBoundsPdf = mapper.cssRectToPdf(newBoxCss);
-        onResize?.(newBoundsPdf);
+      if (activeHandle.includes('w')) newLeft += dxPt;
+      if (activeHandle.includes('e')) newRight += dxPt;
+      if (activeHandle.includes('s')) newBottom += dyPt;
+      if (activeHandle.includes('n')) newTop += dyPt;
+
+      if (newRight > newLeft + 10 && newTop > newBottom + 10) {
+        onResize?.({
+          left: newLeft,
+          bottom: newBottom,
+          right: newRight,
+          top: newTop
+        });
         setDragStart({ x: e.clientX, y: e.clientY });
       }
-    } else if (activeHandle === 'rotate') {
-      // Rotate handle
-      const centerX = boxCss.x + boxCss.width / 2;
-      const centerY = boxCss.y + boxCss.height / 2;
-      const angleRad = Math.atan2(e.clientY - centerY, e.clientX - centerX);
-      const angleDeg = (angleRad * 180) / Math.PI + 90; // Align with top handle
-      onRotate?.(Math.round(angleDeg));
     }
   };
 
-  const handlePointerUp = () => {
-    if (marqueeBox && marqueeBox.width > 3 && marqueeBox.height > 3) {
-      const marqueePdf = mapper.cssRectToPdf(marqueeBox);
-      const selected = marqueeSelect(eligibleObjects, marqueePdf, 'intersect');
-      if (selected.length > 0) {
-        onSelectIds?.(selected);
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (typeof (e.target as Element).releasePointerCapture === 'function') {
+      try {
+        (e.target as Element).releasePointerCapture(e.pointerId);
+      } catch {
+        // Ignore
+      }
+    }
+
+    if (marqueeBox) {
+      if (marqueeBox.width > 5 && marqueeBox.height > 5) {
+        const regionPdf = mapper.cssRectToPdf(marqueeBox);
+        if (isRegionSelectMode) {
+          onRegionSelected?.(regionPdf);
+        } else {
+          const selected = marqueeSelect(eligibleObjects, regionPdf);
+          onSelectIds?.(selected);
+        }
       }
     }
     setActiveHandle(null);
@@ -275,6 +311,64 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
         />
       )}
 
+      {/* Task 7.5: Edit Text Mode: Hover Outlines and Click Selection */}
+      {activeMode === 'edit-text' &&
+        textBlocks.map((block) => {
+          const blockBox = mapper.pdfRectToCss(block.bounds);
+          const isSelected = activeBlockId === block.id || block.runs.some((r) => selectedIds.includes(r.id));
+          const isHovered = hoveredBlockId === block.id;
+
+          return (
+            <rect
+              key={block.id}
+              data-testid={isHovered ? 'text-block-hover-outline' : `text-block-rect-${block.id}`}
+              x={blockBox.x}
+              y={blockBox.y}
+              width={blockBox.width}
+              height={blockBox.height}
+              fill={isSelected ? 'rgba(37, 99, 235, 0.08)' : isHovered ? 'rgba(59, 130, 246, 0.05)' : 'transparent'}
+              stroke={isSelected ? '#2563eb' : isHovered ? '#60a5fa' : 'transparent'}
+              strokeWidth={1}
+              strokeDasharray={isSelected ? 'none' : '3 3'}
+              style={{ cursor: 'pointer' }}
+              onPointerEnter={() => setHoveredBlockId(block.id)}
+              onPointerLeave={() => setHoveredBlockId(null)}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                onSelectBlock?.(block.id);
+                onSelectIds?.(block.runs.map((r) => r.id));
+              }}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                onDoubleClickBlock?.(block.id);
+              }}
+            />
+          );
+        })}
+
+      {/* Task 7.5: Non-editable element click handler in edit-text mode */}
+      {activeMode === 'edit-text' &&
+        pageObjects
+          .filter((o) => o.type === 'image' || o.type === 'path')
+          .map((obj) => {
+            const b = mapper.pdfRectToCss(obj.bounds);
+            return (
+              <rect
+                key={`non-edit-${obj.id}`}
+                x={b.x}
+                y={b.y}
+                width={b.width}
+                height={b.height}
+                fill="transparent"
+                style={{ cursor: 'not-allowed' }}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  setShowOcrHint(true);
+                }}
+              />
+            );
+          })}
+
       {/* Selection Bounding Box & Handles */}
       {boxCss && (
         <g data-testid="selection-box-group">
@@ -306,6 +400,12 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
             strokeDasharray="4 4"
             style={{ cursor: 'move' }}
             onPointerDown={(e) => handlePointerDown(e, 'body')}
+            onDoubleClick={(e) => {
+              if (activeMode === 'edit-text' && activeBlockId) {
+                e.stopPropagation();
+                onDoubleClickBlock?.(activeBlockId);
+              }
+            }}
           />
 
           {/* Rotate handle connector stem */}
@@ -371,7 +471,7 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
             style={{ cursor: 'nesw-resize' }}
             onPointerDown={(e) => handlePointerDown(e, 'ne')}
           />
-          {/* E */}
+          {/* E (width resize - rewrap) */}
           <rect
             data-testid="handle-e"
             x={boxCss.x + boxCss.width - HALF_HANDLE}
@@ -423,7 +523,7 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
             style={{ cursor: 'nesw-resize' }}
             onPointerDown={(e) => handlePointerDown(e, 'sw')}
           />
-          {/* W */}
+          {/* W (width resize - rewrap) */}
           <rect
             data-testid="handle-w"
             x={boxCss.x - HALF_HANDLE}
@@ -437,6 +537,60 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
             onPointerDown={(e) => handlePointerDown(e, 'w')}
           />
         </g>
+      )}
+
+      {/* Task 7.5: Non-editable raster text OCR Hint popup */}
+      {showOcrHint && (
+        <foreignObject x={20} y={20} width={320} height={70}>
+          <div
+            data-testid="ocr-hint-badge"
+            style={{
+              backgroundColor: 'rgba(30, 41, 59, 0.95)',
+              color: '#ffffff',
+              padding: '8px 12px',
+              borderRadius: 6,
+              fontSize: 12,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+            }}
+          >
+            <span>Text in scanned image cannot be edited directly.</span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button
+                data-testid="btn-ocr-detect"
+                onClick={() => {
+                  setShowOcrHint(false);
+                  onOcrDetectRequested?.();
+                }}
+                style={{
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 4,
+                  padding: '3px 8px',
+                  fontSize: 11,
+                  cursor: 'pointer'
+                }}
+              >
+                Detect text (OCR)
+              </button>
+              <button
+                onClick={() => setShowOcrHint(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  padding: 2
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </foreignObject>
       )}
     </svg>
   );

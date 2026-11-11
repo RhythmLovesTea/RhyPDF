@@ -20,9 +20,18 @@ import {
   CropImageCommand,
   ReplaceImageCommand,
   FlipImageCommand,
-  ReorderObjectCommand
+  ReorderObjectCommand,
+  groupTextRunsToBlocks,
+  groupRunsInRegion,
+  findInTextBlocks,
+  applyReplacementToBlock,
+  CommitTextBlockCommand,
+  InsertTextBlockCommand,
+  type TextBlock,
+  type FindReplaceMatch,
+  type CommitTextBlockOptions
 } from '@rhypdf/edit-core';
-import type { PageObject, ImageObject, Rect } from '@rhypdf/pdf-model';
+import type { PageObject, ImageObject, Rect, TextRun } from '@rhypdf/pdf-model';
 import { useDocStore } from '../../stores/docStore';
 import { useUIStore } from '../../stores/uiStore';
 import { PdfViewer, PageMetric } from '../viewer/PdfViewer';
@@ -33,6 +42,8 @@ import { ContextualToolbar } from './ContextualToolbar';
 import { PropertiesPanel, SelectedObjectProps } from './PropertiesPanel';
 import { EditorStatusBar } from './EditorStatusBar';
 import { SelectionOverlay } from './SelectionOverlay';
+import { TextEditorOverlay } from './TextEditorOverlay';
+import { FindReplaceBar } from './FindReplaceBar';
 import { CommandPalette, CommandItem } from '../../components/CommandPalette';
 import { ShortcutsHelpDialog } from '../../components/ShortcutsHelpDialog';
 import { AutosaveManager } from '../../lib/autosave';
@@ -92,6 +103,16 @@ export default function EditorPage({
   const [isCropping, setIsCropping] = useState(false);
   const [cropBoxPdf, setCropBoxPdf] = useState<Rect | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Text editing specific state (Phase 7)
+  const [activeTextBlockId, setActiveTextBlockId] = useState<string | null>(null);
+  const [editingTextBlockId, setEditingTextBlockId] = useState<string | null>(null);
+  const [isRegionSelectMode, setIsRegionSelectMode] = useState(false);
+  const [pageTextRunsMap, setPageTextRunsMap] = useState<Map<number, TextRun[]>>(new Map());
+  const [isFindReplaceOpen, setIsFindReplaceOpen] = useState(false);
+  const [findMatches, setFindMatches] = useState<FindReplaceMatch[]>([]);
+  const [currentFindMatchIndex, setCurrentFindMatchIndex] = useState(0);
+  const [findOverflowWarning, setFindOverflowWarning] = useState(false);
 
   // PDF Engine & Document Handle
   const [engine, setEngine] = useState<PdfEngine | null>(null);
@@ -239,6 +260,35 @@ export default function EditorPage({
     [pageObjectsMap, activePageIdx]
   );
 
+  // Group text runs into blocks for active page (Tasks 7.1, 7.2, 7.3, 7.4)
+  const currentRuns = useMemo<TextRun[]>(() => {
+    return currentObjects.filter((o): o is TextRun => o.type === 'text');
+  }, [currentObjects]);
+
+  const currentMetric = pageMetricsMap.get(activePageIdx) || {
+    width: 595.28,
+    height: 841.89,
+    rotation: 0
+  };
+
+  const currentTextBlocks = useMemo<TextBlock[]>(() => {
+    return groupTextRunsToBlocks(currentRuns, activePageIdx, {
+      pageHeight: currentMetric.height
+    });
+  }, [currentRuns, activePageIdx, currentMetric.height]);
+
+  const activeTextBlock = useMemo<TextBlock | null>(() => {
+    if (activeTextBlockId) {
+      const found = currentTextBlocks.find((b) => b.id === activeTextBlockId);
+      if (found) return found;
+    }
+    if (selectedIds.length > 0) {
+      const idSet = new Set(selectedIds);
+      return currentTextBlocks.find((b) => b.runs.some((r) => idSet.has(r.id))) || null;
+    }
+    return null;
+  }, [activeTextBlockId, selectedIds, currentTextBlocks]);
+
   // Selected image helper
   const selectedImage = useMemo<ImageObject | null>(() => {
     if (selectedIds.length !== 1) return null;
@@ -271,12 +321,34 @@ export default function EditorPage({
 
   // Update selectedObject in PropertiesPanel whenever selection changes
   useEffect(() => {
-    if (selectedIds.length === 0) {
+    if (selectedIds.length === 0 && !activeTextBlock) {
       setSelectedObject(null);
       setIsCropping(false);
       setCropBoxPdf(null);
       return;
     }
+
+    if (activeMode === 'edit-text' && activeTextBlock) {
+      setSelectedObject({
+        id: activeTextBlock.id,
+        type: 'text',
+        x: Math.round(activeTextBlock.bounds.left),
+        y: Math.round(activeTextBlock.bounds.bottom),
+        width: Math.round(activeTextBlock.bounds.right - activeTextBlock.bounds.left),
+        height: Math.round(activeTextBlock.bounds.top - activeTextBlock.bounds.bottom),
+        rotation: activeTextBlock.rotation,
+        opacity: 100,
+        textPreview: activeTextBlock.lines.map((l) => l.text).join(' '),
+        fontFamily: activeTextBlock.primaryFont,
+        fontSize: activeTextBlock.primaryFontSize,
+        alignment: activeTextBlock.alignment,
+        canReuseFont: activeTextBlock.fontReusability.canReuseFont,
+        isSubset: activeTextBlock.fontReusability.isSubset,
+        missingGlyphs: activeTextBlock.fontReusability.missingGlyphs
+      });
+      return;
+    }
+
     const bounds = computeSelectionBounds(currentObjects, selectedIds);
     if (bounds) {
       setSelectedObject({
@@ -294,7 +366,7 @@ export default function EditorPage({
         isLowRes: imageDpiResult?.isLowRes
       });
     }
-  }, [selectedIds, currentObjects, selectedImage, imageDpiResult]);
+  }, [selectedIds, currentObjects, selectedImage, imageDpiResult, activeMode, activeTextBlock]);
 
   // Command handlers
   const handleMoveObjects = useCallback(
@@ -1012,6 +1084,261 @@ export default function EditorPage({
     setActiveMode
   ]);
 
+  // Task 7.11, 7.13, 7.14, 7.20, 7.21: Text block commit
+  const handleCommitTextBlock = useCallback(
+    async (blockId: string, newLines: string[], options?: CommitTextBlockOptions) => {
+      const targetBlock = currentTextBlocks.find((b) => b.id === blockId);
+      if (!targetBlock) return;
+
+      const fontName = options?.fontName || targetBlock.primaryFont;
+      const fontSize = options?.fontSize || targetBlock.primaryFontSize;
+      const color = options?.color || targetBlock.primaryColor;
+      const lineHeight = fontSize * 1.25;
+
+      const oldRunIds = targetBlock.runs.map((r) => r.id);
+
+      // Create new text runs
+      const newRuns: TextRun[] = newLines.map((lineText, idx) => {
+        const baseline = targetBlock.bounds.top - (idx + 1) * lineHeight;
+        const lineBounds: Rect = {
+          left: targetBlock.bounds.left,
+          bottom: baseline,
+          right: targetBlock.bounds.right,
+          top: baseline + fontSize
+        };
+        return {
+          id: `text-run-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
+          type: 'text',
+          text: lineText,
+          fontName,
+          fontSize,
+          fillColor: color,
+          bounds: lineBounds,
+          matrix: [1, 0, 0, 1, targetBlock.bounds.left, baseline],
+          zIndex: 100 + idx,
+          isEmbeddedSubset: false,
+          rotation: targetBlock.rotation
+        };
+      });
+
+      // Prepare engine mutations
+      const ops: any[] = [];
+      for (const oldId of oldRunIds) {
+        ops.push({ type: 'removeObject', objectId: oldId });
+      }
+      for (const r of newRuns) {
+        ops.push({
+          type: 'insertText',
+          text: r.text,
+          fontName: r.fontName,
+          fontSize: r.fontSize,
+          fillColor: r.fillColor,
+          matrix: r.matrix
+        });
+      }
+
+      if (engine && docHandle) {
+        try {
+          await engine.mutate(docHandle, activePageIdx, ops);
+        } catch (e) {
+          console.warn('[EditorPage] engine.mutate failed:', e);
+        }
+      }
+
+      // Update local page objects map
+      setPageObjectsMap((prev) => {
+        const next = new Map(prev);
+        const cur = next.get(activePageIdx) || [];
+        const filtered = cur.filter((o) => !oldRunIds.includes(o.id));
+        next.set(activePageIdx, [...filtered, ...newRuns]);
+        return next;
+      });
+
+      // Wrap in CommitTextBlockCommand with coalescing support
+      const cmd = new CommitTextBlockCommand(
+        activePageIdx,
+        blockId,
+        targetBlock,
+        newLines,
+        options,
+        undefined,
+        (_p, _bid, restoredRuns) => {
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            const cur = next.get(activePageIdx) || [];
+            const newIds = new Set(newRuns.map((r) => r.id));
+            const filtered = cur.filter((o) => !newIds.has(o.id));
+            next.set(activePageIdx, [...filtered, ...restoredRuns]);
+            return next;
+          });
+        }
+      );
+      await editSession.execute(cmd);
+
+      setEditingTextBlockId(null);
+    },
+    [currentTextBlocks, engine, docHandle, activePageIdx, editSession]
+  );
+
+  // Task 7.15: Add Text Box
+  const handleAddTextBox = useCallback(async () => {
+    const defaultBounds: Rect = {
+      left: 100,
+      bottom: 500,
+      right: 280,
+      top: 524
+    };
+
+    const cmd = new InsertTextBlockCommand(
+      activePageIdx,
+      'Click to edit text',
+      defaultBounds,
+      'Roboto',
+      14,
+      { r: 0, g: 0, b: 0, a: 255 },
+      async (_page, run) => {
+        if (engine && docHandle) {
+          try {
+            await engine.mutate(docHandle, activePageIdx, [
+              {
+                type: 'insertText',
+                text: run.text,
+                fontName: run.fontName,
+                fontSize: run.fontSize,
+                fillColor: run.fillColor,
+                matrix: run.matrix
+              }
+            ]);
+          } catch {
+            // Fallback
+          }
+        }
+        setPageObjectsMap((prev) => {
+          const next = new Map(prev);
+          const list = [...(next.get(activePageIdx) || []), run];
+          next.set(activePageIdx, list);
+          return next;
+        });
+        editSession.selectAll(activePageIdx, [run.id]);
+      },
+      (_page, runId) => {
+        setPageObjectsMap((prev) => {
+          const next = new Map(prev);
+          const list = (next.get(activePageIdx) || []).filter((o) => o.id !== runId);
+          next.set(activePageIdx, list);
+          return next;
+        });
+      }
+    );
+
+    await editSession.execute(cmd);
+  }, [activePageIdx, editSession, engine, docHandle]);
+
+  // Task 7.6: Region Select
+  const handleRegionSelected = useCallback(
+    (regionPdf: Rect) => {
+      const block = groupRunsInRegion(currentRuns, regionPdf, activePageIdx);
+      if (block) {
+        setActiveTextBlockId(block.id);
+        editSession.selectAll(activePageIdx, block.runs.map((r) => r.id));
+      }
+      setIsRegionSelectMode(false);
+    },
+    [currentRuns, activePageIdx, editSession]
+  );
+
+  // Task 7.10: Grow downward & Shrink to fit
+  const handleGrowDownward = useCallback(
+    (blockId: string, additionalHeightPt: number) => {
+      const block = currentTextBlocks.find((b) => b.id === blockId);
+      if (!block) return;
+      setPageObjectsMap((prev) => {
+        const next = new Map(prev);
+        const list = next.get(activePageIdx) || [];
+        const runIds = new Set(block.runs.map((r) => r.id));
+        const updated = list.map((obj) => {
+          if (runIds.has(obj.id) && obj.bounds) {
+            return {
+              ...obj,
+              bounds: { ...obj.bounds, bottom: obj.bounds.bottom - additionalHeightPt }
+            };
+          }
+          return obj;
+        });
+        next.set(activePageIdx, updated);
+        return next;
+      });
+    },
+    [currentTextBlocks, activePageIdx]
+  );
+
+  const handleShrinkToFit = useCallback(
+    (blockId: string, newFontSize: number) => {
+      const block = currentTextBlocks.find((b) => b.id === blockId);
+      if (!block) return;
+      void handleCommitTextBlock(blockId, block.lines.map((l) => l.text), {
+        fontSize: newFontSize
+      });
+    },
+    [currentTextBlocks, handleCommitTextBlock]
+  );
+
+  // Task 7.18: Find & Replace
+  const handleFindSearch = useCallback(
+    (query: string, options: { caseSensitive: boolean; wholeWord: boolean }) => {
+      const matches = findInTextBlocks(currentTextBlocks, query, options);
+      setFindMatches(matches);
+      setCurrentFindMatchIndex(0);
+      setFindOverflowWarning(false);
+    },
+    [currentTextBlocks]
+  );
+
+  const handleNextFindMatch = useCallback(() => {
+    if (findMatches.length === 0) return;
+    setCurrentFindMatchIndex((prev) => (prev + 1) % findMatches.length);
+  }, [findMatches.length]);
+
+  const handlePrevFindMatch = useCallback(() => {
+    if (findMatches.length === 0) return;
+    setCurrentFindMatchIndex((prev) => (prev - 1 + findMatches.length) % findMatches.length);
+  }, [findMatches.length]);
+
+  const handleReplaceCurrent = useCallback(
+    async (replacement: string) => {
+      if (findMatches.length === 0 || currentFindMatchIndex >= findMatches.length) return;
+      const match = findMatches[currentFindMatchIndex]!;
+      const block = currentTextBlocks.find((b) => b.id === match.blockId);
+      if (!block) return;
+
+      const { updatedLines, isOverflow } = applyReplacementToBlock(block, match, replacement);
+      setFindOverflowWarning(isOverflow);
+
+      await handleCommitTextBlock(block.id, updatedLines);
+      handleFindSearch(match.matchedText, { caseSensitive: false, wholeWord: false });
+    },
+    [findMatches, currentFindMatchIndex, currentTextBlocks, handleCommitTextBlock, handleFindSearch]
+  );
+
+  const handleReplaceAll = useCallback(
+    async (replacement: string) => {
+      if (findMatches.length === 0) return;
+
+      let anyOverflow = false;
+      for (const match of findMatches) {
+        const block = currentTextBlocks.find((b) => b.id === match.blockId);
+        if (!block) continue;
+        const { updatedLines, isOverflow } = applyReplacementToBlock(block, match, replacement);
+        if (isOverflow) anyOverflow = true;
+        await handleCommitTextBlock(block.id, updatedLines);
+      }
+
+      setFindOverflowWarning(anyOverflow);
+      setFindMatches([]);
+    },
+    [findMatches, currentTextBlocks, handleCommitTextBlock]
+  );
+
   const handleDownload = useCallback(async () => {
     if (currentDocId) {
       await downloadRecentFile(currentDocId, filename || 'document.pdf');
@@ -1057,14 +1384,19 @@ export default function EditorPage({
 
   const getPageTextRuns = useCallback(
     async (pageIdx: number) => {
+      if (pageTextRunsMap.has(pageIdx)) {
+        return pageTextRunsMap.get(pageIdx)!;
+      }
       if (!engine || !docHandle) return [];
       try {
-        return await engine.extractText(docHandle, pageIdx);
+        const runs = await engine.extractText(docHandle, pageIdx);
+        setPageTextRunsMap((prev) => new Map(prev).set(pageIdx, runs));
+        return runs;
       } catch {
         return [];
       }
     },
-    [engine, docHandle]
+    [engine, docHandle, pageTextRunsMap]
   );
 
   // Commands list for CommandPalette
@@ -1241,7 +1573,7 @@ export default function EditorPage({
         onRedo={handleRedo}
       />
 
-      {/* Contextual Toolbar (Phase 6 wired) */}
+      {/* Contextual Toolbar (Phase 6 & 7 wired) */}
       <ContextualToolbar
         hasSelectedImage={selectedImage !== null}
         isCropping={isCropping}
@@ -1265,6 +1597,15 @@ export default function EditorPage({
         onBringToFront={() => handleLayerReorder('front')}
         onSendToBack={() => handleLayerReorder('back')}
         onOpacityChange={handleOpacityChange}
+        onAddText={handleAddTextBox}
+        onSelectRegion={() => setIsRegionSelectMode((prev) => !prev)}
+        onToggleFindReplace={() => setIsFindReplaceOpen((prev) => !prev)}
+        isRegionSelectActive={isRegionSelectMode}
+        selectedFontFamily={activeTextBlock?.primaryFont}
+        selectedFontSize={activeTextBlock?.primaryFontSize}
+        selectedAlignment={activeTextBlock?.alignment}
+        hasSelectedTextBlock={Boolean(activeTextBlock)}
+        onDeleteText={handleDeleteObjects}
       />
 
       {/* Main Workspace Area: Rail + Canvas + Properties */}
@@ -1277,6 +1618,18 @@ export default function EditorPage({
 
         {/* Central Canvas Viewport */}
         <div style={{ flex: 1, height: '100%', overflow: 'hidden', position: 'relative' }}>
+          <FindReplaceBar
+            isOpen={isFindReplaceOpen}
+            onClose={() => setIsFindReplaceOpen(false)}
+            matches={findMatches}
+            currentIndex={currentFindMatchIndex}
+            onSearch={handleFindSearch}
+            onNextMatch={handleNextFindMatch}
+            onPrevMatch={handlePrevFindMatch}
+            onReplaceCurrent={handleReplaceCurrent}
+            onReplaceAll={handleReplaceAll}
+            hasOverflowWarning={findOverflowWarning}
+          />
           {currentDocId ? (
             <PdfViewer
               docId={currentDocId}
@@ -1292,23 +1645,66 @@ export default function EditorPage({
               onBackToHome={() => closeDoc()}
               renderOverlay={(pageIdx, metric) => {
                 if (pageIdx !== activePageIdx) return null;
+                const editingBlock = editingTextBlockId
+                  ? currentTextBlocks.find((b) => b.id === editingTextBlockId)
+                  : null;
+
                 return (
-                  <SelectionOverlay
-                    pageWidthPt={metric.width}
-                    pageHeightPt={metric.height}
-                    rotation={metric.rotation}
-                    scale={scale}
-                    activeMode={activeMode}
-                    isCropping={isCropping}
-                    cropBoxPdf={cropBoxPdf}
-                    pageObjects={currentObjects}
-                    selectedIds={selectedIds}
-                    onSelectIds={(ids) => editSession.selectAll(activePageIdx, ids)}
-                    onMove={handleMoveObjects}
-                    onResize={handleResizeObjects}
-                    onRotate={handleRotateObjects}
-                    onClearSelection={() => editSession.clearSelection()}
-                  />
+                  <>
+                    <SelectionOverlay
+                      pageWidthPt={metric.width}
+                      pageHeightPt={metric.height}
+                      rotation={metric.rotation}
+                      scale={scale}
+                      activeMode={activeMode}
+                      isCropping={isCropping}
+                      cropBoxPdf={cropBoxPdf}
+                      pageObjects={currentObjects}
+                      selectedIds={selectedIds}
+                      textBlocks={currentTextBlocks}
+                      activeBlockId={activeTextBlock?.id || activeTextBlockId}
+                      isRegionSelectMode={isRegionSelectMode}
+                      onSelectBlock={(blockId) => {
+                        setActiveTextBlockId(blockId);
+                        const blk = currentTextBlocks.find((b) => b.id === blockId);
+                        if (blk) {
+                          editSession.selectAll(
+                            activePageIdx,
+                            blk.runs.map((r) => r.id)
+                          );
+                        }
+                      }}
+                      onDoubleClickBlock={(blockId) => {
+                        setActiveTextBlockId(blockId);
+                        setEditingTextBlockId(blockId);
+                      }}
+                      onRegionSelected={handleRegionSelected}
+                      onSelectIds={(ids) => editSession.selectAll(activePageIdx, ids)}
+                      onMove={handleMoveObjects}
+                      onResize={handleResizeObjects}
+                      onRotate={handleRotateObjects}
+                      onClearSelection={() => {
+                        setActiveTextBlockId(null);
+                        editSession.clearSelection();
+                      }}
+                      onOcrDetectRequested={() => {
+                        alert('OCR text detection will become active in Phase 10.');
+                      }}
+                    />
+                    {editingBlock && (
+                      <TextEditorOverlay
+                        block={editingBlock}
+                        pageWidthPt={metric.width}
+                        pageHeightPt={metric.height}
+                        rotation={metric.rotation}
+                        scale={scale}
+                        onCommit={handleCommitTextBlock}
+                        onCancel={() => setEditingTextBlockId(null)}
+                        onGrowDownward={handleGrowDownward}
+                        onShrinkToFit={handleShrinkToFit}
+                      />
+                    )}
+                  </>
                 );
               }}
             />

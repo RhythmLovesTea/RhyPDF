@@ -1127,6 +1127,12 @@ export class PdfiumEngine implements PdfEngine {
   }
 
   async extractText(docHandle: DocumentHandle, pageIndex: number): Promise<TextRun[]> {
+    const pageObjects = await this.getPageObjects(docHandle, pageIndex);
+    const textObjects = pageObjects.filter((o): o is TextRun => o.type === 'text');
+    if (textObjects.length > 0) {
+      return textObjects;
+    }
+
     const doc = this.getDocument(docHandle);
     const pagePtr = this.loadPage(doc, pageIndex);
     const textPage = this.pdfium.FPDFText_LoadPage(pagePtr);
@@ -1245,10 +1251,21 @@ export class PdfiumEngine implements PdfEngine {
     const doc = this.getDocument(docHandle);
     const pagePtr = this.loadPage(doc, pageIndex);
 
+    // Pre-resolve removeObject pointers before mutations alter object indices
+    const removePtrMap = new Map<string, { objPtr: number; parentFormPtr?: number }>();
+    for (const op of ops) {
+      if (op.type === 'removeObject' && !removePtrMap.has(op.objectId)) {
+        const found = this.findPageObjectByPath(pagePtr, pageIndex, op.objectId);
+        if (found) {
+          removePtrMap.set(op.objectId, found);
+        }
+      }
+    }
+
     for (const op of ops) {
       switch (op.type) {
         case 'removeObject': {
-          const found = this.findPageObjectByPath(pagePtr, pageIndex, op.objectId);
+          const found = removePtrMap.get(op.objectId) || this.findPageObjectByPath(pagePtr, pageIndex, op.objectId);
           if (found) {
             if (found.parentFormPtr && typeof this.pdfium.FPDFFormObj_RemoveObject === 'function') {
               this.pdfium.FPDFFormObj_RemoveObject(found.parentFormPtr, found.objPtr);
@@ -1258,17 +1275,7 @@ export class PdfiumEngine implements PdfEngine {
             if (typeof this.pdfium.FPDFPageObj_Destroy === 'function') {
               this.pdfium.FPDFPageObj_Destroy(found.objPtr);
             }
-          } else {
-            const count = this.pdfium.FPDFPage_CountObjects(pagePtr);
-            if (count > 0) {
-              const fallbackObj = this.pdfium.FPDFPage_GetObject(pagePtr, 0);
-              if (fallbackObj) {
-                this.pdfium.FPDFPage_RemoveObject(pagePtr, fallbackObj);
-                if (typeof this.pdfium.FPDFPageObj_Destroy === 'function') {
-                  this.pdfium.FPDFPageObj_Destroy(fallbackObj);
-                }
-              }
-            }
+            removePtrMap.delete(op.objectId);
           }
           break;
         }
