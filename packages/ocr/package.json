@@ -12,7 +12,8 @@
     }
   },
   "dependencies": {
-    "@rhypdf/pdf-model": "workspace:*"
+    "@rhypdf/pdf-model": "workspace:*",
+    "tesseract.js": "7.0.0"
   },
   "scripts": {
     "build": "tsc",

@@ -10,7 +10,8 @@ import {
   CheckCircle2,
   CircleDot,
   Command,
-  HelpCircle
+  HelpCircle,
+  Scan
 } from 'lucide-react';
 import { useDocStore, EditorMode } from '../../stores/docStore';
 
@@ -20,6 +21,7 @@ export interface EditorTopBarProps {
   onToggleSearch: () => void;
   onOpenCommandPalette: () => void;
   onOpenShortcutsHelp: () => void;
+  onOpenBatchOcr?: () => void;
   canUndo?: boolean;
   canRedo?: boolean;
   onUndo?: () => void;
@@ -32,6 +34,7 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
   onToggleSearch,
   onOpenCommandPalette,
   onOpenShortcutsHelp,
+  onOpenBatchOcr,
   canUndo = false,
   canRedo = false,
   onUndo,
@@ -277,6 +280,17 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
         >
           <HelpCircle size={16} />
         </IconButton>
+        {onOpenBatchOcr && (
+          <IconButton
+            data-testid="btn-topbar-ocr"
+            aria-label="OCR Document"
+            size="sm"
+            variant="ghost"
+            onClick={onOpenBatchOcr}
+          >
+            <Scan size={16} />
+          </IconButton>
+        )}
 
         <Button
           data-testid="btn-topbar-download"

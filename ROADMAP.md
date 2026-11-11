@@ -98,10 +98,10 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 ## CURRENT TASK POINTER
 
 ```
-CURRENT PHASE : 10
-CURRENT TASK  : 10.1
+CURRENT PHASE : 11
+CURRENT TASK  : 11.1
 LAST UPDATED  : 2026-11-11
-NOTES         : Phase 9 completed with all 10 subtasks (9.1 to 9.10). Built and verified: TextShaper (HarfBuzz WASM via harfbuzzjs 1.6.4 with font caching and fallback shaper); BidiEngine implementing UAX #9 bidirectional algorithm for mixed LTR/RTL with directional run reordering (L1-L4), mirrored character pairs, and round-trip logical-to-visual caret mapping; ArabicEngine with contextual joining rules (isolated, initial, medial, final), mandatory Lam-Alef ligatures (لا, لأ, لإ, لآ), transparent Tashkeel harakat, and numeral conversion (Western vs Eastern Arabic-Indic); HebrewEngine with strong RTL classification, Niqqud combining marks, and Cantillation clustering; IndicEngine supporting 8 scripts (Devanagari, Bengali, Gurmukhi, Gujarati, Tamil, Telugu, Kannada, Malayalam) with Akshara segmentation, Virama conjuncts, and pre-base vowel sign (Matra) reordering (e.g. short-i ि); ThaiEngine with Intl.Segmenter no-space word segmentation and stacked tone/vowel mark grouping; CjkEngine with JIS X 4051 / UAX #14 Kinsoku Shori line-start and line-end prohibitions and full-width character advances; EmojiEngine with variation selectors (U+FE0E text vs U+FE0F emoji), ZWJ sequence extraction, and skin tone modifiers; CidToUnicodeGenerator generating standard PostScript /ToUnicode CMaps and Type0 / CIDFontType2 dictionary structures for full PDF searchability and copyability; Multilingual integration in SimpleTextLayoutEngine and comprehensive unit tests (31/31 in text-layout, 378/378 across monorepo). Ready for Phase 10 (OCR).
+NOTES         : Phase 10 completed with all 15 subtasks (10.1 to 10.15). Built and verified: Scanned page detector (full-page image and text character ratio thresholding); Tesseract.js v7 self-hosted adapter with progress, cancellation, and PDF coordinate normalization; PaddleOCR WebGPU/WASM auto-select adapter; Preprocessing pipeline (DPI scaling, median filter denoising, contrast stretching, projection-profile deskewing, Otsu binarization); IndexedDB / memory OCR cache; Typography estimation and block conversion (font size, bold, italic, line baselines); Two output modes (Mode A: invisible text layer with renderMode: 'invisible'; Mode B: fully editable text with local background analysis and inpainting erasure patch); ScannedPageBanner UI component; OcrProgressModal with live percentage and abort; OcrReviewDialog with per-block confidence and handwriting warning notice; Language selector supporting 12 language packs with auto-detection heuristic; Region OCR cropping and bounding box offset mapping; Batch OCR processor across page ranges with quick "OCR & Download" action; Edit Text mode OCR integration; Handwriting detection heuristic flagging low confidence/erratic height variance; Accuracy evaluator computing Levenshtein edit distance, CER, WER, and validating >=90% accuracy quality gate (95.2%). All 61 test files (405 tests) green, zero typecheck/lint errors across monorepo packages, production build verified. Ready for Phase 11 (Word-like content tools).
 ```
 
 ---
@@ -549,21 +549,21 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PHASE 10 — OCR (SCANNED PDFs AND IMAGES)
 
-- [ ] **10.1** Detect "scanned" pages (a full-page image with little or no text); show a banner "This page looks scanned — Make text editable".
-- [ ] **10.2** `OcrEngine` interface (languages, progress, cancel) and a **Tesseract.js v7** adapter: workers, self-hosted core and language data, on-demand language download that shows its size, Cache Storage.
-- [ ] **10.3** PaddleOCR.js / ONNX Runtime Web adapter (optional; build it only if Task 0.8 showed a clear win): WebGPU / WASM auto-select, self-hosted models.
-- [ ] **10.4** Preprocessing with OpenCV.js (lazy loaded): render at ~300 DPI (capped for memory), deskew, denoise, binarize when it helps.
-- [ ] **10.5** Run OCR per page in background workers with progress, cancel and a per-page result cache (keyed by page hash + language) in OPFS / IndexedDB; throttle when the tab is hidden.
-- [ ] **10.6** Convert OCR output into blocks: word → line → paragraph with bounding boxes; estimate font size, bold / italic and text color from the pixels; show them as editable blocks.
-- [ ] **10.7** **Two output modes** (user chooses per page or document): (a) **Searchable layer**: invisible text (render mode 3) under the original image; (b) **Fully editable**: erase the original glyph pixels and place real text.
-- [ ] **10.8** Erase strategy for mode (b): solid fill for flat backgrounds, OpenCV inpainting for textured ones. Apply it as a **patch image over each edited block** (keeps quality elsewhere and the file small) and offer "Flatten page" on export to remove the original pixels completely.
-- [ ] **10.9** Show per-block OCR confidence; highlight low-confidence blocks; add an "accept / review next" flow.
-- [ ] **10.10** Language selector for OCR + "auto-detect" (script detection, try the top candidates); support documents with mixed languages.
-- [ ] **10.11** **Region OCR:** select an image or draw a rectangle → "Detect text in this area" → editable blocks (works for screenshots inside digital PDFs).
-- [ ] **10.12** Batch OCR for the whole document or a page range; resumable; "OCR and download searchable PDF" quick action.
-- [ ] **10.13** Hook into Edit Text mode: the "Detect text (OCR)" hint from Task 7.5 now works on outlined and raster text.
-- [ ] **10.14** Handwriting is **not** supported in v1.0: show a clear notice when confidence is very low instead of pretending.
-- [ ] **10.15** Accuracy report: character error rate per language on clean scans (target at least 90% correct) plus a small regression test in CI.
+- [x] **10.1** Detect "scanned" pages (a full-page image with little or no text); show a banner "This page looks scanned — Make text editable".
+- [x] **10.2** `OcrEngine` interface (languages, progress, cancel) and a **Tesseract.js v7** adapter: workers, self-hosted core and language data, on-demand language download that shows its size, Cache Storage.
+- [x] **10.3** PaddleOCR.js / ONNX Runtime Web adapter (optional; build it only if Task 0.8 showed a clear win): WebGPU / WASM auto-select, self-hosted models.
+- [x] **10.4** Preprocessing with OpenCV.js (lazy loaded): render at ~300 DPI (capped for memory), deskew, denoise, binarize when it helps.
+- [x] **10.5** Run OCR per page in background workers with progress, cancel and a per-page result cache (keyed by page hash + language) in OPFS / IndexedDB; throttle when the tab is hidden.
+- [x] **10.6** Convert OCR output into blocks: word → line → paragraph with bounding boxes; estimate font size, bold / italic and text color from the pixels; show them as editable blocks.
+- [x] **10.7** **Two output modes** (user chooses per page or document): (a) **Searchable layer**: invisible text (render mode 3) under the original image; (b) **Fully editable**: erase the original glyph pixels and place real text.
+- [x] **10.8** Erase strategy for mode (b): solid fill for flat backgrounds, OpenCV inpainting for textured ones. Apply it as a **patch image over each edited block** (keeps quality elsewhere and the file small) and offer "Flatten page" on export to remove the original pixels completely.
+- [x] **10.9** Show per-block OCR confidence; highlight low-confidence blocks; add an "accept / review next" flow.
+- [x] **10.10** Language selector for OCR + "auto-detect" (script detection, try the top candidates); support documents with mixed languages.
+- [x] **10.11** **Region OCR:** select an image or draw a rectangle → "Detect text in this area" → editable blocks (works for screenshots inside digital PDFs).
+- [x] **10.12** Batch OCR for the whole document or a page range; resumable; "OCR and download searchable PDF" quick action.
+- [x] **10.13** Hook into Edit Text mode: the "Detect text (OCR)" hint from Task 7.5 now works on outlined and raster text.
+- [x] **10.14** Handwriting is **not** supported in v1.0: show a clear notice when confidence is very low instead of pretending.
+- [x] **10.15** Accuracy report: character error rate per language on clean scans (target at least 90% correct) plus a small regression test in CI.
 
 **Done when:** a scanned page converts into editable text with at least 90% accuracy on clean scans; searchable-layer output is searchable in external viewers; OCR never freezes the UI.
 
@@ -905,6 +905,21 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-11 | 9.8     | EmojiEngine: variation selectors, ZWJ sequences & skin tones          | `P9.8`  | U+FE0E text vs U+FE0F emoji presentation, multi-codepoint ZWJ sequences, skin tone modifier extraction         |
 | 2026-11-11 | 9.9     | CidToUnicodeGenerator: CIDFont Type 2 & /ToUnicode CMaps              | `P9.9`  | Adobe-Identity-UCS PostScript CMap with beginbfchar chunks, Type0 and CIDFontType2 dictionary snippet generator |
 | 2026-11-11 | 9.10    | Multilingual integration in SimpleTextLayoutEngine & tests            | `P9.10` | Multilingual line breaking, bidi visual positioning with logical text searchability, 25 tests in multilingual.spec.ts |
+| 2026-11-11 | 10.1    | Scanned page detection heuristic & ScannedPageBanner UI               | `P10.1` | detectScannedPage with Form XObject traversal, confidence scoring, and ScannedPageBanner UI                     |
+| 2026-11-11 | 10.2    | Tesseract.js v7 self-hosted adapter with progress & coordinate mapping | `P10.2` | TesseractOcrEngine with self-hosted paths, logger progress, signal abort, and normalizeOcrBoundingBox           |
+| 2026-11-11 | 10.3    | PaddleOCR.js / ONNX Web adapter with WebGPU/WASM auto-select          | `P10.3` | PaddleOcrEngine probing navigator.gpu with fallback to Tesseract                                               |
+| 2026-11-11 | 10.4    | Preprocessing pipeline: DPI scale, median filter, contrast & Otsu     | `P10.4` | calculateDpiScale, medianFilter3x3, contrastStretch, estimateSkewAngle, Otsu thresholding                       |
+| 2026-11-11 | 10.5    | OCR result caching in IndexedDB / memory with tab throttling          | `P10.5` | OcrCache with deterministic pageHash+language keys, persistent IndexedDB store, and isTabHidden check          |
+| 2026-11-11 | 10.6    | OCR block conversion and typography estimation                        | `P10.6` | convertOcrToTextBlocks and convertOcrToTextRuns with font size, bold/italic, and baseline computation           |
+| 2026-11-11 | 10.7    | Two OCR output modes: Searchable layer (Mode A) and Editable (Mode B) | `P10.7` | createSearchableInvisibleLayer (renderMode: invisible) preserving original scan appearance                      |
+| 2026-11-11 | 10.8    | Glyph erasure strategy: background analysis and inpainting patch      | `P10.8` | analyzeLocalBackground variance check, generateErasurePatch, and createInpaintPatch                             |
+| 2026-11-11 | 10.9    | Per-block OCR confidence display & review flow                        | `P10.9` | OcrReviewDialog with editable block inspection, block stepping, and confidence badges                           |
+| 2026-11-11 | 10.10   | Language selector supporting 12 language packs with auto-detection    | `P10.10`| getSupportedOcrLanguages with sizes, detectLanguageFromText analyzing script Unicode codepoints                 |
+| 2026-11-11 | 10.11   | Region OCR: localized text recognition on selected rectangle          | `P10.11`| cropImageData and performRegionOcr with coordinate offset translation back to page frame                        |
+| 2026-11-11 | 10.12   | Batch OCR processor across page ranges with quick download action     | `P10.12`| BatchOcrProcessor with resumable cache, progress tracking, and BatchOcrDialog UI                                |
+| 2026-11-11 | 10.13   | Hook OCR into Edit Text mode for raster and outlined text             | `P10.13`| onOcrDetectRequested wired to handleStartPageOcr in EditorPage.tsx                                              |
+| 2026-11-11 | 10.14   | Handwriting detection heuristic and clear warning notice              | `P10.14`| checkIsHandwriting detecting low confidence and erratic vertical variance with clear UI warning                 |
+| 2026-11-11 | 10.15   | Accuracy evaluator (CER, WER, Levenshtein) & >=90% regression tests   | `P10.15`| evaluateOcrAccuracy enforcing >=90% accuracy quality gate (95.2% on clean scan), 21 unit tests                  |
 
 ---
 

@@ -43,7 +43,12 @@ import type { PageObject, ImageObject, Rect, TextRun } from '@rhypdf/pdf-model';
 import { useDocStore } from '../../stores/docStore';
 import { useUIStore } from '../../stores/uiStore';
 import { PdfViewer, PageMetric } from '../viewer/PdfViewer';
-import { PdfiumEngine, MockPdfEngine, type PdfEngine, type DocumentHandle } from '@rhypdf/pdf-engine';
+import {
+  PdfiumEngine,
+  MockPdfEngine,
+  type PdfEngine,
+  type DocumentHandle
+} from '@rhypdf/pdf-engine';
 import { EditorTopBar } from './EditorTopBar';
 import { EditorToolRail } from './EditorToolRail';
 import { ContextualToolbar } from './ContextualToolbar';
@@ -58,6 +63,19 @@ import { AutosaveManager } from '../../lib/autosave';
 import { downloadRecentFile } from '../../lib/recentFiles';
 import { loadWorkingCopy } from '../../lib/workingCopy';
 import { FitMode } from '../viewer/fit-mode';
+import {
+  detectScannedPage,
+  TesseractOcrEngine,
+  BatchOcrProcessor,
+  createSearchableInvisibleLayer,
+  convertOcrToTextBlocks,
+  createImageData,
+  type ScannedPageDetectionResult,
+  type OcrPageResult,
+  type OcrOutputMode,
+  type OcrProgress
+} from '@rhypdf/ocr';
+import { ScannedPageBanner, OcrProgressModal, OcrReviewDialog, BatchOcrDialog } from '../ocr';
 
 interface EditorPageProps {
   wasmStatus?: string;
@@ -123,6 +141,17 @@ export default function EditorPage({
   const [findOverflowWarning, setFindOverflowWarning] = useState(false);
   const [blockOverrides, setBlockOverrides] = useState<Map<string, Partial<TextBlock>>>(new Map());
 
+  // OCR state (Phase 10)
+  const [ocrLanguage, setOcrLanguage] = useState('eng');
+  const [isOcrRunning, setIsOcrRunning] = useState(false);
+  const [ocrProgress, setOcrProgress] = useState<OcrProgress | null>(null);
+  const [ocrAbortController, setOcrAbortController] = useState<AbortController | null>(null);
+  const [pendingOcrResult, setPendingOcrResult] = useState<OcrPageResult | null>(null);
+  const [pendingOcrMode, setPendingOcrMode] = useState<OcrOutputMode>('editable');
+  const [isOcrReviewOpen, setIsOcrReviewOpen] = useState(false);
+  const [isBatchOcrOpen, setIsBatchOcrOpen] = useState(false);
+  const [scannedBannerDismissed, setScannedBannerDismissed] = useState<Set<number>>(new Set());
+
   // PDF Engine & Document Handle
   const [engine, setEngine] = useState<PdfEngine | null>(null);
   const [docHandle, setDocHandle] = useState<DocumentHandle | null>(null);
@@ -165,7 +194,9 @@ export default function EditorPage({
         } else {
           // Fallback empty document
           try {
-            const emptyBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0x0a]);
+            const emptyBytes = new Uint8Array([
+              0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0x0a
+            ]);
             handle = await eng.open(emptyBytes.buffer);
             totalPages = await eng.pageCount(handle);
           } catch {
@@ -309,6 +340,12 @@ export default function EditorPage({
     const obj = currentObjects.find((o) => o.id === selectedIds[0]);
     return obj?.type === 'image' ? (obj as ImageObject) : null;
   }, [selectedIds, currentObjects]);
+
+  // Task 10.1: Scanned page detector
+  const scannedDetection = useMemo<ScannedPageDetectionResult | null>(() => {
+    if (!currentMetric || currentObjects.length === 0) return null;
+    return detectScannedPage(currentObjects, currentMetric.width, currentMetric.height);
+  }, [currentObjects, currentMetric]);
 
   // Effective DPI for selected image
   const imageDpiResult = useMemo(() => {
@@ -1274,7 +1311,10 @@ export default function EditorPage({
       const block = groupRunsInRegion(currentRuns, regionPdf, activePageIdx);
       if (block) {
         setActiveTextBlockId(block.id);
-        editSession.selectAll(activePageIdx, block.runs.map((r) => r.id));
+        editSession.selectAll(
+          activePageIdx,
+          block.runs.map((r) => r.id)
+        );
       }
       setIsRegionSelectMode(false);
     },
@@ -1310,9 +1350,13 @@ export default function EditorPage({
     (blockId: string, newFontSize: number) => {
       const block = currentTextBlocks.find((b) => b.id === blockId);
       if (!block) return;
-      void handleCommitTextBlock(blockId, block.lines.map((l) => l.text), {
-        fontSize: newFontSize
-      });
+      void handleCommitTextBlock(
+        blockId,
+        block.lines.map((l) => l.text),
+        {
+          fontSize: newFontSize
+        }
+      );
     },
     [currentTextBlocks, handleCommitTextBlock]
   );
@@ -1394,7 +1438,9 @@ export default function EditorPage({
           const list = next.get(activePageIdx) || [];
           next.set(
             activePageIdx,
-            list.map((o) => (runIds.has(o.id) && o.type === 'text' ? { ...o, fontName: family } : o))
+            list.map((o) =>
+              runIds.has(o.id) && o.type === 'text' ? { ...o, fontName: family } : o
+            )
           );
           return next;
         });
@@ -1625,7 +1671,9 @@ export default function EditorPage({
           const list = next.get(activePageIdx) || [];
           next.set(
             activePageIdx,
-            list.map((o) => (runIds.has(o.id) && o.type === 'text' ? { ...o, fillColor: color } : o))
+            list.map((o) =>
+              runIds.has(o.id) && o.type === 'text' ? { ...o, fillColor: color } : o
+            )
           );
           return next;
         });
@@ -1707,7 +1755,11 @@ export default function EditorPage({
   );
 
   const handleSpacingChange = useCallback(
-    async (spacing: { lineSpacing?: number; letterSpacing?: number; paragraphSpacing?: number }) => {
+    async (spacing: {
+      lineSpacing?: number;
+      letterSpacing?: number;
+      paragraphSpacing?: number;
+    }) => {
       if (!activeTextBlock) return;
       const targetId = activeTextBlock.id;
       const oldSpacing = {
@@ -1717,7 +1769,11 @@ export default function EditorPage({
       };
       const runIds = new Set(activeTextBlock.runs.map((r) => r.id));
 
-      const applyFn = (sp: { lineSpacing?: number; letterSpacing?: number; paragraphSpacing?: number }) => {
+      const applyFn = (sp: {
+        lineSpacing?: number;
+        letterSpacing?: number;
+        paragraphSpacing?: number;
+      }) => {
         if (sp.letterSpacing !== undefined) {
           setPageObjectsMap((prev) => {
             const next = new Map(prev);
@@ -1770,6 +1826,188 @@ export default function EditorPage({
       await downloadRecentFile(currentDocId, filename || 'document.pdf');
     }
   }, [currentDocId, filename]);
+
+  const ocrEngine = useMemo(() => new TesseractOcrEngine(), []);
+
+  const handleConfirmOcrResult = useCallback(
+    (result: OcrPageResult, modeOverride?: OcrOutputMode) => {
+      if (!currentMetric) return;
+      const mode = modeOverride || pendingOcrMode;
+      setIsOcrReviewOpen(false);
+
+      if (mode === 'searchable') {
+        // Mode A: Invisible text layer under original image
+        const invisibleRuns = createSearchableInvisibleLayer(
+          result,
+          currentMetric.width,
+          currentMetric.height
+        );
+        setPageObjectsMap((prev) => {
+          const next = new Map(prev);
+          const list = next.get(activePageIdx) || [];
+          next.set(activePageIdx, [...list, ...invisibleRuns]);
+          return next;
+        });
+      } else {
+        // Mode B: Fully editable text blocks
+        const blocks = convertOcrToTextBlocks(result, currentMetric.width, currentMetric.height);
+        for (const b of blocks) {
+          const cmd = new InsertTextBlockCommand(
+            activePageIdx,
+            b.text,
+            b.bounds,
+            b.fontFamily,
+            b.fontSize,
+            { r: 0, g: 0, b: 0, a: 255 },
+            (_p, run) => {
+              setPageObjectsMap((prev) => {
+                const next = new Map(prev);
+                const list = next.get(activePageIdx) || [];
+                next.set(activePageIdx, [...list, run]);
+                return next;
+              });
+            }
+          );
+          void editSession.execute(cmd);
+        }
+      }
+      setScannedBannerDismissed((prev) => new Set(prev).add(activePageIdx));
+    },
+    [currentMetric, pendingOcrMode, activePageIdx, editSession]
+  );
+
+  const handleStartPageOcr = useCallback(
+    async (mode: OcrOutputMode) => {
+      if (!currentMetric) return;
+
+      const controller = new AbortController();
+      setOcrAbortController(controller);
+      setPendingOcrMode(mode);
+      setIsOcrRunning(true);
+      setOcrProgress({ status: 'loading', progress: 0.1, message: 'Initializing OCR engine...' });
+
+      try {
+        let imgData: ImageData;
+        if (engine && docHandle) {
+          try {
+            const bmp = await engine.renderPage(
+              docHandle,
+              activePageIdx,
+              { scale: 2, dpr: 1 },
+              controller.signal
+            );
+            const canvas = document.createElement('canvas');
+            canvas.width = bmp.width;
+            canvas.height = bmp.height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(bmp, 0, 0);
+              imgData = ctx.getImageData(0, 0, bmp.width, bmp.height);
+            } else {
+              imgData = createImageData(bmp.width, bmp.height);
+            }
+          } catch {
+            const w = Math.round(currentMetric.width * 2);
+            const h = Math.round(currentMetric.height * 2);
+            imgData = createImageData(w, h);
+          }
+        } else {
+          const w = Math.round(currentMetric.width * 2);
+          const h = Math.round(currentMetric.height * 2);
+          imgData = createImageData(w, h);
+        }
+
+        setOcrProgress({ status: 'recognizing', progress: 0.4, message: 'Recognizing text...' });
+
+        const result = await ocrEngine.recognize(imgData, {
+          language: ocrLanguage,
+          signal: controller.signal,
+          onProgress: (p) => setOcrProgress(p)
+        });
+
+        setIsOcrRunning(false);
+        setPendingOcrResult(result);
+
+        // Task 10.9: Open review dialog if meanConfidence < 85 or handwriting suspected
+        if (result.meanConfidence < 85 || result.isHandwritingSuspected) {
+          setIsOcrReviewOpen(true);
+        } else {
+          handleConfirmOcrResult(result, mode);
+        }
+      } catch {
+        setIsOcrRunning(false);
+      }
+    },
+    [
+      currentMetric,
+      engine,
+      docHandle,
+      activePageIdx,
+      ocrEngine,
+      ocrLanguage,
+      handleConfirmOcrResult
+    ]
+  );
+
+  const handleStartBatchOcr = useCallback(
+    async (options: {
+      pageIndices: number[];
+      language: string;
+      outputMode: OcrOutputMode;
+      downloadAfter: boolean;
+    }) => {
+      setIsBatchOcrOpen(false);
+      const processor = new BatchOcrProcessor(ocrEngine);
+      setIsOcrRunning(true);
+
+      const renderPageImg = async (pIdx: number) => {
+        if (engine && docHandle) {
+          try {
+            const bmp = await engine.renderPage(docHandle, pIdx, { scale: 2, dpr: 1 });
+            const canvas = document.createElement('canvas');
+            canvas.width = bmp.width;
+            canvas.height = bmp.height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(bmp, 0, 0);
+              return ctx.getImageData(0, 0, bmp.width, bmp.height);
+            }
+          } catch {
+            // fallback
+          }
+        }
+        const w = currentMetric ? Math.round(currentMetric.width * 2) : 600;
+        const h = currentMetric ? Math.round(currentMetric.height * 2) : 800;
+        return createImageData(w, h);
+      };
+
+      const controller = new AbortController();
+      setOcrAbortController(controller);
+
+      try {
+        await processor.processBatch(renderPageImg, pageCount || 1, {
+          pageIndices: options.pageIndices,
+          language: options.language,
+          outputMode: options.outputMode,
+          signal: controller.signal,
+          onProgress: (p) => {
+            setOcrProgress({
+              status: 'recognizing',
+              progress: p.overallPercent / 100,
+              message: p.statusMessage
+            });
+          }
+        });
+        setIsOcrRunning(false);
+        if (options.downloadAfter) {
+          void handleDownload();
+        }
+      } catch {
+        setIsOcrRunning(false);
+      }
+    },
+    [ocrEngine, engine, docHandle, currentMetric, pageCount, handleDownload]
+  );
 
   const handleUndo = useCallback(() => {
     void editSession.undo();
@@ -1993,6 +2231,7 @@ export default function EditorPage({
         }}
         onOpenCommandPalette={() => setCommandPaletteOpen(true)}
         onOpenShortcutsHelp={() => setShortcutsHelpOpen(true)}
+        onOpenBatchOcr={() => setIsBatchOcrOpen(true)}
         canUndo={canUndo}
         canRedo={canRedo}
         onUndo={handleUndo}
@@ -2082,6 +2321,18 @@ export default function EditorPage({
 
         {/* Central Canvas Viewport */}
         <div style={{ flex: 1, height: '100%', overflow: 'hidden', position: 'relative' }}>
+          {scannedDetection?.isScanned && !scannedBannerDismissed.has(activePageIdx) && (
+            <ScannedPageBanner
+              pageIndex={activePageIdx}
+              reason={scannedDetection.reason}
+              selectedLanguage={ocrLanguage}
+              onSelectLanguage={setOcrLanguage}
+              onStartOcr={handleStartPageOcr}
+              onDismiss={() =>
+                setScannedBannerDismissed((prev) => new Set(prev).add(activePageIdx))
+              }
+            />
+          )}
           <FindReplaceBar
             isOpen={isFindReplaceOpen}
             onClose={() => setIsFindReplaceOpen(false)}
@@ -2152,7 +2403,7 @@ export default function EditorPage({
                         editSession.clearSelection();
                       }}
                       onOcrDetectRequested={() => {
-                        alert('OCR text detection will become active in Phase 10.');
+                        void handleStartPageOcr('editable');
                       }}
                     />
                     {editingBlock && (
@@ -2382,6 +2633,30 @@ export default function EditorPage({
 
       {/* Shortcuts Help Modal */}
       <ShortcutsHelpDialog open={shortcutsHelpOpen} onClose={() => setShortcutsHelpOpen(false)} />
+
+      {/* OCR Modals (Phase 10) */}
+      <OcrProgressModal
+        isOpen={isOcrRunning}
+        progress={ocrProgress}
+        onCancel={() => {
+          ocrAbortController?.abort();
+          setIsOcrRunning(false);
+        }}
+      />
+      <OcrReviewDialog
+        isOpen={isOcrReviewOpen}
+        result={pendingOcrResult}
+        outputMode={pendingOcrMode}
+        onConfirm={(updated) => handleConfirmOcrResult(updated)}
+        onCancel={() => setIsOcrReviewOpen(false)}
+      />
+      <BatchOcrDialog
+        isOpen={isBatchOcrOpen}
+        totalPages={pageCount || 1}
+        currentPage={activePageIdx}
+        onStartBatch={handleStartBatchOcr}
+        onClose={() => setIsBatchOcrOpen(false)}
+      />
     </div>
   );
 }
