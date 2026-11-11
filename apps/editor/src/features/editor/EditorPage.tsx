@@ -27,10 +27,18 @@ import {
   applyReplacementToBlock,
   CommitTextBlockCommand,
   InsertTextBlockCommand,
+  SetFontFamilyCommand,
+  SetFontSizeCommand,
+  SetTextStyleCommand,
+  SetTextColorCommand,
+  SetTextHighlightColorCommand,
+  SetTextAlignmentCommand,
+  SetTextSpacingCommand,
   type TextBlock,
   type FindReplaceMatch,
   type CommitTextBlockOptions
 } from '@rhypdf/edit-core';
+import { FontCatalog } from '@rhypdf/fonts';
 import type { PageObject, ImageObject, Rect, TextRun } from '@rhypdf/pdf-model';
 import { useDocStore } from '../../stores/docStore';
 import { useUIStore } from '../../stores/uiStore';
@@ -113,6 +121,7 @@ export default function EditorPage({
   const [findMatches, setFindMatches] = useState<FindReplaceMatch[]>([]);
   const [currentFindMatchIndex, setCurrentFindMatchIndex] = useState(0);
   const [findOverflowWarning, setFindOverflowWarning] = useState(false);
+  const [blockOverrides, setBlockOverrides] = useState<Map<string, Partial<TextBlock>>>(new Map());
 
   // PDF Engine & Document Handle
   const [engine, setEngine] = useState<PdfEngine | null>(null);
@@ -272,10 +281,15 @@ export default function EditorPage({
   };
 
   const currentTextBlocks = useMemo<TextBlock[]>(() => {
-    return groupTextRunsToBlocks(currentRuns, activePageIdx, {
+    const blocks = groupTextRunsToBlocks(currentRuns, activePageIdx, {
       pageHeight: currentMetric.height
     });
-  }, [currentRuns, activePageIdx, currentMetric.height]);
+    return blocks.map((b) => {
+      const override = blockOverrides.get(b.id);
+      if (!override) return b;
+      return { ...b, ...override };
+    });
+  }, [currentRuns, activePageIdx, currentMetric.height, blockOverrides]);
 
   const activeTextBlock = useMemo<TextBlock | null>(() => {
     if (activeTextBlockId) {
@@ -329,6 +343,11 @@ export default function EditorPage({
     }
 
     if (activeMode === 'edit-text' && activeTextBlock) {
+      const hl = activeTextBlock.highlightColor;
+      const hlHex = hl
+        ? `#${hl.r.toString(16).padStart(2, '0')}${hl.g.toString(16).padStart(2, '0')}${hl.b.toString(16).padStart(2, '0')}`
+        : null;
+
       setSelectedObject({
         id: activeTextBlock.id,
         type: 'text',
@@ -337,14 +356,29 @@ export default function EditorPage({
         width: Math.round(activeTextBlock.bounds.right - activeTextBlock.bounds.left),
         height: Math.round(activeTextBlock.bounds.top - activeTextBlock.bounds.bottom),
         rotation: activeTextBlock.rotation,
-        opacity: 100,
+        opacity: Math.round((activeTextBlock.opacity ?? 1) * 100),
         textPreview: activeTextBlock.lines.map((l) => l.text).join(' '),
         fontFamily: activeTextBlock.primaryFont,
         fontSize: activeTextBlock.primaryFontSize,
         alignment: activeTextBlock.alignment,
         canReuseFont: activeTextBlock.fontReusability.canReuseFont,
         isSubset: activeTextBlock.fontReusability.isSubset,
-        missingGlyphs: activeTextBlock.fontReusability.missingGlyphs
+        missingGlyphs: activeTextBlock.fontReusability.missingGlyphs,
+        isBold: activeTextBlock.isBold,
+        isItalic: activeTextBlock.isItalic,
+        isUnderline: activeTextBlock.isUnderline,
+        isStrikethrough: activeTextBlock.isStrikethrough,
+        isSuperscript: activeTextBlock.isSuperscript,
+        isSubscript: activeTextBlock.isSubscript,
+        highlightColor: hlHex,
+        lineSpacing: activeTextBlock.lineSpacing,
+        letterSpacing: activeTextBlock.letterSpacing,
+        paragraphSpacing: activeTextBlock.paragraphSpacing,
+        originalFontName:
+          activeTextBlock.originalFontName ||
+          (activeTextBlock.fontReusability.isSubset
+            ? activeTextBlock.fontReusability.fontName
+            : undefined)
       });
       return;
     }
@@ -1339,6 +1373,398 @@ export default function EditorPage({
     [findMatches, currentTextBlocks, handleCommitTextBlock]
   );
 
+  // Phase 8: Typography Handlers (Tasks 8.1 - 8.18)
+  const fontCatalog = useMemo(() => FontCatalog.getInstance(), []);
+
+  const handleFontFamilyChange = useCallback(
+    async (newFamily: string) => {
+      if (!activeTextBlock) return;
+      const targetId = activeTextBlock.id;
+      const oldFamily = activeTextBlock.primaryFont;
+      const originalFont =
+        activeTextBlock.originalFontName ||
+        (activeTextBlock.fontReusability?.isSubset
+          ? activeTextBlock.fontReusability.fontName
+          : oldFamily);
+      const runIds = new Set(activeTextBlock.runs.map((r) => r.id));
+
+      const applyFn = (family: string) => {
+        setPageObjectsMap((prev) => {
+          const next = new Map(prev);
+          const list = next.get(activePageIdx) || [];
+          next.set(
+            activePageIdx,
+            list.map((o) => (runIds.has(o.id) && o.type === 'text' ? { ...o, fontName: family } : o))
+          );
+          return next;
+        });
+        setBlockOverrides((prev) => {
+          const next = new Map(prev);
+          const existing = next.get(targetId) || {};
+          next.set(targetId, { ...existing, primaryFont: family });
+          return next;
+        });
+      };
+
+      const cmd = new SetFontFamilyCommand(
+        activePageIdx,
+        targetId,
+        oldFamily,
+        newFamily,
+        originalFont,
+        applyFn
+      );
+      await editSession.execute(cmd);
+    },
+    [activeTextBlock, activePageIdx, editSession]
+  );
+
+  const handleFontSizeChange = useCallback(
+    async (newSize: number) => {
+      if (!activeTextBlock) return;
+      const targetId = activeTextBlock.id;
+      const oldSize = activeTextBlock.primaryFontSize;
+      const runIds = new Set(activeTextBlock.runs.map((r) => r.id));
+
+      const applyFn = (size: number) => {
+        setPageObjectsMap((prev) => {
+          const next = new Map(prev);
+          const list = next.get(activePageIdx) || [];
+          next.set(
+            activePageIdx,
+            list.map((o) => (runIds.has(o.id) && o.type === 'text' ? { ...o, fontSize: size } : o))
+          );
+          return next;
+        });
+        setBlockOverrides((prev) => {
+          const next = new Map(prev);
+          const existing = next.get(targetId) || {};
+          next.set(targetId, { ...existing, primaryFontSize: size });
+          return next;
+        });
+      };
+
+      const cmd = new SetFontSizeCommand(activePageIdx, targetId, oldSize, newSize, applyFn);
+      await editSession.execute(cmd);
+    },
+    [activeTextBlock, activePageIdx, editSession]
+  );
+
+  const handleToggleBold = useCallback(async () => {
+    if (!activeTextBlock) return;
+    const targetId = activeTextBlock.id;
+    const oldVal = Boolean(activeTextBlock.isBold);
+    const newVal = !oldVal;
+
+    const applyFn = (style: { isBold?: boolean }) => {
+      setBlockOverrides((prev) => {
+        const next = new Map(prev);
+        const existing = next.get(targetId) || {};
+        next.set(targetId, { ...existing, isBold: style.isBold });
+        return next;
+      });
+    };
+
+    const cmd = new SetTextStyleCommand(
+      activePageIdx,
+      targetId,
+      { isBold: oldVal },
+      { isBold: newVal },
+      applyFn
+    );
+    await editSession.execute(cmd);
+  }, [activeTextBlock, activePageIdx, editSession]);
+
+  const handleToggleItalic = useCallback(async () => {
+    if (!activeTextBlock) return;
+    const targetId = activeTextBlock.id;
+    const oldVal = Boolean(activeTextBlock.isItalic);
+    const newVal = !oldVal;
+
+    const applyFn = (style: { isItalic?: boolean }) => {
+      setBlockOverrides((prev) => {
+        const next = new Map(prev);
+        const existing = next.get(targetId) || {};
+        next.set(targetId, { ...existing, isItalic: style.isItalic });
+        return next;
+      });
+    };
+
+    const cmd = new SetTextStyleCommand(
+      activePageIdx,
+      targetId,
+      { isItalic: oldVal },
+      { isItalic: newVal },
+      applyFn
+    );
+    await editSession.execute(cmd);
+  }, [activeTextBlock, activePageIdx, editSession]);
+
+  const handleToggleUnderline = useCallback(async () => {
+    if (!activeTextBlock) return;
+    const targetId = activeTextBlock.id;
+    const oldVal = Boolean(activeTextBlock.isUnderline);
+    const newVal = !oldVal;
+
+    const applyFn = (style: { isUnderline?: boolean }) => {
+      setBlockOverrides((prev) => {
+        const next = new Map(prev);
+        const existing = next.get(targetId) || {};
+        next.set(targetId, { ...existing, isUnderline: style.isUnderline });
+        return next;
+      });
+    };
+
+    const cmd = new SetTextStyleCommand(
+      activePageIdx,
+      targetId,
+      { isUnderline: oldVal },
+      { isUnderline: newVal },
+      applyFn
+    );
+    await editSession.execute(cmd);
+  }, [activeTextBlock, activePageIdx, editSession]);
+
+  const handleToggleStrike = useCallback(async () => {
+    if (!activeTextBlock) return;
+    const targetId = activeTextBlock.id;
+    const oldVal = Boolean(activeTextBlock.isStrikethrough);
+    const newVal = !oldVal;
+
+    const applyFn = (style: { isStrikethrough?: boolean }) => {
+      setBlockOverrides((prev) => {
+        const next = new Map(prev);
+        const existing = next.get(targetId) || {};
+        next.set(targetId, { ...existing, isStrikethrough: style.isStrikethrough });
+        return next;
+      });
+    };
+
+    const cmd = new SetTextStyleCommand(
+      activePageIdx,
+      targetId,
+      { isStrikethrough: oldVal },
+      { isStrikethrough: newVal },
+      applyFn
+    );
+    await editSession.execute(cmd);
+  }, [activeTextBlock, activePageIdx, editSession]);
+
+  const handleToggleSuperscript = useCallback(async () => {
+    if (!activeTextBlock) return;
+    const targetId = activeTextBlock.id;
+    const oldVal = Boolean(activeTextBlock.isSuperscript);
+    const newVal = !oldVal;
+
+    const applyFn = (style: { isSuperscript?: boolean; isSubscript?: boolean }) => {
+      setBlockOverrides((prev) => {
+        const next = new Map(prev);
+        const existing = next.get(targetId) || {};
+        next.set(targetId, {
+          ...existing,
+          isSuperscript: style.isSuperscript,
+          isSubscript: style.isSubscript ?? false
+        });
+        return next;
+      });
+    };
+
+    const cmd = new SetTextStyleCommand(
+      activePageIdx,
+      targetId,
+      { isSuperscript: oldVal, isSubscript: Boolean(activeTextBlock.isSubscript) },
+      { isSuperscript: newVal, isSubscript: false },
+      applyFn
+    );
+    await editSession.execute(cmd);
+  }, [activeTextBlock, activePageIdx, editSession]);
+
+  const handleToggleSubscript = useCallback(async () => {
+    if (!activeTextBlock) return;
+    const targetId = activeTextBlock.id;
+    const oldVal = Boolean(activeTextBlock.isSubscript);
+    const newVal = !oldVal;
+
+    const applyFn = (style: { isSuperscript?: boolean; isSubscript?: boolean }) => {
+      setBlockOverrides((prev) => {
+        const next = new Map(prev);
+        const existing = next.get(targetId) || {};
+        next.set(targetId, {
+          ...existing,
+          isSubscript: style.isSubscript,
+          isSuperscript: style.isSuperscript ?? false
+        });
+        return next;
+      });
+    };
+
+    const cmd = new SetTextStyleCommand(
+      activePageIdx,
+      targetId,
+      { isSubscript: oldVal, isSuperscript: Boolean(activeTextBlock.isSuperscript) },
+      { isSubscript: newVal, isSuperscript: false },
+      applyFn
+    );
+    await editSession.execute(cmd);
+  }, [activeTextBlock, activePageIdx, editSession]);
+
+  const handleTextColorChange = useCallback(
+    async (hex: string) => {
+      if (!activeTextBlock) return;
+      const targetId = activeTextBlock.id;
+      const oldColor = activeTextBlock.primaryColor;
+      const r = parseInt(hex.slice(1, 3), 16) || 0;
+      const g = parseInt(hex.slice(3, 5), 16) || 0;
+      const b = parseInt(hex.slice(5, 7), 16) || 0;
+      const newColor = { r, g, b, a: 255 };
+      const runIds = new Set(activeTextBlock.runs.map((r) => r.id));
+
+      const applyFn = (color: { r: number; g: number; b: number; a: number }) => {
+        setPageObjectsMap((prev) => {
+          const next = new Map(prev);
+          const list = next.get(activePageIdx) || [];
+          next.set(
+            activePageIdx,
+            list.map((o) => (runIds.has(o.id) && o.type === 'text' ? { ...o, fillColor: color } : o))
+          );
+          return next;
+        });
+        setBlockOverrides((prev) => {
+          const next = new Map(prev);
+          const existing = next.get(targetId) || {};
+          next.set(targetId, { ...existing, primaryColor: color });
+          return next;
+        });
+      };
+
+      const cmd = new SetTextColorCommand(
+        activePageIdx,
+        targetId,
+        oldColor,
+        newColor,
+        activeTextBlock.opacity,
+        activeTextBlock.opacity,
+        applyFn
+      );
+      await editSession.execute(cmd);
+    },
+    [activeTextBlock, activePageIdx, editSession]
+  );
+
+  const handleHighlightColorChange = useCallback(
+    async (hex: string | null) => {
+      if (!activeTextBlock) return;
+      const targetId = activeTextBlock.id;
+      const oldHighlight = activeTextBlock.highlightColor ?? null;
+      let newHighlight: { r: number; g: number; b: number; a: number } | null = null;
+      if (hex) {
+        const r = parseInt(hex.slice(1, 3), 16) || 0;
+        const g = parseInt(hex.slice(3, 5), 16) || 0;
+        const b = parseInt(hex.slice(5, 7), 16) || 0;
+        newHighlight = { r, g, b, a: 255 };
+      }
+
+      const applyFn = (hl: { r: number; g: number; b: number; a: number } | null) => {
+        setBlockOverrides((prev) => {
+          const next = new Map(prev);
+          const existing = next.get(targetId) || {};
+          next.set(targetId, { ...existing, highlightColor: hl });
+          return next;
+        });
+      };
+
+      const cmd = new SetTextHighlightColorCommand(
+        activePageIdx,
+        targetId,
+        oldHighlight,
+        newHighlight,
+        applyFn
+      );
+      await editSession.execute(cmd);
+    },
+    [activeTextBlock, activePageIdx, editSession]
+  );
+
+  const handleAlignmentChange = useCallback(
+    async (align: 'left' | 'center' | 'right' | 'justify') => {
+      if (!activeTextBlock) return;
+      const targetId = activeTextBlock.id;
+      const oldAlign = activeTextBlock.alignment;
+
+      const applyFn = (a: 'left' | 'center' | 'right' | 'justify') => {
+        setBlockOverrides((prev) => {
+          const next = new Map(prev);
+          const existing = next.get(targetId) || {};
+          next.set(targetId, { ...existing, alignment: a });
+          return next;
+        });
+      };
+
+      const cmd = new SetTextAlignmentCommand(activePageIdx, targetId, oldAlign, align, applyFn);
+      await editSession.execute(cmd);
+    },
+    [activeTextBlock, activePageIdx, editSession]
+  );
+
+  const handleSpacingChange = useCallback(
+    async (spacing: { lineSpacing?: number; letterSpacing?: number; paragraphSpacing?: number }) => {
+      if (!activeTextBlock) return;
+      const targetId = activeTextBlock.id;
+      const oldSpacing = {
+        lineSpacing: activeTextBlock.lineSpacing,
+        letterSpacing: activeTextBlock.letterSpacing,
+        paragraphSpacing: activeTextBlock.paragraphSpacing
+      };
+      const runIds = new Set(activeTextBlock.runs.map((r) => r.id));
+
+      const applyFn = (sp: { lineSpacing?: number; letterSpacing?: number; paragraphSpacing?: number }) => {
+        if (sp.letterSpacing !== undefined) {
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            const list = next.get(activePageIdx) || [];
+            next.set(
+              activePageIdx,
+              list.map((o) =>
+                runIds.has(o.id) && o.type === 'text' ? { ...o, charSpacing: sp.letterSpacing } : o
+              )
+            );
+            return next;
+          });
+        }
+        setBlockOverrides((prev) => {
+          const next = new Map(prev);
+          const existing = next.get(targetId) || {};
+          next.set(targetId, {
+            ...existing,
+            lineSpacing: sp.lineSpacing ?? existing.lineSpacing,
+            letterSpacing: sp.letterSpacing ?? existing.letterSpacing,
+            paragraphSpacing: sp.paragraphSpacing ?? existing.paragraphSpacing
+          });
+          return next;
+        });
+      };
+
+      const cmd = new SetTextSpacingCommand(activePageIdx, targetId, oldSpacing, spacing, applyFn);
+      await editSession.execute(cmd);
+    },
+    [activeTextBlock, activePageIdx, editSession]
+  );
+
+  const handleMatchOriginalFont = useCallback(async () => {
+    if (!activeTextBlock) return;
+    const orig =
+      activeTextBlock.originalFontName ||
+      (activeTextBlock.fontReusability?.isSubset
+        ? activeTextBlock.fontReusability.fontName
+        : undefined);
+    if (!orig) return;
+
+    const match = fontCatalog.findMetricCompatible(orig);
+    if (match) {
+      await handleFontFamilyChange(match.matchedEntry.family);
+    }
+  }, [activeTextBlock, fontCatalog, handleFontFamilyChange]);
+
   const handleDownload = useCallback(async () => {
     if (currentDocId) {
       await downloadRecentFile(currentDocId, filename || 'document.pdf');
@@ -1573,7 +1999,7 @@ export default function EditorPage({
         onRedo={handleRedo}
       />
 
-      {/* Contextual Toolbar (Phase 6 & 7 wired) */}
+      {/* Contextual Toolbar (Phase 6, 7 & 8 wired) */}
       <ContextualToolbar
         hasSelectedImage={selectedImage !== null}
         isCropping={isCropping}
@@ -1602,8 +2028,46 @@ export default function EditorPage({
         onToggleFindReplace={() => setIsFindReplaceOpen((prev) => !prev)}
         isRegionSelectActive={isRegionSelectMode}
         selectedFontFamily={activeTextBlock?.primaryFont}
+        onFontFamilyChange={handleFontFamilyChange}
         selectedFontSize={activeTextBlock?.primaryFontSize}
+        onFontSizeChange={handleFontSizeChange}
+        selectedIsBold={activeTextBlock?.isBold}
+        onToggleBold={handleToggleBold}
+        selectedIsItalic={activeTextBlock?.isItalic}
+        onToggleItalic={handleToggleItalic}
+        selectedIsUnderline={activeTextBlock?.isUnderline}
+        onToggleUnderline={handleToggleUnderline}
+        selectedIsStrike={activeTextBlock?.isStrikethrough}
+        onToggleStrike={handleToggleStrike}
+        selectedIsSuperscript={activeTextBlock?.isSuperscript}
+        onToggleSuperscript={handleToggleSuperscript}
+        selectedIsSubscript={activeTextBlock?.isSubscript}
+        onToggleSubscript={handleToggleSubscript}
         selectedAlignment={activeTextBlock?.alignment}
+        onAlignmentChange={handleAlignmentChange}
+        selectedTextColor={
+          activeTextBlock
+            ? `#${activeTextBlock.primaryColor.r.toString(16).padStart(2, '0')}${activeTextBlock.primaryColor.g.toString(16).padStart(2, '0')}${activeTextBlock.primaryColor.b.toString(16).padStart(2, '0')}`
+            : undefined
+        }
+        onTextColorChange={handleTextColorChange}
+        selectedHighlightColor={
+          activeTextBlock?.highlightColor
+            ? `#${activeTextBlock.highlightColor.r.toString(16).padStart(2, '0')}${activeTextBlock.highlightColor.g.toString(16).padStart(2, '0')}${activeTextBlock.highlightColor.b.toString(16).padStart(2, '0')}`
+            : null
+        }
+        onHighlightColorChange={handleHighlightColorChange}
+        lineSpacing={activeTextBlock?.lineSpacing}
+        letterSpacing={activeTextBlock?.letterSpacing}
+        paragraphSpacing={activeTextBlock?.paragraphSpacing}
+        onSpacingChange={handleSpacingChange}
+        originalFontName={
+          activeTextBlock?.originalFontName ||
+          (activeTextBlock?.fontReusability?.isSubset
+            ? activeTextBlock.fontReusability.fontName
+            : undefined)
+        }
+        onMatchOriginalFont={handleMatchOriginalFont}
         hasSelectedTextBlock={Boolean(activeTextBlock)}
         onDeleteText={handleDeleteObjects}
       />
@@ -1760,11 +2224,12 @@ export default function EditorPage({
           )}
         </div>
 
-        {/* Properties Panel (Right) (Tasks 6.4, 6.5, 6.10, 6.11, 6.12) */}
+        {/* Properties Panel (Right) (Tasks 6.4, 6.5, 6.10, 6.11, 6.12, 8.16) */}
         <PropertiesPanel
           open={propertiesOpen}
           onToggle={() => setPropertiesOpen((p) => !p)}
           selectedObject={selectedObject}
+          onMatchOriginalFont={handleMatchOriginalFont}
           onBringForward={() => handleLayerReorder('forward')}
           onSendBackward={() => handleLayerReorder('backward')}
           onBringToFront={() => handleLayerReorder('front')}

@@ -205,10 +205,20 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
           padding: '2px 4px',
           fontFamily: fontFamily.includes('sans') ? 'sans-serif' : fontFamily.includes('mono') ? 'monospace' : fontFamily,
           fontSize: fontSize * scale,
-          lineHeight: 1.25,
+          fontWeight: block.isBold ? 'bold' : 'normal',
+          fontStyle: block.isItalic ? 'italic' : 'normal',
+          textDecoration: [
+            block.isUnderline ? 'underline' : '',
+            block.isStrikethrough ? 'line-through' : ''
+          ].filter(Boolean).join(' ') || 'none',
+          letterSpacing: block.letterSpacing !== undefined ? `${block.letterSpacing}pt` : undefined,
+          lineHeight: block.lineSpacing ? block.lineSpacing : 1.25,
           color: colorRgba,
           textAlign: block.alignment,
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backgroundColor: block.highlightColor
+            ? `rgba(${block.highlightColor.r}, ${block.highlightColor.g}, ${block.highlightColor.b}, 0.35)`
+            : 'rgba(255, 255, 255, 0.95)',
+          opacity: block.opacity !== undefined ? block.opacity / 100 : 1,
           border: '1.5px solid #2563eb',
           borderRadius: 3,
           boxShadow: '0 0 0 2px rgba(37, 99, 235, 0.2)',

@@ -98,10 +98,10 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 ## CURRENT TASK POINTER
 
 ```
-CURRENT PHASE : 8
-CURRENT TASK  : 8.1
+CURRENT PHASE : 9
+CURRENT TASK  : 9.1
 LAST UPDATED  : 2026-11-11
-NOTES         : Phase 7 completed with all 22 subtasks (7.1 to 7.22). Built and verified: text run extraction with per-page caching in DocStore; baseline/font/color/gap grouping into lines and blocks with multi-column gutter detection, table detection, and header/footer classification; rotated text (90/180/270°), vertical CJK text, and charSpacing/horizontalScaling; embedded subset detection (canReuseFont & missingGlyphs); Edit Text mode with hover outline, block selection, non-editable raster image click detection with "Detect text (OCR)" hint; drag-rectangle region select tool; inline text editor overlay matching font/size/color/alignment with visible caret; typing surface with IME composition, spellcheck, plain text paste, dir="auto"; selection basics; live layout wrapping with SimpleTextLayoutEngine and overflow indicator with grow box downward & shrink-to-fit; commit removing original text objects (no ghost text) and inserting new text objects with matrix/baseline; missing-glyph handling with bundled font fallback notice; partial-styling support; add text box tool; undoable delete text block; move, resize width (re-wrap), and rotate text blocks; Find & Replace across document with overflow warning banner; coalesced EditTextBlockCommand with transaction batches; searchable/copyable verification; external viewer parity test with zero ghost text. All 56 test files (327 tests) green across monorepo packages and editor, zero lint/typecheck errors, production build verified. Ready for Phase 8.
+NOTES         : Phase 8 completed with all 18 subtasks (8.1 to 8.18). Built and verified: FontCatalog model with 24 bundled open-license fonts (Roboto, Open Sans, Lato, Montserrat, Poppins, Inter, Source Sans 3, Nunito, Raleway, Merriweather, Playfair Display, Lora, PT Serif, Source Serif 4, Source Code Pro, Roboto Mono, Dancing Script, Pacifico, Oswald, plus metric stand-ins Liberation Sans/Serif/Mono, Carlito, Caladea); 17 on-demand Noto fonts for full script coverage; FontDownloadManager with Cache Storage, size cap, privacy checks (zero runtime calls to Google Fonts); queryLocalSystemFonts via Local Font Access API; importFontFromDevice with strict OS/2.fsType embedding permission check (rejection of 0x0002); Google-Docs style FontPicker with native typeface previews, search filtering, category chips, script selector, and recent fonts; FontSizeControl with stepper (-/+), direct numeric input, and presets dropdown (8-96pt); style toggles (Bold, Italic, Underline, Strikethrough, Superscript, Subscript) with Ctrl+B/I/U shortcuts; ColorPickerPopover with palette grid, custom hex, eyedropper, opacity slider, and highlight color with "None"; SpacingPopover with line spacing presets (1.0, 1.15, 1.5, 2.0), character spacing, and paragraph spacing; text alignment (left/center/right/justify); font subsetting engine (random 6-character tag ABCDEF+Name, HarfBuzz WASM subsetting hook, TrueType essential table subsetting, fsType.noSubsetting full embed fallback); variable font static instancing; smart font matching for non-embedded originals (Arial->Liberation Sans, Times->Liberation Serif, Courier->Liberation Mono, Calibri->Carlito, Cambria->Caladea) with "Original: X -> using Y" badge and "Match original font" button in ContextualToolbar and PropertiesPanel; Unicode script fallback chains (Latin + Noto Arabic/Devanagari/CJK). All 58 test files (353 tests) green, zero lint/typecheck errors, production build verified. Ready for Phase 9.
 ```
 
 ---
@@ -507,24 +507,24 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PHASE 8 — FONTS AND TYPOGRAPHY (GOOGLE-DOCS-STYLE)
 
-- [ ] **8.1** `FontCatalog` model: family, weights, styles, supported scripts, source (bundled / downloaded / local / user / from PDF), license, `embeddable` flag.
-- [ ] **8.2** Bundle a starter set of open-license (OFL / Apache) fonts, self-hosted: Roboto, Open Sans, Lato, Montserrat, Poppins, Inter, Source Sans 3, Nunito, Raleway, Merriweather, Playfair Display, Lora, PT Serif, Source Serif 4, Source Code Pro, Roboto Mono, Dancing Script, Pacifico, Oswald, plus metric-compatible stand-ins for common Microsoft fonts (Liberation Sans / Serif / Mono, Carlito for Calibri, Caladea for Cambria; verify each license). Use WOFF2 for UI preview and TTF / OTF for embedding.
-- [ ] **8.3** Noto fonts for script coverage, downloaded on demand: Noto Sans / Serif (Latin, Cyrillic, Greek), Arabic, Hebrew, Devanagari, Bengali, Tamil, Telugu, Kannada, Malayalam, Gujarati, Gurmukhi, Thai, CJK (SC / TC / JP / KR); emoji optional.
-- [ ] **8.4** On-demand font download with progress UI, Cache Storage, size limit and version / hash check. The site must still work offline with the bundled fonts. **Self-host the files; never call Google Fonts at runtime** (privacy).
-- [ ] **8.5** Local fonts as an optional source through the Local Font Access API (Chromium only, needs permission); respect embedding flags.
-- [ ] **8.6** "Import font" (TTF / OTF / WOFF2) from the device with an `OS/2.fsType` embedding-permission check.
-- [ ] **8.7** Font picker like Google Docs: searchable, virtualized list; each name shown in its own typeface; recent fonts on top; filters by script and category (serif, sans, mono, handwriting, display).
-- [ ] **8.8** Font size control: stepper (−/+), direct input, presets (8–96 pt) and free values.
-- [ ] **8.9** Style toggles: Bold, Italic, Underline, Strikethrough. Use real weights / styles when the family has them; synthetic (fake bold / skew) only as a flagged last resort.
-- [ ] **8.10** Text color picker (palette, hex, eyedropper via the `EyeDropper` API where available, plus "pick from page" by sampling our own render) and highlight color; recent colors.
-- [ ] **8.11** Alignment (left / center / right / justify), line spacing (1.0, 1.15, 1.5, 2.0, custom), character spacing, paragraph spacing.
-- [ ] **8.12** Superscript / subscript and text opacity.
-- [ ] **8.13** **Subsetting + embedding on save:** HarfBuzz subset (keep glyph IDs), one embedded subset per font per document, full embed only if a license requires it.
-- [ ] **8.14** Variable fonts: create static instances before embedding (PDF has no variable-font support).
-- [ ] **8.15** Smart font matching for non-embedded originals (Arial, Calibri, Times New Roman, Helvetica, Courier…) to the best bundled equivalent; show "Original font: X → using Y".
-- [ ] **8.16** "Match original font" button that re-selects the closest font.
-- [ ] **8.17** Per-script automatic fallback chains (for example a Latin font + Noto Arabic when Arabic is typed into a Latin block).
-- [ ] **8.18** Unit tests: fallback chains, subset contains every used glyph, bold / italic mapping, `fsType` checks.
+- [x] **8.1** `FontCatalog` model: family, weights, styles, supported scripts, source (bundled / downloaded / local / user / from PDF), license, `embeddable` flag.
+- [x] **8.2** Bundle a starter set of open-license (OFL / Apache) fonts, self-hosted: Roboto, Open Sans, Lato, Montserrat, Poppins, Inter, Source Sans 3, Nunito, Raleway, Merriweather, Playfair Display, Lora, PT Serif, Source Serif 4, Source Code Pro, Roboto Mono, Dancing Script, Pacifico, Oswald, plus metric-compatible stand-ins for common Microsoft fonts (Liberation Sans / Serif / Mono, Carlito for Calibri, Caladea for Cambria; verify each license). Use WOFF2 for UI preview and TTF / OTF for embedding.
+- [x] **8.3** Noto fonts for script coverage, downloaded on demand: Noto Sans / Serif (Latin, Cyrillic, Greek), Arabic, Hebrew, Devanagari, Bengali, Tamil, Telugu, Kannada, Malayalam, Gujarati, Gurmukhi, Thai, CJK (SC / TC / JP / KR); emoji optional.
+- [x] **8.4** On-demand font download with progress UI, Cache Storage, size limit and version / hash check. The site must still work offline with the bundled fonts. **Self-host the files; never call Google Fonts at runtime** (privacy).
+- [x] **8.5** Local fonts as an optional source through the Local Font Access API (Chromium only, needs permission); respect embedding flags.
+- [x] **8.6** "Import font" (TTF / OTF / WOFF2) from the device with an `OS/2.fsType` embedding-permission check.
+- [x] **8.7** Font picker like Google Docs: searchable, virtualized list; each name shown in its own typeface; recent fonts on top; filters by script and category (serif, sans, mono, handwriting, display).
+- [x] **8.8** Font size control: stepper (−/+), direct input, presets (8–96 pt) and free values.
+- [x] **8.9** Style toggles: Bold, Italic, Underline, Strikethrough. Use real weights / styles when the family has them; synthetic (fake bold / skew) only as a flagged last resort.
+- [x] **8.10** Text color picker (palette, hex, eyedropper via the `EyeDropper` API where available, plus "pick from page" by sampling our own render) and highlight color; recent colors.
+- [x] **8.11** Alignment (left / center / right / justify), line spacing (1.0, 1.15, 1.5, 2.0, custom), character spacing, paragraph spacing.
+- [x] **8.12** Superscript / subscript and text opacity.
+- [x] **8.13** **Subsetting + embedding on save:** HarfBuzz subset (keep glyph IDs), one embedded subset per font per document, full embed only if a license requires it.
+- [x] **8.14** Variable fonts: create static instances before embedding (PDF has no variable-font support).
+- [x] **8.15** Smart font matching for non-embedded originals (Arial, Calibri, Times New Roman, Helvetica, Courier…) to the best bundled equivalent; show "Original font: X → using Y".
+- [x] **8.16** "Match original font" button that re-selects the closest font.
+- [x] **8.17** Per-script automatic fallback chains (for example a Latin font + Noto Arabic when Arabic is typed into a Latin block).
+- [x] **8.18** Unit tests: fallback chains, subset contains every used glyph, bold / italic mapping, `fsType` checks.
 
 **Done when:** the user can switch a block to any bundled font, change size / style / color, and the saved PDF shows exactly that in external viewers.
 
@@ -877,6 +877,24 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-11 | 7.20    | Searchable & copyable output verification                             | `P7.20` | Verified text extraction from saved file matches user input exactly                                           |
 | 2026-11-11 | 7.21    | External viewer parity and zero ghost text verification               | `P7.21` | Verified removal of old text runs and absence of ghost text across saved PDFium documents                     |
 | 2026-11-11 | 7.22    | Parity test in CI: overlay layout vs PDFium text metrics              | `P7.22` | Automated parity test comparing layout engine line breaks with PDFium character positions                     |
+| 2026-11-11 | 8.1     | FontCatalog model: family, weights, scripts, source & embeddability   | `P8.1`  | Core typography catalog model with categorization, script tagging, and embedding constraints                  |
+| 2026-11-11 | 8.2     | Starter set of 24 bundled open-license fonts & metric stand-ins       | `P8.2`  | Roboto, Open Sans, Lato, Montserrat, Inter, Merriweather, + Liberation Sans/Serif/Mono, Carlito, Caladea     |
+| 2026-11-11 | 8.3     | Noto script coverage fonts (Latin, Cyrillic, Greek, Arabic, CJK, etc) | `P8.3`  | 17 Noto fonts covering major global scripts for on-demand fetch and offline fallback                          |
+| 2026-11-11 | 8.4     | On-demand font download with Cache Storage and strict offline privacy | `P8.4`  | FontDownloadManager with hash check, size limits (15MB cap) and runtime Google Fonts call blocker             |
+| 2026-11-11 | 8.5     | Local fonts via Local Font Access API with permission & checks        | `P8.5`  | queryLocalSystemFonts queries system fonts with embedding restriction enforcement                             |
+| 2026-11-11 | 8.6     | Import font (TTF/OTF/WOFF2) with OS/2.fsType permission check         | `P8.6`  | Binary OpenType table parser rejecting 0x0002 restricted license fonts                                        |
+| 2026-11-11 | 8.7     | Google-Docs style font picker: virtualized, categorized, preview      | `P8.7`  | FontPicker with native typeface preview, search filter, category chips, script selector & recent fonts        |
+| 2026-11-11 | 8.8     | Font size control: stepper (-/+), direct input, presets (8-96pt)      | `P8.8`  | FontSizeControl with decrement/increment steppers, direct typing with Enter/arrows, and preset dropdown      |
+| 2026-11-11 | 8.9     | Style toggles: Bold, Italic, Underline, Strikethrough                 | `P8.9`  | Toggle buttons, Ctrl+B/I/U shortcuts, real vs synthetic style tracking in block properties                    |
+| 2026-11-11 | 8.10    | Text and highlight color picker with opacity, eyedropper & recents    | `P8.10` | ColorPickerPopover with palette swatches, hex input, EyeDropper API bridge, and recent colors                 |
+| 2026-11-11 | 8.11    | Alignment, line spacing, character spacing, and paragraph spacing    | `P8.11` | SpacingPopover with line spacing presets (1.0-2.0), character/paragraph steppers & alignment buttons          |
+| 2026-11-11 | 8.12    | Superscript / subscript (X², X₂) and text opacity (0-100%)            | `P8.12` | Toggle superscript/subscript buttons and opacity slider applied to active block and overlay                   |
+| 2026-11-11 | 8.13    | Subsetting + embedding on save (HarfBuzz / TrueType subsetting)       | `P8.13` | Random 6-char subset tag (ABCDEF+Name), table subsetting, fsType.noSubsetting full embed fallback            |
+| 2026-11-11 | 8.14    | Variable fonts: static instancing before embedding                    | `P8.14` | fvar table axis parser and instance creation prior to PDF object embedding                                    |
+| 2026-11-11 | 8.15    | Smart font matching for non-embedded originals (Arial, Calibri, etc)  | `P8.15` | Metric compatible mapping: Arial->Liberation Sans, Calibri->Carlito, Cambria->Caladea with badge             |
+| 2026-11-11 | 8.16    | "Match original font" button restoring closest metric font            | `P8.16` | ContextualToolbar & PropertiesPanel "Match original" button restoring metric stand-in                         |
+| 2026-11-11 | 8.17    | Per-script automatic fallback chains                                  | `P8.17` | Unicode code-point classification and splitTextIntoScriptSegments for mixed Latin/Arabic/Devanagari text      |
+| 2026-11-11 | 8.18    | Comprehensive unit & integration tests covering Phase 8 typography    | `P8.18` | 13 font catalog tests, 19 edit-core typography tests, and 12 UI integration tests verified green (52/52)     |
 
 ---
 

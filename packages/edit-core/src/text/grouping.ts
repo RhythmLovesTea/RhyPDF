@@ -446,6 +446,8 @@ function buildTextBlock(
     primaryFontSize,
     primaryColor,
     fontReusability,
+    isBold: Boolean(firstSpan?.isBold),
+    isItalic: Boolean(firstSpan?.isItalic),
     isHeader,
     isFooter,
     isListItem,

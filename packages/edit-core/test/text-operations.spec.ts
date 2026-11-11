@@ -14,6 +14,13 @@ import {
   ResizeTextBlockWidthCommand,
   RotateTextBlockCommand,
   BatchReplaceTextCommand,
+  SetFontFamilyCommand,
+  SetFontSizeCommand,
+  SetTextStyleCommand,
+  SetTextColorCommand,
+  SetTextHighlightColorCommand,
+  SetTextAlignmentCommand,
+  SetTextSpacingCommand,
   EditSession
 } from '../src/index';
 
@@ -438,6 +445,107 @@ describe('Phase 7: Text Grouping, Detection, and Operations', () => {
       expect(rotatedAngle).toBe(90);
       await rotateCmd.revert();
       expect(rotatedAngle).toBe(0);
+    });
+
+    it('executes and reverts typography commands: font, size, style, color, alignment, spacing (Tasks 8.8-8.12)', async () => {
+      let currentFont = 'Helvetica';
+      let currentSize = 12;
+      let currentStyle = { isBold: false, isItalic: false };
+      let currentColor = { r: 0, g: 0, b: 0, a: 255 };
+      let currentHighlight: ColorRGBA | null = null;
+      let currentAlign: 'left' | 'center' | 'right' | 'justify' = 'left';
+      let currentSpacing = { lineSpacing: 1.0, letterSpacing: 0 };
+
+      // 1. Font Family
+      const fontCmd = new SetFontFamilyCommand(0, 'blk-1', 'Helvetica', 'Roboto', 'Arial', (f) => {
+        currentFont = f;
+      });
+      await fontCmd.apply();
+      expect(currentFont).toBe('Roboto');
+      await fontCmd.revert();
+      expect(currentFont).toBe('Helvetica');
+
+      // 2. Font Size
+      const sizeCmd = new SetFontSizeCommand(0, 'blk-1', 12, 18, (s) => {
+        currentSize = s;
+      });
+      await sizeCmd.apply();
+      expect(currentSize).toBe(18);
+      await sizeCmd.revert();
+      expect(currentSize).toBe(12);
+
+      // 3. Text Style
+      const styleCmd = new SetTextStyleCommand(
+        0,
+        'blk-1',
+        { isBold: false, isItalic: false },
+        { isBold: true, isItalic: true },
+        (st) => {
+          currentStyle = { isBold: !!st.isBold, isItalic: !!st.isItalic };
+        }
+      );
+      await styleCmd.apply();
+      expect(currentStyle).toEqual({ isBold: true, isItalic: true });
+      await styleCmd.revert();
+      expect(currentStyle).toEqual({ isBold: false, isItalic: false });
+
+      // 4. Text Color
+      const colorCmd = new SetTextColorCommand(
+        0,
+        'blk-1',
+        { r: 0, g: 0, b: 0, a: 255 },
+        { r: 255, g: 0, b: 0, a: 255 },
+        1.0,
+        0.8,
+        (col) => {
+          currentColor = col;
+        }
+      );
+      await colorCmd.apply();
+      expect(currentColor.r).toBe(255);
+      await colorCmd.revert();
+      expect(currentColor.r).toBe(0);
+
+      // 5. Highlight Color
+      const highlightCmd = new SetTextHighlightColorCommand(
+        0,
+        'blk-1',
+        null,
+        { r: 254, g: 240, b: 138, a: 255 },
+        (hl) => {
+          currentHighlight = hl;
+        }
+      );
+      await highlightCmd.apply();
+      expect(currentHighlight).not.toBeNull();
+      await highlightCmd.revert();
+      expect(currentHighlight).toBeNull();
+
+      // 6. Text Alignment
+      const alignCmd = new SetTextAlignmentCommand(0, 'blk-1', 'left', 'center', (al) => {
+        currentAlign = al;
+      });
+      await alignCmd.apply();
+      expect(currentAlign).toBe('center');
+      await alignCmd.revert();
+      expect(currentAlign).toBe('left');
+
+      // 7. Spacing
+      const spacingCmd = new SetTextSpacingCommand(
+        0,
+        'blk-1',
+        { lineSpacing: 1.0, letterSpacing: 0 },
+        { lineSpacing: 1.5, letterSpacing: 2 },
+        (sp) => {
+          currentSpacing = { lineSpacing: sp.lineSpacing ?? 1.0, letterSpacing: sp.letterSpacing ?? 0 };
+        }
+      );
+      await spacingCmd.apply();
+      expect(currentSpacing.lineSpacing).toBe(1.5);
+      expect(currentSpacing.letterSpacing).toBe(2);
+      await spacingCmd.revert();
+      expect(currentSpacing.lineSpacing).toBe(1.0);
+      expect(currentSpacing.letterSpacing).toBe(0);
     });
   });
 });

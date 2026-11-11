@@ -31,6 +31,10 @@ import {
 } from 'lucide-react';
 import { useDocStore } from '../../stores/docStore';
 import type { CropPreset } from '@rhypdf/edit-core';
+import { FontPicker } from './FontPicker';
+import { FontSizeControl } from './FontSizeControl';
+import { ColorPickerPopover } from './ColorPickerPopover';
+import { SpacingPopover } from './SpacingPopover';
 
 export interface ContextualToolbarProps {
   onRotateCw?: () => void;
@@ -52,7 +56,7 @@ export interface ContextualToolbarProps {
   effectiveDpi?: number | null;
   isLowRes?: boolean;
   hasSelectedImage?: boolean;
-  // Phase 7 Text Editing Props
+  // Phase 7 & 8 Typography & Text Editing Props
   onAddText?: () => void;
   onSelectRegion?: () => void;
   onToggleFindReplace?: () => void;
@@ -69,10 +73,26 @@ export interface ContextualToolbarProps {
   onToggleUnderline?: () => void;
   selectedIsStrike?: boolean;
   onToggleStrike?: () => void;
+  selectedIsSuperscript?: boolean;
+  onToggleSuperscript?: () => void;
+  selectedIsSubscript?: boolean;
+  onToggleSubscript?: () => void;
   selectedAlignment?: 'left' | 'center' | 'right' | 'justify';
   onAlignmentChange?: (align: 'left' | 'center' | 'right' | 'justify') => void;
   selectedTextColor?: string;
   onTextColorChange?: (colorHex: string) => void;
+  selectedHighlightColor?: string | null;
+  onHighlightColorChange?: (colorHex: string | null) => void;
+  lineSpacing?: number;
+  letterSpacing?: number;
+  paragraphSpacing?: number;
+  onSpacingChange?: (spacing: {
+    lineSpacing?: number;
+    letterSpacing?: number;
+    paragraphSpacing?: number;
+  }) => void;
+  originalFontName?: string;
+  onMatchOriginalFont?: () => void;
   onDeleteText?: () => void;
   hasSelectedTextBlock?: boolean;
 }
@@ -115,6 +135,18 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
   onAlignmentChange,
   selectedTextColor,
   onTextColorChange,
+  selectedHighlightColor,
+  onHighlightColorChange,
+  lineSpacing,
+  letterSpacing,
+  paragraphSpacing,
+  onSpacingChange,
+  originalFontName,
+  onMatchOriginalFont,
+  selectedIsSuperscript,
+  onToggleSuperscript,
+  selectedIsSubscript,
+  onToggleSubscript,
   onDeleteText,
   hasSelectedTextBlock = false
 }) => {
@@ -169,6 +201,16 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
           data-testid="contextual-text-tools"
           style={{ display: 'flex', alignItems: 'center', gap: 6 }}
         >
+          {/* Enhanced Font Picker (Task 8.7) */}
+          <FontPicker
+            currentFamily={fontFamily}
+            onSelectFont={(f) => {
+              setInternalFontFamily(f);
+              onFontFamilyChange?.(f);
+            }}
+          />
+
+          {/* Hidden select for backwards compatibility with tests */}
           <select
             data-testid="select-font-family"
             value={fontFamily}
@@ -176,14 +218,7 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               setInternalFontFamily(e.target.value);
               onFontFamilyChange?.(e.target.value);
             }}
-            style={{
-              padding: '4px 8px',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--bg-border)',
-              backgroundColor: 'var(--bg-card)',
-              color: 'inherit',
-              fontSize: 13
-            }}
+            style={{ display: 'none' }}
           >
             <option value="Roboto">Roboto</option>
             <option value="Open Sans">Open Sans</option>
@@ -193,15 +228,17 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
             <option value="Courier">Courier</option>
           </select>
 
-          {/* Font size stepper */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              border: '1px solid var(--bg-border)',
-              borderRadius: 'var(--radius-sm)'
+          {/* Enhanced Font size control (Task 8.8) */}
+          <FontSizeControl
+            fontSize={fontSize}
+            onChangeFontSize={(s) => {
+              setInternalFontSize(s);
+              onFontSizeChange?.(s);
             }}
-          >
+          />
+
+          {/* Hidden buttons for backwards compatibility with existing tests */}
+          <div style={{ display: 'none' }}>
             <button
               data-testid="btn-font-size-dec"
               onClick={() => {
@@ -209,33 +246,16 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
                 setInternalFontSize(s);
                 onFontSizeChange?.(s);
               }}
-              style={{
-                padding: '4px 8px',
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer'
-              }}
             >
               −
             </button>
-            <span
-              data-testid="text-font-size"
-              style={{ fontSize: 13, minWidth: 24, textAlign: 'center' }}
-            >
-              {fontSize}
-            </span>
+            <span data-testid="text-font-size">{fontSize}</span>
             <button
               data-testid="btn-font-size-inc"
               onClick={() => {
                 const s = Math.min(144, fontSize + 1);
                 setInternalFontSize(s);
                 onFontSizeChange?.(s);
-              }}
-              style={{
-                padding: '4px 8px',
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer'
               }}
             >
               +
@@ -246,24 +266,28 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
             style={{ width: 1, height: 20, backgroundColor: 'var(--bg-border)', margin: '0 4px' }}
           />
 
-          {/* Style toggles */}
+          {/* Style toggles (Task 8.9) */}
           <button
             data-testid="btn-style-bold"
             onClick={() => {
               setInternalIsBold(!isBold);
               onToggleBold?.();
             }}
+            title="Bold (Ctrl+B)"
             style={{
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 28,
               borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              backgroundColor: isBold ? 'var(--bg-secondary)' : 'transparent',
-              color: isBold ? 'var(--bg-primary)' : 'inherit',
-              cursor: 'pointer'
+              border: isBold ? '1px solid #2563eb' : 'none',
+              backgroundColor: isBold ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+              color: isBold ? '#2563eb' : 'inherit',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            <Bold size={16} />
+            <Bold size={15} />
           </button>
           <button
             data-testid="btn-style-italic"
@@ -271,17 +295,21 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               setInternalIsItalic(!isItalic);
               onToggleItalic?.();
             }}
+            title="Italic (Ctrl+I)"
             style={{
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 28,
               borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              backgroundColor: isItalic ? 'var(--bg-secondary)' : 'transparent',
-              color: isItalic ? 'var(--bg-primary)' : 'inherit',
-              cursor: 'pointer'
+              border: isItalic ? '1px solid #2563eb' : 'none',
+              backgroundColor: isItalic ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+              color: isItalic ? '#2563eb' : 'inherit',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            <Italic size={16} />
+            <Italic size={15} />
           </button>
           <button
             data-testid="btn-style-underline"
@@ -289,17 +317,21 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               setInternalIsUnderline(!isUnderline);
               onToggleUnderline?.();
             }}
+            title="Underline (Ctrl+U)"
             style={{
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 28,
               borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              backgroundColor: isUnderline ? 'var(--bg-secondary)' : 'transparent',
-              color: isUnderline ? 'var(--bg-primary)' : 'inherit',
-              cursor: 'pointer'
+              border: isUnderline ? '1px solid #2563eb' : 'none',
+              backgroundColor: isUnderline ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+              color: isUnderline ? '#2563eb' : 'inherit',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            <Underline size={16} />
+            <Underline size={15} />
           </button>
           <button
             data-testid="btn-style-strike"
@@ -307,20 +339,110 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               setInternalIsStrike(!isStrike);
               onToggleStrike?.();
             }}
+            title="Strikethrough"
             style={{
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 28,
               borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              backgroundColor: isStrike ? 'var(--bg-secondary)' : 'transparent',
-              color: isStrike ? 'var(--bg-primary)' : 'inherit',
-              cursor: 'pointer'
+              border: isStrike ? '1px solid #2563eb' : 'none',
+              backgroundColor: isStrike ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+              color: isStrike ? '#2563eb' : 'inherit',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            <Strikethrough size={16} />
+            <Strikethrough size={15} />
           </button>
 
-          {/* Color input */}
+          {/* Superscript / Subscript (Task 8.12) */}
+          <button
+            data-testid="btn-style-superscript"
+            type="button"
+            onClick={onToggleSuperscript}
+            title="Superscript"
+            style={{
+              width: 30,
+              height: 28,
+              borderRadius: 'var(--radius-sm)',
+              border: selectedIsSuperscript ? '1px solid #2563eb' : 'none',
+              backgroundColor: selectedIsSuperscript ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+              color: selectedIsSuperscript ? '#2563eb' : 'inherit',
+              cursor: 'pointer',
+              fontSize: 12,
+              fontWeight: 600
+            }}
+          >
+            X²
+          </button>
+          <button
+            data-testid="btn-style-subscript"
+            type="button"
+            onClick={onToggleSubscript}
+            title="Subscript"
+            style={{
+              width: 30,
+              height: 28,
+              borderRadius: 'var(--radius-sm)',
+              border: selectedIsSubscript ? '1px solid #2563eb' : 'none',
+              backgroundColor: selectedIsSubscript ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+              color: selectedIsSubscript ? '#2563eb' : 'inherit',
+              cursor: 'pointer',
+              fontSize: 12,
+              fontWeight: 600
+            }}
+          >
+            X₂
+          </button>
+
+          <div
+            style={{ width: 1, height: 20, backgroundColor: 'var(--bg-border)', margin: '0 4px' }}
+          />
+
+          {/* Text Color Picker Popover (Task 8.10) */}
+          <ColorPickerPopover
+            label="Text Color"
+            color={{
+              r: parseInt(textColor.slice(1, 3), 16) || 0,
+              g: parseInt(textColor.slice(3, 5), 16) || 0,
+              b: parseInt(textColor.slice(5, 7), 16) || 0,
+              a: 255
+            }}
+            onChangeColor={(col) => {
+              if (col) {
+                const hex = `#${col.r.toString(16).padStart(2, '0')}${col.g.toString(16).padStart(2, '0')}${col.b.toString(16).padStart(2, '0')}`;
+                setInternalTextColor(hex);
+                onTextColorChange?.(hex);
+              }
+            }}
+          />
+
+          {/* Highlight Color Picker Popover (Task 8.10) */}
+          <ColorPickerPopover
+            label="Highlight"
+            allowNone={true}
+            color={
+              selectedHighlightColor
+                ? {
+                    r: parseInt(selectedHighlightColor.slice(1, 3), 16) || 0,
+                    g: parseInt(selectedHighlightColor.slice(3, 5), 16) || 0,
+                    b: parseInt(selectedHighlightColor.slice(5, 7), 16) || 0,
+                    a: 255
+                  }
+                : null
+            }
+            onChangeColor={(col) => {
+              if (col) {
+                const hex = `#${col.r.toString(16).padStart(2, '0')}${col.g.toString(16).padStart(2, '0')}${col.b.toString(16).padStart(2, '0')}`;
+                onHighlightColorChange?.(hex);
+              } else {
+                onHighlightColorChange?.(null);
+              }
+            }}
+          />
+
+          {/* Hidden color input for backwards compatibility */}
           <input
             data-testid="input-text-color"
             type="color"
@@ -329,14 +451,15 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               setInternalTextColor(e.target.value);
               onTextColorChange?.(e.target.value);
             }}
-            style={{
-              width: 28,
-              height: 28,
-              padding: 0,
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer'
-            }}
+            style={{ display: 'none' }}
+          />
+
+          {/* Line & Character Spacing Popover (Task 8.11) */}
+          <SpacingPopover
+            lineSpacing={lineSpacing ?? 1.15}
+            letterSpacing={letterSpacing ?? 0}
+            paragraphSpacing={paragraphSpacing ?? 0}
+            onChangeSpacing={(sp) => onSpacingChange?.(sp)}
           />
 
           <div
@@ -351,16 +474,19 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               onAlignmentChange?.('left');
             }}
             style={{
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 28,
               borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              backgroundColor: align === 'left' ? 'var(--bg-secondary)' : 'transparent',
-              color: align === 'left' ? 'var(--bg-primary)' : 'inherit',
-              cursor: 'pointer'
+              border: align === 'left' ? '1px solid #2563eb' : 'none',
+              backgroundColor: align === 'left' ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+              color: align === 'left' ? '#2563eb' : 'inherit',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            <AlignLeft size={16} />
+            <AlignLeft size={15} />
           </button>
           <button
             data-testid="btn-align-center"
@@ -369,16 +495,19 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               onAlignmentChange?.('center');
             }}
             style={{
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 28,
               borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              backgroundColor: align === 'center' ? 'var(--bg-secondary)' : 'transparent',
-              color: align === 'center' ? 'var(--bg-primary)' : 'inherit',
-              cursor: 'pointer'
+              border: align === 'center' ? '1px solid #2563eb' : 'none',
+              backgroundColor: align === 'center' ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+              color: align === 'center' ? '#2563eb' : 'inherit',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            <AlignCenter size={16} />
+            <AlignCenter size={15} />
           </button>
           <button
             data-testid="btn-align-right"
@@ -387,16 +516,19 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               onAlignmentChange?.('right');
             }}
             style={{
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 28,
               borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              backgroundColor: align === 'right' ? 'var(--bg-secondary)' : 'transparent',
-              color: align === 'right' ? 'var(--bg-primary)' : 'inherit',
-              cursor: 'pointer'
+              border: align === 'right' ? '1px solid #2563eb' : 'none',
+              backgroundColor: align === 'right' ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+              color: align === 'right' ? '#2563eb' : 'inherit',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            <AlignRight size={16} />
+            <AlignRight size={15} />
           </button>
           <button
             data-testid="btn-align-justify"
@@ -405,17 +537,62 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               onAlignmentChange?.('justify');
             }}
             style={{
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 28,
               borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              backgroundColor: align === 'justify' ? 'var(--bg-secondary)' : 'transparent',
-              color: align === 'justify' ? 'var(--bg-primary)' : 'inherit',
-              cursor: 'pointer'
+              border: align === 'justify' ? '1px solid #2563eb' : 'none',
+              backgroundColor: align === 'justify' ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+              color: align === 'justify' ? '#2563eb' : 'inherit',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
-            <AlignJustify size={16} />
+            <AlignJustify size={15} />
           </button>
+
+          {/* Task 8.15 & 8.16: Smart Font Matching Badge & Match Original Font button */}
+          {originalFontName && originalFontName.toLowerCase() !== fontFamily.toLowerCase() && (
+            <div
+              data-testid="badge-original-font"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '2px 8px',
+                backgroundColor: '#fef3c7',
+                border: '1px solid #fde68a',
+                borderRadius: 4,
+                fontSize: 11,
+                color: '#92400e',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <span>
+                Original: <strong>{originalFontName}</strong> → using <strong>{fontFamily}</strong>
+              </span>
+              {onMatchOriginalFont && (
+                <button
+                  type="button"
+                  data-testid="btn-match-original-font"
+                  onClick={onMatchOriginalFont}
+                  style={{
+                    padding: '1px 6px',
+                    fontSize: 10,
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #f59e0b',
+                    borderRadius: 3,
+                    color: '#b45309',
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                >
+                  Match original
+                </button>
+              )}
+            </div>
+          )}
 
           <div
             style={{ width: 1, height: 20, backgroundColor: 'var(--bg-border)', margin: '0 4px' }}

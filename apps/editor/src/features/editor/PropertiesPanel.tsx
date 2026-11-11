@@ -41,6 +41,17 @@ export interface SelectedObjectProps {
   canReuseFont?: boolean;
   isSubset?: boolean;
   missingGlyphs?: string[];
+  isBold?: boolean;
+  isItalic?: boolean;
+  isUnderline?: boolean;
+  isStrikethrough?: boolean;
+  isSuperscript?: boolean;
+  isSubscript?: boolean;
+  highlightColor?: string | null;
+  lineSpacing?: number;
+  letterSpacing?: number;
+  paragraphSpacing?: number;
+  originalFontName?: string;
 }
 
 export interface PropertiesPanelProps {
@@ -48,6 +59,7 @@ export interface PropertiesPanelProps {
   onToggle: () => void;
   selectedObject?: SelectedObjectProps | null;
   onUpdateObject?: (updates: Partial<SelectedObjectProps>) => void;
+  onMatchOriginalFont?: () => void;
   onBringForward?: () => void;
   onSendBackward?: () => void;
   onBringToFront?: () => void;
@@ -66,6 +78,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   onToggle,
   selectedObject = null,
   onUpdateObject,
+  onMatchOriginalFont,
   onBringForward,
   onSendBackward,
   onBringToFront,
@@ -676,6 +689,70 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     : 'Full Font'}
               </span>
             </div>
+
+            {/* Smart Font Matching Badge & Restore Button (Task 8.15 & 8.16) */}
+            {selectedObject.originalFontName &&
+              selectedObject.fontFamily &&
+              selectedObject.originalFontName.toLowerCase() !==
+                selectedObject.fontFamily.toLowerCase() && (
+                <div
+                  data-testid="prop-original-font-badge"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                    padding: '6px 8px',
+                    borderRadius: 4,
+                    backgroundColor: '#fef3c7',
+                    border: '1px solid #fde68a',
+                    fontSize: 11,
+                    color: '#92400e'
+                  }}
+                >
+                  <span>
+                    Original font: <strong>{selectedObject.originalFontName}</strong>
+                    <br />
+                    Using stand-in: <strong>{selectedObject.fontFamily}</strong>
+                  </span>
+                  {onMatchOriginalFont && (
+                    <button
+                      type="button"
+                      data-testid="btn-prop-match-original-font"
+                      onClick={onMatchOriginalFont}
+                      style={{
+                        padding: '2px 6px',
+                        fontSize: 10,
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #f59e0b',
+                        borderRadius: 3,
+                        color: '#b45309',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        alignSelf: 'flex-start'
+                      }}
+                    >
+                      Match Original Font
+                    </button>
+                  )}
+                </div>
+              )}
+
+            {/* Spacing summary */}
+            {(selectedObject.lineSpacing || selectedObject.letterSpacing) && (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: 11,
+                  color: 'var(--bg-muted-foreground)'
+                }}
+              >
+                <span>Spacing:</span>
+                <span>
+                  Line: {selectedObject.lineSpacing ?? 1.15}x, Char: {selectedObject.letterSpacing ?? 0}pt
+                </span>
+              </div>
+            )}
           </section>
         )}
 

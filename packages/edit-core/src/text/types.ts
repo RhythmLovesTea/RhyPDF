@@ -9,6 +9,10 @@ export interface TextBlockSpan {
   isBold?: boolean;
   isItalic?: boolean;
   isUnderline?: boolean;
+  isStrikethrough?: boolean;
+  isSuperscript?: boolean;
+  isSubscript?: boolean;
+  opacity?: number;
   originalRunId?: string;
 }
 
@@ -42,6 +46,20 @@ export interface TextBlock {
   primaryFontSize: number;
   primaryColor: ColorRGBA;
   fontReusability: FontReusabilityInfo;
+  isBold?: boolean;
+  isItalic?: boolean;
+  isUnderline?: boolean;
+  isStrikethrough?: boolean;
+  isSuperscript?: boolean;
+  isSubscript?: boolean;
+  opacity?: number;
+  highlightColor?: ColorRGBA | null;
+  lineSpacing?: number;
+  letterSpacing?: number;
+  paragraphSpacing?: number;
+  originalFontName?: string;
+  isSyntheticBold?: boolean;
+  isSyntheticItalic?: boolean;
   isHeader?: boolean;
   isFooter?: boolean;
   isListItem?: boolean;

@@ -329,3 +329,220 @@ export class BatchReplaceTextCommand implements EditCommand {
     if (this.revertFn) await this.revertFn();
   }
 }
+
+/**
+ * Task 8.1, 8.2, 8.15, 8.16: Set Font Family Command
+ * Updates block font family, records previous family, and tracks original detected font.
+ */
+export class SetFontFamilyCommand implements EditCommand {
+  public readonly id = `cmd-set-font-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  public readonly name: string;
+  public readonly timestamp = Date.now();
+  public readonly approximateBytes = 256;
+
+  constructor(
+    public readonly pageIndex: number,
+    public readonly blockId: string,
+    public readonly oldFontFamily: string,
+    public readonly newFontFamily: string,
+    public readonly originalFontName?: string,
+    private readonly applyFn?: (family: string) => Promise<void> | void
+  ) {
+    this.name = `Change font of block ${blockId} from "${oldFontFamily}" to "${newFontFamily}"`;
+  }
+
+  async apply(): Promise<void> {
+    if (this.applyFn) await this.applyFn(this.newFontFamily);
+  }
+
+  async revert(): Promise<void> {
+    if (this.applyFn) await this.applyFn(this.oldFontFamily);
+  }
+}
+
+/**
+ * Task 8.8: Set Font Size Command
+ */
+export class SetFontSizeCommand implements EditCommand {
+  public readonly id = `cmd-set-fontsize-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  public readonly name: string;
+  public readonly timestamp = Date.now();
+  public readonly approximateBytes = 128;
+
+  constructor(
+    public readonly pageIndex: number,
+    public readonly blockId: string,
+    public readonly oldFontSize: number,
+    public readonly newFontSize: number,
+    private readonly applyFn?: (size: number) => Promise<void> | void
+  ) {
+    this.name = `Change font size of block ${blockId} from ${oldFontSize}pt to ${newFontSize}pt`;
+  }
+
+  async apply(): Promise<void> {
+    if (this.applyFn) await this.applyFn(this.newFontSize);
+  }
+
+  async revert(): Promise<void> {
+    if (this.applyFn) await this.applyFn(this.oldFontSize);
+  }
+}
+
+export interface TextStyleOptions {
+  isBold?: boolean;
+  isItalic?: boolean;
+  isUnderline?: boolean;
+  isStrikethrough?: boolean;
+  isSuperscript?: boolean;
+  isSubscript?: boolean;
+  isSyntheticBold?: boolean;
+  isSyntheticItalic?: boolean;
+}
+
+/**
+ * Task 8.9, 8.12: Set Text Style Command (Bold, Italic, Underline, Strike, Super, Sub)
+ */
+export class SetTextStyleCommand implements EditCommand {
+  public readonly id = `cmd-set-style-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  public readonly name: string;
+  public readonly timestamp = Date.now();
+  public readonly approximateBytes = 256;
+
+  constructor(
+    public readonly pageIndex: number,
+    public readonly blockId: string,
+    public readonly oldStyle: TextStyleOptions,
+    public readonly newStyle: TextStyleOptions,
+    private readonly applyFn?: (style: TextStyleOptions) => Promise<void> | void
+  ) {
+    this.name = `Update text styles on block ${blockId}`;
+  }
+
+  async apply(): Promise<void> {
+    if (this.applyFn) await this.applyFn(this.newStyle);
+  }
+
+  async revert(): Promise<void> {
+    if (this.applyFn) await this.applyFn(this.oldStyle);
+  }
+}
+
+/**
+ * Task 8.10, 8.12: Set Text Color & Opacity Command
+ */
+export class SetTextColorCommand implements EditCommand {
+  public readonly id = `cmd-set-color-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  public readonly name: string;
+  public readonly timestamp = Date.now();
+  public readonly approximateBytes = 128;
+
+  constructor(
+    public readonly pageIndex: number,
+    public readonly blockId: string,
+    public readonly oldColor: ColorRGBA,
+    public readonly newColor: ColorRGBA,
+    public readonly oldOpacity?: number,
+    public readonly newOpacity?: number,
+    private readonly applyFn?: (color: ColorRGBA, opacity?: number) => Promise<void> | void
+  ) {
+    this.name = `Change text color on block ${blockId}`;
+  }
+
+  async apply(): Promise<void> {
+    if (this.applyFn) await this.applyFn(this.newColor, this.newOpacity);
+  }
+
+  async revert(): Promise<void> {
+    if (this.applyFn) await this.applyFn(this.oldColor, this.oldOpacity);
+  }
+}
+
+/**
+ * Task 8.10: Set Text Highlight Color Command
+ */
+export class SetTextHighlightColorCommand implements EditCommand {
+  public readonly id = `cmd-set-highlight-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  public readonly name: string;
+  public readonly timestamp = Date.now();
+  public readonly approximateBytes = 128;
+
+  constructor(
+    public readonly pageIndex: number,
+    public readonly blockId: string,
+    public readonly oldHighlight: ColorRGBA | null,
+    public readonly newHighlight: ColorRGBA | null,
+    private readonly applyFn?: (highlight: ColorRGBA | null) => Promise<void> | void
+  ) {
+    this.name = `Change highlight color on block ${blockId}`;
+  }
+
+  async apply(): Promise<void> {
+    if (this.applyFn) await this.applyFn(this.newHighlight);
+  }
+
+  async revert(): Promise<void> {
+    if (this.applyFn) await this.applyFn(this.oldHighlight);
+  }
+}
+
+/**
+ * Task 8.11: Set Text Alignment Command
+ */
+export class SetTextAlignmentCommand implements EditCommand {
+  public readonly id = `cmd-set-align-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  public readonly name: string;
+  public readonly timestamp = Date.now();
+  public readonly approximateBytes = 128;
+
+  constructor(
+    public readonly pageIndex: number,
+    public readonly blockId: string,
+    public readonly oldAlign: 'left' | 'center' | 'right' | 'justify',
+    public readonly newAlign: 'left' | 'center' | 'right' | 'justify',
+    private readonly applyFn?: (align: 'left' | 'center' | 'right' | 'justify') => Promise<void> | void
+  ) {
+    this.name = `Set alignment of block ${blockId} to "${newAlign}"`;
+  }
+
+  async apply(): Promise<void> {
+    if (this.applyFn) await this.applyFn(this.newAlign);
+  }
+
+  async revert(): Promise<void> {
+    if (this.applyFn) await this.applyFn(this.oldAlign);
+  }
+}
+
+export interface SpacingOptions {
+  lineSpacing?: number;
+  letterSpacing?: number;
+  paragraphSpacing?: number;
+}
+
+/**
+ * Task 8.11: Set Text Spacing Command (line spacing, character spacing, paragraph spacing)
+ */
+export class SetTextSpacingCommand implements EditCommand {
+  public readonly id = `cmd-set-spacing-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  public readonly name: string;
+  public readonly timestamp = Date.now();
+  public readonly approximateBytes = 128;
+
+  constructor(
+    public readonly pageIndex: number,
+    public readonly blockId: string,
+    public readonly oldSpacing: SpacingOptions,
+    public readonly newSpacing: SpacingOptions,
+    private readonly applyFn?: (spacing: SpacingOptions) => Promise<void> | void
+  ) {
+    this.name = `Update spacing on text block ${blockId}`;
+  }
+
+  async apply(): Promise<void> {
+    if (this.applyFn) await this.applyFn(this.newSpacing);
+  }
+
+  async revert(): Promise<void> {
+    if (this.applyFn) await this.applyFn(this.oldSpacing);
+  }
+}
