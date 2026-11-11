@@ -76,7 +76,7 @@ export async function queryLocalSystemFonts(
       fonts: Array.from(familyMap.values()),
       permissionGranted: true
     };
-  } catch (err: unknown) {
+  } catch {
     // Permission denied or aborted
     return { fonts: [], permissionGranted: false };
   }
@@ -125,8 +125,8 @@ export async function importFontFromDevice(
     category: parsed.names.fontFamily.toLowerCase().includes('serif')
       ? 'serif'
       : parsed.names.fontFamily.toLowerCase().includes('mono')
-      ? 'monospace'
-      : 'sans-serif',
+        ? 'monospace'
+        : 'sans-serif',
     weights: [weight],
     styles: [style],
     supportedScripts: ['latin'],

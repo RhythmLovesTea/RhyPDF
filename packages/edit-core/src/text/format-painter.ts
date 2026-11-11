@@ -52,10 +52,7 @@ export function extractTextStyle(block: TextBlock): TextStyleAttributes {
  * Applies TextStyleAttributes to a target TextBlock, updating its top-level properties
  * and propagating to its internal lines and spans.
  */
-export function applyTextStyleToBlock(
-  target: TextBlock,
-  style: TextStyleAttributes
-): TextBlock {
+export function applyTextStyleToBlock(target: TextBlock, style: TextStyleAttributes): TextBlock {
   const updated: TextBlock = {
     ...target,
     primaryFont: style.fontName,
@@ -73,9 +70,9 @@ export function applyTextStyleToBlock(
     lineSpacing: style.lineSpacing ?? target.lineSpacing,
     letterSpacing: style.letterSpacing ?? target.letterSpacing,
     paragraphSpacing: style.paragraphSpacing ?? target.paragraphSpacing,
-    lines: target.lines.map(line => ({
+    lines: target.lines.map((line) => ({
       ...line,
-      spans: line.spans.map(span => ({
+      spans: line.spans.map((span) => ({
         ...span,
         fontName: style.fontName,
         fontSize: style.fontSize,

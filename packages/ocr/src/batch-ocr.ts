@@ -5,6 +5,7 @@
  */
 
 import type { OcrEngine, BatchOcrOptions, BatchOcrResult, OcrPageResult } from './types';
+import { checkBatteryLow } from './types';
 import { OcrCache } from './ocr-cache';
 
 export class BatchOcrProcessor {
@@ -35,6 +36,28 @@ export class BatchOcrProcessor {
     let totalConfidence = 0;
 
     for (let i = 0; i < targetPages.length; i++) {
+      if (options.signal?.aborted) {
+        break;
+      }
+
+      // Task 16.7: Throttle when tab is hidden or battery is low
+      if (
+        options.throttleOnHidden !== false &&
+        typeof document !== 'undefined' &&
+        document.hidden
+      ) {
+        options.onThrottled?.('tab_hidden');
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+
+      if (options.pauseOnLowBattery !== false) {
+        const isLow = await checkBatteryLow();
+        if (isLow) {
+          options.onThrottled?.('low_battery');
+          await new Promise((resolve) => setTimeout(resolve, 300));
+        }
+      }
+
       if (options.signal?.aborted) {
         break;
       }

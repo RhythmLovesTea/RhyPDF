@@ -106,7 +106,9 @@ export function flattenFormFields(fields: AcroFormField[]): PageObject[] {
       }
     } else {
       // Text field, dropdown, list
-      const textVal = Array.isArray(field.value) ? field.value.join(', ') : String(field.value || '');
+      const textVal = Array.isArray(field.value)
+        ? field.value.join(', ')
+        : String(field.value || '');
       if (textVal.trim()) {
         const fontSize = Math.min(height * 0.7, 12);
         const baselineY = bottom + (height - fontSize) / 2 + fontSize * 0.2;

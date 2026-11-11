@@ -67,7 +67,14 @@ export const ExportOptionsDialog: React.FC<ExportOptionsDialogProps> = ({
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 16
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Sliders size={20} color="var(--bg-primary, #2563eb)" />
             <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>PDF Export Options</h3>
@@ -132,14 +139,19 @@ export const ExportOptionsDialog: React.FC<ExportOptionsDialogProps> = ({
 
           {/* PDF Version */}
           <div>
-            <label htmlFor="select-pdf-version" style={{ fontSize: 13, fontWeight: 500, display: 'block', marginBottom: 6 }}>
+            <label
+              htmlFor="select-pdf-version"
+              style={{ fontSize: 13, fontWeight: 500, display: 'block', marginBottom: 6 }}
+            >
               PDF Specification Version
             </label>
             <select
               id="select-pdf-version"
               data-testid="select-pdf-version"
               value={pdfVersion}
-              onChange={(e) => setPdfVersion(e.target.value as '1.4' | '1.5' | '1.6' | '1.7' | '2.0')}
+              onChange={(e) =>
+                setPdfVersion(e.target.value as '1.4' | '1.5' | '1.6' | '1.7' | '2.0')
+              }
               style={{
                 width: '100%',
                 padding: '6px 10px',
@@ -160,7 +172,10 @@ export const ExportOptionsDialog: React.FC<ExportOptionsDialogProps> = ({
 
           {/* Font Embedding */}
           <div>
-            <label htmlFor="select-embed-fonts" style={{ fontSize: 13, fontWeight: 500, display: 'block', marginBottom: 6 }}>
+            <label
+              htmlFor="select-embed-fonts"
+              style={{ fontSize: 13, fontWeight: 500, display: 'block', marginBottom: 6 }}
+            >
               Font Embedding
             </label>
             <select
@@ -186,7 +201,15 @@ export const ExportOptionsDialog: React.FC<ExportOptionsDialogProps> = ({
 
           {/* Toggles */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 13,
+                cursor: 'pointer'
+              }}
+            >
               <input
                 data-testid="toggle-optimize-size"
                 type="checkbox"
@@ -197,7 +220,15 @@ export const ExportOptionsDialog: React.FC<ExportOptionsDialogProps> = ({
               <span>Compress streams with Object Streams (PDF 1.5+)</span>
             </label>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 13,
+                cursor: 'pointer'
+              }}
+            >
               <input
                 data-testid="toggle-flatten-annotations"
                 type="checkbox"
@@ -208,7 +239,15 @@ export const ExportOptionsDialog: React.FC<ExportOptionsDialogProps> = ({
               <span>Flatten annotations into static vector graphics</span>
             </label>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 13,
+                cursor: 'pointer'
+              }}
+            >
               <input
                 data-testid="toggle-flatten-forms"
                 type="checkbox"

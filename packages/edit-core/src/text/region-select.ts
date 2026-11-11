@@ -7,11 +7,7 @@ import { rectsIntersect } from '../selection';
  * Task 7.6: "Select text region" tool (drag a rectangle)
  * Filters text runs within the user-dragged region and groups them into a custom TextBlock.
  */
-export function groupRunsInRegion(
-  runs: TextRun[],
-  region: Rect,
-  pageIndex = 0
-): TextBlock | null {
+export function groupRunsInRegion(runs: TextRun[], region: Rect, pageIndex = 0): TextBlock | null {
   const selectedRuns = runs.filter((r) => rectsIntersect(r.bounds, region));
   if (selectedRuns.length === 0) return null;
 

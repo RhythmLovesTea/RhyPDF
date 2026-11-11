@@ -11,16 +11,13 @@ import { createShape } from '../shapes/generator';
 
 export interface WhiteoutCoverOptions {
   color?: ColorRGBA; // default: pure opaque white
-  opacity?: number;  // default: 1.0
+  opacity?: number; // default: 1.0
 }
 
 export const WHITEOUT_DISCLAIMER =
   'Whiteout is a visual overlay only. Underlying content is covered from view, but this is not permanent redaction.';
 
-export function createWhiteoutCover(
-  bounds: Rect,
-  options?: WhiteoutCoverOptions
-): ShapeObject {
+export function createWhiteoutCover(bounds: Rect, options?: WhiteoutCoverOptions): ShapeObject {
   const fillColor = options?.color ?? { r: 255, g: 255, b: 255, a: 255 };
   const opacity = options?.opacity ?? 1.0;
 
@@ -39,9 +36,5 @@ export function createWhiteoutCover(
 }
 
 export function isWhiteoutCover(obj: unknown): obj is ShapeObject & { isWhiteout: true } {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    (obj as ShapeObject).isWhiteout === true
-  );
+  return typeof obj === 'object' && obj !== null && (obj as ShapeObject).isWhiteout === true;
 }

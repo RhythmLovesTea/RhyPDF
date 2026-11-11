@@ -49,7 +49,9 @@ export const AcroFormOverlay: React.FC<AcroFormOverlayProps> = ({
         const isFieldReadOnly = isReadOnly || field.readOnly;
         const isRequiredEmpty =
           field.required &&
-          (field.value === '' || field.value === false || (Array.isArray(field.value) && field.value.length === 0));
+          (field.value === '' ||
+            field.value === false ||
+            (Array.isArray(field.value) && field.value.length === 0));
 
         const baseStyle: React.CSSProperties = {
           position: 'absolute',

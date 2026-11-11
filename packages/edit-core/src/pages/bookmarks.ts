@@ -204,9 +204,15 @@ export async function loadBookmarksFromPdf(
 
       const titleObj = dict.get(PDFName.of('Title'));
       let title = 'Untitled Bookmark';
-      if (titleObj && typeof (titleObj as unknown as { decodeText?: () => string }).decodeText === 'function') {
+      if (
+        titleObj &&
+        typeof (titleObj as unknown as { decodeText?: () => string }).decodeText === 'function'
+      ) {
         title = (titleObj as unknown as { decodeText: () => string }).decodeText();
-      } else if (titleObj && typeof (titleObj as unknown as { asString?: () => string }).asString === 'function') {
+      } else if (
+        titleObj &&
+        typeof (titleObj as unknown as { asString?: () => string }).asString === 'function'
+      ) {
         title = (titleObj as unknown as { asString: () => string }).asString();
       }
 
@@ -286,7 +292,10 @@ export async function saveBookmarksToPdf(
   });
   const outlinesRef = context.register(outlinesDict);
 
-  function createSubtree(items: BookmarkItem[], parentRef: PDFRef): { first: PDFRef; last: PDFRef; count: number } {
+  function createSubtree(
+    items: BookmarkItem[],
+    parentRef: PDFRef
+  ): { first: PDFRef; last: PDFRef; count: number } {
     const itemRefs: PDFRef[] = [];
     let totalCount = items.length;
 

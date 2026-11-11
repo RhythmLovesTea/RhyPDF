@@ -3,7 +3,7 @@ import React, { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { initI18n } from '@rhypdf/i18n';
 import type { TextRun, Rect } from '@rhypdf/pdf-model';
-import { groupTextRunsToBlocks, type TextBlock } from '@rhypdf/edit-core';
+import { groupTextRunsToBlocks } from '@rhypdf/edit-core';
 import { SelectionOverlay } from '../../src/features/editor/SelectionOverlay';
 import { TextEditorOverlay } from '../../src/features/editor/TextEditorOverlay';
 import { ContextualToolbar } from '../../src/features/editor/ContextualToolbar';
@@ -209,7 +209,9 @@ describe('Phase 7 UI: In-Place Text Editing, Overlays, and Controls', () => {
       });
 
       // Commit button
-      const commitBtn = container.querySelector('[data-testid="btn-commit-edit"]') as HTMLButtonElement;
+      const commitBtn = container.querySelector(
+        '[data-testid="btn-commit-edit"]'
+      ) as HTMLButtonElement;
       expect(commitBtn).not.toBeNull();
 
       act(() => {
@@ -227,15 +229,22 @@ describe('Phase 7 UI: In-Place Text Editing, Overlays, and Controls', () => {
     });
 
     it('shows missing glyph warning notice when font is subset with missing characters (Task 7.12)', () => {
-      const subsetRun = createMockTextRun('sub1', 'Only Latin', {
-        left: 50,
-        bottom: 500,
-        right: 200,
-        top: 514
-      }, 'ABCDEF+SubsetFont', 12, {
-        isEmbeddedSubset: true,
-        fontInfo: { isEmbedded: true, isSubset: true }
-      });
+      const subsetRun = createMockTextRun(
+        'sub1',
+        'Only Latin',
+        {
+          left: 50,
+          bottom: 500,
+          right: 200,
+          top: 514
+        },
+        'ABCDEF+SubsetFont',
+        12,
+        {
+          isEmbeddedSubset: true,
+          fontInfo: { isEmbedded: true, isSubset: true }
+        }
+      );
 
       const block = groupTextRunsToBlocks([subsetRun], 0)[0]!;
       // Simulate missing glyphs
@@ -306,7 +315,9 @@ describe('Phase 7 UI: In-Place Text Editing, Overlays, and Controls', () => {
       const overflowBar = container.querySelector('[data-testid="text-overflow-indicator"]');
       expect(overflowBar).not.toBeNull();
 
-      const growBtn = container.querySelector('[data-testid="btn-grow-downward"]') as HTMLButtonElement;
+      const growBtn = container.querySelector(
+        '[data-testid="btn-grow-downward"]'
+      ) as HTMLButtonElement;
       expect(growBtn).not.toBeNull();
 
       await act(async () => {
@@ -357,7 +368,9 @@ describe('Phase 7 UI: In-Place Text Editing, Overlays, and Controls', () => {
       const overflowBar = container.querySelector('[data-testid="text-overflow-indicator"]');
       expect(overflowBar).not.toBeNull();
 
-      const shrinkBtn = container.querySelector('[data-testid="btn-shrink-to-fit"]') as HTMLButtonElement;
+      const shrinkBtn = container.querySelector(
+        '[data-testid="btn-shrink-to-fit"]'
+      ) as HTMLButtonElement;
       expect(shrinkBtn).not.toBeNull();
 
       await act(async () => {
@@ -388,9 +401,15 @@ describe('Phase 7 UI: In-Place Text Editing, Overlays, and Controls', () => {
       });
 
       const addBtn = container.querySelector('[data-testid="btn-add-text"]') as HTMLButtonElement;
-      const regionBtn = container.querySelector('[data-testid="btn-select-region"]') as HTMLButtonElement;
-      const findBtn = container.querySelector('[data-testid="btn-find-replace"]') as HTMLButtonElement;
-      const delBtn = container.querySelector('[data-testid="btn-delete-text"]') as HTMLButtonElement;
+      const regionBtn = container.querySelector(
+        '[data-testid="btn-select-region"]'
+      ) as HTMLButtonElement;
+      const findBtn = container.querySelector(
+        '[data-testid="btn-find-replace"]'
+      ) as HTMLButtonElement;
+      const delBtn = container.querySelector(
+        '[data-testid="btn-delete-text"]'
+      ) as HTMLButtonElement;
 
       expect(addBtn).not.toBeNull();
       expect(regionBtn).not.toBeNull();
@@ -437,15 +456,13 @@ describe('Phase 7 UI: In-Place Text Editing, Overlays, and Controls', () => {
 
       act(() => {
         root.render(
-          <PropertiesPanel
-            open={true}
-            onToggle={vi.fn()}
-            selectedObject={selectedTextObj}
-          />
+          <PropertiesPanel open={true} onToggle={vi.fn()} selectedObject={selectedTextObj} />
         );
       });
 
-      const typographySection = container.querySelector('[data-testid="text-block-properties-section"]');
+      const typographySection = container.querySelector(
+        '[data-testid="text-block-properties-section"]'
+      );
       expect(typographySection).not.toBeNull();
 
       const previewBox = container.querySelector('[data-testid="text-preview-box"]');

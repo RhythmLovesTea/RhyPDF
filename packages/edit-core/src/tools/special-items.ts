@@ -5,7 +5,10 @@
 
 export type DateFormatPattern = 'iso' | 'us' | 'eu' | 'long' | 'withTime';
 
-export function formatCurrentDate(format: DateFormatPattern = 'iso', date: Date = new Date()): string {
+export function formatCurrentDate(
+  format: DateFormatPattern = 'iso',
+  date: Date = new Date()
+): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -13,8 +16,18 @@ export function formatCurrentDate(format: DateFormatPattern = 'iso', date: Date 
   const minutes = String(date.getMinutes()).padStart(2, '0');
 
   const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
   ];
 
   switch (format) {
@@ -42,7 +55,26 @@ export const SYMBOL_CATEGORIES: SymbolCategory[] = [
   {
     id: 'math',
     name: 'Mathematics',
-    symbols: ['±', '×', '÷', '≠', '≈', '≤', '≥', '∞', 'π', '√', '∑', 'Δ', '∫', '‰', '½', '¼', '¾', '°']
+    symbols: [
+      '±',
+      '×',
+      '÷',
+      '≠',
+      '≈',
+      '≤',
+      '≥',
+      '∞',
+      'π',
+      '√',
+      '∑',
+      'Δ',
+      '∫',
+      '‰',
+      '½',
+      '¼',
+      '¾',
+      '°'
+    ]
   },
   {
     id: 'currency',
@@ -57,12 +89,51 @@ export const SYMBOL_CATEGORIES: SymbolCategory[] = [
   {
     id: 'typography',
     name: 'Typography',
-    symbols: ['©', '®', '™', '§', '¶', '•', '◦', '▪', '—', '–', '†', '‡', '…', '“', '”', '‘', '’', '«', '»']
+    symbols: [
+      '©',
+      '®',
+      '™',
+      '§',
+      '¶',
+      '•',
+      '◦',
+      '▪',
+      '—',
+      '–',
+      '†',
+      '‡',
+      '…',
+      '“',
+      '”',
+      '‘',
+      '’',
+      '«',
+      '»'
+    ]
   },
   {
     id: 'greek',
     name: 'Greek Letters',
-    symbols: ['α', 'β', 'γ', 'δ', 'ε', 'θ', 'λ', 'μ', 'π', 'σ', 'τ', 'φ', 'ω', 'Ω', 'Δ', 'Σ', 'Φ', 'Ψ']
+    symbols: [
+      'α',
+      'β',
+      'γ',
+      'δ',
+      'ε',
+      'θ',
+      'λ',
+      'μ',
+      'π',
+      'σ',
+      'τ',
+      'φ',
+      'ω',
+      'Ω',
+      'Δ',
+      'Σ',
+      'Φ',
+      'Ψ'
+    ]
   },
   {
     id: 'misc',

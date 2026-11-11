@@ -82,8 +82,12 @@ describe('Task 7.18: Find & Replace Across Document', () => {
     const bar = container.querySelector('[data-testid="find-replace-bar"]');
     expect(bar).not.toBeNull();
 
-    const findInput = container.querySelector('[data-testid="input-find-text"]') as HTMLInputElement;
-    const replaceInput = container.querySelector('[data-testid="input-replace-text"]') as HTMLInputElement;
+    const findInput = container.querySelector(
+      '[data-testid="input-find-text"]'
+    ) as HTMLInputElement;
+    const replaceInput = container.querySelector(
+      '[data-testid="input-replace-text"]'
+    ) as HTMLInputElement;
     const counter = container.querySelector('[data-testid="find-match-counter"]');
 
     expect(findInput).not.toBeNull();
@@ -97,7 +101,9 @@ describe('Task 7.18: Find & Replace Across Document', () => {
     expect(onSearch).toHaveBeenCalledWith('Contract', { caseSensitive: false, wholeWord: false });
 
     // Toggle Match Case
-    const caseCheckbox = container.querySelector('[data-testid="checkbox-match-case"]') as HTMLInputElement;
+    const caseCheckbox = container.querySelector(
+      '[data-testid="checkbox-match-case"]'
+    ) as HTMLInputElement;
     act(() => {
       caseCheckbox.click();
     });
@@ -137,13 +143,19 @@ describe('Task 7.18: Find & Replace Across Document', () => {
       );
     });
 
-    const replaceInput = container.querySelector('[data-testid="input-replace-text"]') as HTMLInputElement;
+    const replaceInput = container.querySelector(
+      '[data-testid="input-replace-text"]'
+    ) as HTMLInputElement;
     act(() => {
       setInputValue(replaceInput, 'Agreement');
     });
 
-    const replaceBtn = container.querySelector('[data-testid="btn-replace-one"]') as HTMLButtonElement;
-    const replaceAllBtn = container.querySelector('[data-testid="btn-replace-all"]') as HTMLButtonElement;
+    const replaceBtn = container.querySelector(
+      '[data-testid="btn-replace-one"]'
+    ) as HTMLButtonElement;
+    const replaceAllBtn = container.querySelector(
+      '[data-testid="btn-replace-all"]'
+    ) as HTMLButtonElement;
 
     act(() => {
       replaceBtn.click();
@@ -176,6 +188,8 @@ describe('Task 7.18: Find & Replace Across Document', () => {
 
     const warning = container.querySelector('[data-testid="replace-overflow-warning"]');
     expect(warning).not.toBeNull();
-    expect(warning?.textContent).toContain('Warning: Replacement text overflows original box boundaries');
+    expect(warning?.textContent).toContain(
+      'Warning: Replacement text overflows original box boundaries'
+    );
   });
 });

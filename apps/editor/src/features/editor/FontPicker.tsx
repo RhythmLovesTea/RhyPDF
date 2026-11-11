@@ -1,9 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  FontCatalog,
-  type FontCategory,
-  importFontFromDevice
-} from '@rhypdf/fonts';
+import { FontCatalog, type FontCategory, importFontFromDevice } from '@rhypdf/fonts';
 import { Search, Check, ChevronDown, Upload, Clock } from 'lucide-react';
 
 interface FontPickerProps {
@@ -173,37 +169,35 @@ export const FontPicker: React.FC<FontPickerProps> = ({
               backgroundColor: '#f8fafc'
             }}
           >
-            {(['all', 'sans-serif', 'serif', 'monospace', 'handwriting'] as const).map(
-              (cat) => (
-                <button
-                  key={cat}
-                  data-testid={`chip-cat-${cat}`}
-                  type="button"
-                  onClick={() => setSelectedCategory(cat)}
-                  style={{
-                    padding: '2px 6px',
-                    fontSize: 10,
-                    borderRadius: 3,
-                    border: '1px solid',
-                    borderColor: selectedCategory === cat ? '#2563eb' : '#cbd5e1',
-                    backgroundColor: selectedCategory === cat ? '#dbeafe' : '#ffffff',
-                    color: selectedCategory === cat ? '#1d4ed8' : '#475569',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  {cat === 'all'
-                    ? 'All'
-                    : cat === 'sans-serif'
+            {(['all', 'sans-serif', 'serif', 'monospace', 'handwriting'] as const).map((cat) => (
+              <button
+                key={cat}
+                data-testid={`chip-cat-${cat}`}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                style={{
+                  padding: '2px 6px',
+                  fontSize: 10,
+                  borderRadius: 3,
+                  border: '1px solid',
+                  borderColor: selectedCategory === cat ? '#2563eb' : '#cbd5e1',
+                  backgroundColor: selectedCategory === cat ? '#dbeafe' : '#ffffff',
+                  color: selectedCategory === cat ? '#1d4ed8' : '#475569',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {cat === 'all'
+                  ? 'All'
+                  : cat === 'sans-serif'
                     ? 'Sans'
                     : cat === 'serif'
-                    ? 'Serif'
-                    : cat === 'monospace'
-                    ? 'Mono'
-                    : 'Script'}
-                </button>
-              )
-            )}
+                      ? 'Serif'
+                      : cat === 'monospace'
+                        ? 'Mono'
+                        : 'Script'}
+              </button>
+            ))}
           </div>
 
           {/* Script Filter Select */}
@@ -260,54 +254,56 @@ export const FontPicker: React.FC<FontPickerProps> = ({
           {/* Font List */}
           <div style={{ overflowY: 'auto', flex: 1, maxHeight: 220 }}>
             {/* Recent Fonts section (Task 8.7) */}
-            {!searchQuery && selectedCategory === 'all' && selectedScript === 'all' && recentFamilies.length > 0 && (
-              <div>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    padding: '4px 8px',
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: '#64748b',
-                    backgroundColor: '#f1f5f9'
-                  }}
-                >
-                  <Clock size={10} />
-                  <span>RECENT FONTS</span>
+            {!searchQuery &&
+              selectedCategory === 'all' &&
+              selectedScript === 'all' &&
+              recentFamilies.length > 0 && (
+                <div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '4px 8px',
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: '#64748b',
+                      backgroundColor: '#f1f5f9'
+                    }}
+                  >
+                    <Clock size={10} />
+                    <span>RECENT FONTS</span>
+                  </div>
+                  {recentFamilies.map((rec) => {
+                    const entry = catalog.getByFamily(rec);
+                    const isSelected = currentFamily.toLowerCase() === rec.toLowerCase();
+                    return (
+                      <button
+                        key={`recent-${rec}`}
+                        data-testid={`font-option-recent-${rec}`}
+                        type="button"
+                        onClick={() => handleSelect(rec)}
+                        style={{
+                          width: '100%',
+                          textAlign: 'left',
+                          padding: '6px 12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          fontSize: 13,
+                          fontFamily: rec,
+                          backgroundColor: isSelected ? '#eff6ff' : '#ffffff',
+                          border: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <span>{entry?.displayName || rec}</span>
+                        {isSelected && <Check size={14} color="#2563eb" />}
+                      </button>
+                    );
+                  })}
                 </div>
-                {recentFamilies.map((rec) => {
-                  const entry = catalog.getByFamily(rec);
-                  const isSelected =
-                    currentFamily.toLowerCase() === rec.toLowerCase();
-                  return (
-                    <button
-                      key={`recent-${rec}`}
-                      data-testid={`font-option-recent-${rec}`}
-                      type="button"
-                      onClick={() => handleSelect(rec)}
-                      style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '6px 12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        fontSize: 13,
-                        fontFamily: rec,
-                        backgroundColor: isSelected ? '#eff6ff' : '#ffffff',
-                        border: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <span>{entry?.displayName || rec}</span>
-                      {isSelected && <Check size={14} color="#2563eb" />}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+              )}
 
             {/* All Filtered Fonts */}
             <div
@@ -335,8 +331,7 @@ export const FontPicker: React.FC<FontPickerProps> = ({
               </div>
             ) : (
               filteredFonts.map((font) => {
-                const isSelected =
-                  currentFamily.toLowerCase() === font.family.toLowerCase();
+                const isSelected = currentFamily.toLowerCase() === font.family.toLowerCase();
                 return (
                   <button
                     key={font.id}

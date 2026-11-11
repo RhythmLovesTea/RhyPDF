@@ -3,9 +3,9 @@ import type { MarkupAnnotationOptions, TextMarkupType } from './types';
 
 export const DEFAULT_MARKUP_COLORS: Record<TextMarkupType, ColorRGBA> = {
   Highlight: { r: 254, g: 240, b: 138, a: 128 }, // semi-transparent yellow
-  Underline: { r: 37, g: 99, b: 235, a: 255 },  // blue
-  StrikeOut: { r: 239, g: 68, b: 68, a: 255 },  // red
-  Squiggly: { r: 22, g: 163, b: 74, a: 255 }    // green
+  Underline: { r: 37, g: 99, b: 235, a: 255 }, // blue
+  StrikeOut: { r: 239, g: 68, b: 68, a: 255 }, // red
+  Squiggly: { r: 22, g: 163, b: 74, a: 255 } // green
 };
 
 /**
@@ -33,16 +33,7 @@ export function computeQuadPointsFromBounds(bounds: Rect): number[] {
 export function computeMultiLineQuadPoints(lineBoxes: Rect[]): number[] {
   const result: number[] = [];
   for (const box of lineBoxes) {
-    result.push(
-      box.left,
-      box.top,
-      box.right,
-      box.top,
-      box.left,
-      box.bottom,
-      box.right,
-      box.bottom
-    );
+    result.push(box.left, box.top, box.right, box.top, box.left, box.bottom, box.right, box.bottom);
   }
   return result;
 }
@@ -52,9 +43,10 @@ export function computeMultiLineQuadPoints(lineBoxes: Rect[]): number[] {
  */
 export function createMarkupAnnotation(options: MarkupAnnotationOptions): AnnotationObject {
   const id = `annot-markup-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
-  const quadPoints = options.quadPoints && options.quadPoints.length > 0
-    ? options.quadPoints
-    : computeQuadPointsFromBounds(options.bounds);
+  const quadPoints =
+    options.quadPoints && options.quadPoints.length > 0
+      ? options.quadPoints
+      : computeQuadPointsFromBounds(options.bounds);
 
   const defaultColor = DEFAULT_MARKUP_COLORS[options.subType];
   const color = options.color ?? defaultColor;
@@ -83,7 +75,13 @@ export function createMarkupAnnotation(options: MarkupAnnotationOptions): Annota
 export function markupToVectorPaths(annotation: AnnotationObject): PathObject[] {
   const paths: PathObject[] = [];
   const quads = annotation.quadPoints ?? computeQuadPointsFromBounds(annotation.bounds);
-  const color = annotation.color ?? DEFAULT_MARKUP_COLORS[annotation.subType as TextMarkupType] ?? { r: 254, g: 240, b: 138, a: 128 };
+  const color = annotation.color ??
+    DEFAULT_MARKUP_COLORS[annotation.subType as TextMarkupType] ?? {
+      r: 254,
+      g: 240,
+      b: 138,
+      a: 128
+    };
   const opacity = annotation.opacity ?? 1.0;
 
   // Each quad is 8 coordinates: [x1, y1, x2, y2, x3, y3, x4, y4]
@@ -168,9 +166,7 @@ export function markupToVectorPaths(annotation: AnnotationObject): PathObject[] 
       const lineY = bottom + 1;
       const waveHeight = 1.5;
       const waveLength = 4;
-      const segments: PathSegment[] = [
-        { type: 'moveTo', points: [{ x: left, y: lineY }] }
-      ];
+      const segments: PathSegment[] = [{ type: 'moveTo', points: [{ x: left, y: lineY }] }];
 
       let currX = left;
       let up = true;

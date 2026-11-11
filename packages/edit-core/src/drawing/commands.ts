@@ -15,7 +15,10 @@ export class AddDrawingStrokeCommand implements EditCommand {
   constructor(
     public readonly pageIndex: number,
     public readonly stroke: DrawingStrokeObject,
-    private readonly insertFn?: (pageIndex: number, stroke: DrawingStrokeObject) => Promise<void> | void,
+    private readonly insertFn?: (
+      pageIndex: number,
+      stroke: DrawingStrokeObject
+    ) => Promise<void> | void,
     private readonly deleteFn?: (pageIndex: number, strokeId: string) => Promise<void> | void
   ) {
     this.name = `Draw with ${stroke.tool}`;
@@ -45,7 +48,10 @@ export class EraseDrawingStrokeCommand implements EditCommand {
     public readonly pageIndex: number,
     public readonly stroke: DrawingStrokeObject,
     private readonly deleteFn?: (pageIndex: number, strokeId: string) => Promise<void> | void,
-    private readonly insertFn?: (pageIndex: number, stroke: DrawingStrokeObject) => Promise<void> | void
+    private readonly insertFn?: (
+      pageIndex: number,
+      stroke: DrawingStrokeObject
+    ) => Promise<void> | void
   ) {
     this.approximateBytes = 256 + (stroke.rawPoints?.length ?? 0) * 16;
   }

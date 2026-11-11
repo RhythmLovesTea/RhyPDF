@@ -71,7 +71,10 @@ export const CreateFormFieldDialog: React.FC<CreateFormFieldDialogProps> = ({
       onClose={onClose}
       title={t('editor.forms.createFieldTitle', { defaultValue: 'Add Form Field' })}
     >
-      <div data-testid="create-field-dialog" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div
+        data-testid="create-field-dialog"
+        style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+      >
         <div>
           <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 4 }}>
             {t('editor.forms.fieldType', { defaultValue: 'Field Type' })}
@@ -80,7 +83,13 @@ export const CreateFormFieldDialog: React.FC<CreateFormFieldDialogProps> = ({
             data-testid="select-create-field-type"
             value={type}
             onChange={(e) => setType(e.target.value as FormFieldType)}
-            style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--bg-border)', fontSize: 13 }}
+            style={{
+              width: '100%',
+              padding: '6px 8px',
+              borderRadius: 4,
+              border: '1px solid var(--bg-border)',
+              fontSize: 13
+            }}
           >
             <option value="text">Text Field</option>
             <option value="checkbox">Checkbox</option>
@@ -98,21 +107,37 @@ export const CreateFormFieldDialog: React.FC<CreateFormFieldDialogProps> = ({
             placeholder="e.g. employee_signature_date"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--bg-border)', fontSize: 13, boxSizing: 'border-box' }}
+            style={{
+              width: '100%',
+              padding: '6px 8px',
+              borderRadius: 4,
+              border: '1px solid var(--bg-border)',
+              fontSize: 13,
+              boxSizing: 'border-box'
+            }}
           />
         </div>
 
         {type === 'dropdown' && (
           <div>
             <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 4 }}>
-              {t('editor.forms.optionsList', { defaultValue: 'Dropdown Options (comma-separated)' })}
+              {t('editor.forms.optionsList', {
+                defaultValue: 'Dropdown Options (comma-separated)'
+              })}
             </label>
             <input
               data-testid="input-create-field-options"
               type="text"
               value={optionsText}
               onChange={(e) => setOptionsText(e.target.value)}
-              style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--bg-border)', fontSize: 13, boxSizing: 'border-box' }}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                borderRadius: 4,
+                border: '1px solid var(--bg-border)',
+                fontSize: 13,
+                boxSizing: 'border-box'
+              }}
             />
           </div>
         )}
@@ -127,13 +152,28 @@ export const CreateFormFieldDialog: React.FC<CreateFormFieldDialogProps> = ({
               type="text"
               value={defaultValue}
               onChange={(e) => setDefaultValue(e.target.value)}
-              style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--bg-border)', fontSize: 13, boxSizing: 'border-box' }}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                borderRadius: 4,
+                border: '1px solid var(--bg-border)',
+                fontSize: 13,
+                boxSizing: 'border-box'
+              }}
             />
           </div>
         )}
 
         <div style={{ display: 'flex', gap: 16 }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 12,
+              cursor: 'pointer'
+            }}
+          >
             <input
               data-testid="checkbox-create-field-required"
               type="checkbox"
@@ -143,7 +183,15 @@ export const CreateFormFieldDialog: React.FC<CreateFormFieldDialogProps> = ({
             <span>{t('editor.forms.requiredField', { defaultValue: 'Required Field' })}</span>
           </label>
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 12,
+              cursor: 'pointer'
+            }}
+          >
             <input
               data-testid="checkbox-create-field-readonly"
               type="checkbox"
@@ -157,7 +205,14 @@ export const CreateFormFieldDialog: React.FC<CreateFormFieldDialogProps> = ({
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 6 }}>
           <button
             onClick={onClose}
-            style={{ padding: '6px 12px', borderRadius: 4, border: '1px solid var(--bg-border)', backgroundColor: 'var(--bg-secondary)', fontSize: 12, cursor: 'pointer' }}
+            style={{
+              padding: '6px 12px',
+              borderRadius: 4,
+              border: '1px solid var(--bg-border)',
+              backgroundColor: 'var(--bg-secondary)',
+              fontSize: 12,
+              cursor: 'pointer'
+            }}
           >
             {t('common.cancel', { defaultValue: 'Cancel' })}
           </button>

@@ -10,7 +10,7 @@ describe('Phase 7 Integration & Parity: Text Editing, Save, Reopen, and Ghost Te
   let wasmBinary: ArrayBuffer;
   let singleColBytes: Uint8Array;
   let twoColBytes: Uint8Array;
-  let subsetFontBytes: Uint8Array;
+  let _subsetFontBytes: Uint8Array;
 
   beforeAll(async () => {
     const wasmPath = path.resolve(
@@ -20,9 +20,15 @@ describe('Phase 7 Integration & Parity: Text Editing, Save, Reopen, and Ghost Te
     wasmBinary = fs.readFileSync(wasmPath).buffer;
 
     const fixturesDir = path.resolve(__dirname, '../../../../packages/test-fixtures/fixtures');
-    singleColBytes = new Uint8Array(fs.readFileSync(path.join(fixturesDir, '01_text_single_column.pdf')));
-    twoColBytes = new Uint8Array(fs.readFileSync(path.join(fixturesDir, '02_two_column_article.pdf')));
-    subsetFontBytes = new Uint8Array(fs.readFileSync(path.join(fixturesDir, '14_subset_font.pdf')));
+    singleColBytes = new Uint8Array(
+      fs.readFileSync(path.join(fixturesDir, '01_text_single_column.pdf'))
+    );
+    twoColBytes = new Uint8Array(
+      fs.readFileSync(path.join(fixturesDir, '02_two_column_article.pdf'))
+    );
+    _subsetFontBytes = new Uint8Array(
+      fs.readFileSync(path.join(fixturesDir, '14_subset_font.pdf'))
+    );
 
     engine = await PdfiumEngine.create({ wasmBinary });
   });
@@ -64,7 +70,14 @@ describe('Phase 7 Integration & Parity: Text Editing, Save, Reopen, and Ghost Te
           fontName: 'Helvetica',
           fontSize: 12,
           fillColor: { r: 0, g: 0, b: 0, a: 255 },
-          matrix: [1, 0, 0, 1, targetBlock.bounds.left, targetBlock.bounds.bottom] as [number, number, number, number, number, number]
+          matrix: [1, 0, 0, 1, targetBlock.bounds.left, targetBlock.bounds.bottom] as [
+            number,
+            number,
+            number,
+            number,
+            number,
+            number
+          ]
         }
       ];
 
@@ -117,7 +130,14 @@ describe('Phase 7 Integration & Parity: Text Editing, Save, Reopen, and Ghost Te
           text: newLeftText,
           fontName: 'Times-Roman',
           fontSize: 11,
-          matrix: [1, 0, 0, 1, leftBlock.bounds.left, leftBlock.bounds.bottom] as [number, number, number, number, number, number]
+          matrix: [1, 0, 0, 1, leftBlock.bounds.left, leftBlock.bounds.bottom] as [
+            number,
+            number,
+            number,
+            number,
+            number,
+            number
+          ]
         }
       ]);
 

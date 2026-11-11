@@ -7,7 +7,11 @@ export interface InsertPagesFromPdfDialogProps {
   onClose: () => void;
   currentPageIndex: number;
   totalPages: number;
-  onInsertPages: (params: { sourceBytes: Uint8Array; pageRange: string; targetIndex: number }) => void;
+  onInsertPages: (params: {
+    sourceBytes: Uint8Array;
+    pageRange: string;
+    targetIndex: number;
+  }) => void;
 }
 
 export const InsertPagesFromPdfDialog: React.FC<InsertPagesFromPdfDialogProps> = ({
@@ -17,7 +21,11 @@ export const InsertPagesFromPdfDialog: React.FC<InsertPagesFromPdfDialogProps> =
   totalPages,
   onInsertPages
 }) => {
-  const [sourceFile, setSourceFile] = useState<{ name: string; bytes: Uint8Array; pageCount: number } | null>(null);
+  const [sourceFile, setSourceFile] = useState<{
+    name: string;
+    bytes: Uint8Array;
+    pageCount: number;
+  } | null>(null);
   const [pageRange, setPageRange] = useState('All');
   const [position, setPosition] = useState<'after' | 'before' | 'start' | 'end'>('after');
   const [error, setError] = useState<string | null>(null);
@@ -81,14 +89,19 @@ export const InsertPagesFromPdfDialog: React.FC<InsertPagesFromPdfDialogProps> =
             style={{ display: 'none' }}
           />
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <Button
-              variant="secondary"
-              onClick={() => fileInputRef.current?.click()}
-            >
+            <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>
               Choose PDF File...
             </Button>
             {sourceFile && (
-              <span style={{ fontSize: 13, color: 'var(--bg-muted-foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span
+                style={{
+                  fontSize: 13,
+                  color: 'var(--bg-muted-foreground)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+              >
                 {sourceFile.name} ({sourceFile.pageCount} pages)
               </span>
             )}
@@ -143,11 +156,7 @@ export const InsertPagesFromPdfDialog: React.FC<InsertPagesFromPdfDialogProps> =
           </select>
         </div>
 
-        {error && (
-          <div style={{ color: '#ef4444', fontSize: 13 }}>
-            {error}
-          </div>
-        )}
+        {error && <div style={{ color: '#ef4444', fontSize: 13 }}>{error}</div>}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
           <Button variant="secondary" onClick={onClose}>

@@ -28,12 +28,7 @@ export interface HeaderFooterConfig {
 }
 
 export type BatesPosition =
-  | 'topLeft'
-  | 'topCenter'
-  | 'topRight'
-  | 'bottomLeft'
-  | 'bottomCenter'
-  | 'bottomRight';
+  'topLeft' | 'topCenter' | 'topRight' | 'bottomLeft' | 'bottomCenter' | 'bottomRight';
 
 export interface BatesNumberingConfig {
   prefix?: string;

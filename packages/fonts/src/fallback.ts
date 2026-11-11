@@ -215,9 +215,13 @@ export function splitTextIntoScriptSegments(
     }
 
     // Check if primary font supports this character's script
-    const primarySupports = primaryEntry ? doesFontSupportScript(primaryEntry, charScript) : charScript === 'latin';
+    const primarySupports = primaryEntry
+      ? doesFontSupportScript(primaryEntry, charScript)
+      : charScript === 'latin';
 
-    const targetFamily = primarySupports ? primaryFamilyName : getRecommendedFamilyForScript(charScript);
+    const targetFamily = primarySupports
+      ? primaryFamilyName
+      : getRecommendedFamilyForScript(charScript);
     const isFallback = !primarySupports;
 
     if (currentText.length === 0) {

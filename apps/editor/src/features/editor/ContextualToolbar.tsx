@@ -148,7 +148,10 @@ export interface ContextualToolbarProps {
   onInsertInitials?: () => void;
   onInsertDateStamp?: () => void;
   onAddStickyNote?: () => void;
-  onTextMarkupSelect?: (type: 'Highlight' | 'Underline' | 'StrikeOut' | 'Squiggly', colorHex?: string) => void;
+  onTextMarkupSelect?: (
+    type: 'Highlight' | 'Underline' | 'StrikeOut' | 'Squiggly',
+    colorHex?: string
+  ) => void;
   onOpenAutofill?: () => void;
   onOpenCreateFormField?: () => void;
   onOpenAnnotationSummary?: () => void;
@@ -269,7 +272,9 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
   const [internalIsItalic, setInternalIsItalic] = useState(false);
   const [internalIsUnderline, setInternalIsUnderline] = useState(false);
   const [internalIsStrike, setInternalIsStrike] = useState(false);
-  const [internalAlign, setInternalAlign] = useState<'left' | 'center' | 'right' | 'justify'>('left');
+  const [internalAlign, setInternalAlign] = useState<'left' | 'center' | 'right' | 'justify'>(
+    'left'
+  );
   const [internalTextColor, setInternalTextColor] = useState('#000000');
 
   const fontFamily = selectedFontFamily ?? internalFontFamily;
@@ -282,7 +287,9 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
   const textColor = selectedTextColor ?? internalTextColor;
 
   // Annotation internal fallback state
-  const [internalAnnotateTool, setInternalAnnotateTool] = useState<'pen' | 'highlighter' | 'eraser'>('pen');
+  const [internalAnnotateTool, setInternalAnnotateTool] = useState<
+    'pen' | 'highlighter' | 'eraser'
+  >('pen');
   const [internalStrokeWidth, setInternalStrokeWidth] = useState(2);
   const [internalDrawColor, setInternalDrawColor] = useState('#ef4444');
 
@@ -742,7 +749,9 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               padding: '4px 8px',
               borderRadius: 'var(--radius-sm)',
               border: isRegionSelectActive ? '1px solid #2563eb' : '1px solid var(--bg-border)',
-              backgroundColor: isRegionSelectActive ? 'rgba(37, 99, 235, 0.1)' : 'var(--bg-secondary)',
+              backgroundColor: isRegionSelectActive
+                ? 'rgba(37, 99, 235, 0.1)'
+                : 'var(--bg-secondary)',
               color: isRegionSelectActive ? '#2563eb' : 'inherit',
               cursor: 'pointer',
               fontSize: 12
@@ -782,8 +791,12 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               alignItems: 'center',
               padding: '4px 8px',
               borderRadius: 'var(--radius-sm)',
-              border: isFormatPainterActive ? '1px solid var(--bg-primary)' : '1px solid var(--bg-border)',
-              backgroundColor: isFormatPainterActive ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-secondary)',
+              border: isFormatPainterActive
+                ? '1px solid var(--bg-primary)'
+                : '1px solid var(--bg-border)',
+              backgroundColor: isFormatPainterActive
+                ? 'rgba(59, 130, 246, 0.15)'
+                : 'var(--bg-secondary)',
               color: isFormatPainterActive ? 'var(--bg-primary)' : 'inherit',
               cursor: 'pointer'
             }}
@@ -797,7 +810,13 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               data-testid="btn-bullet-list"
               onClick={onToggleBulletList}
               title="Bullet List"
-              style={{ padding: '4px 6px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--bg-border)', background: 'var(--bg-secondary)', cursor: 'pointer' }}
+              style={{
+                padding: '4px 6px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                background: 'var(--bg-secondary)',
+                cursor: 'pointer'
+              }}
             >
               <List size={14} />
             </button>
@@ -805,7 +824,13 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               data-testid="btn-numbered-list"
               onClick={onToggleNumberedList}
               title="Numbered List"
-              style={{ padding: '4px 6px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--bg-border)', background: 'var(--bg-secondary)', cursor: 'pointer' }}
+              style={{
+                padding: '4px 6px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                background: 'var(--bg-secondary)',
+                cursor: 'pointer'
+              }}
             >
               <ListOrdered size={14} />
             </button>
@@ -813,7 +838,13 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               data-testid="btn-indent-list"
               onClick={onIndentList}
               title="Indent"
-              style={{ padding: '4px 6px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--bg-border)', background: 'var(--bg-secondary)', cursor: 'pointer' }}
+              style={{
+                padding: '4px 6px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                background: 'var(--bg-secondary)',
+                cursor: 'pointer'
+              }}
             >
               <Indent size={14} />
             </button>
@@ -821,7 +852,13 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               data-testid="btn-outdent-list"
               onClick={onOutdentList}
               title="Outdent"
-              style={{ padding: '4px 6px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--bg-border)', background: 'var(--bg-secondary)', cursor: 'pointer' }}
+              style={{
+                padding: '4px 6px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                background: 'var(--bg-secondary)',
+                cursor: 'pointer'
+              }}
             >
               <Outdent size={14} />
             </button>
@@ -1180,7 +1217,13 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
       {activeMode === 'annotate' && (
         <div
           data-testid="contextual-annotate-tools"
-          style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', overflowX: 'auto' }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            flexWrap: 'nowrap',
+            overflowX: 'auto'
+          }}
         >
           {/* Free-hand Drawing Tools */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -1197,7 +1240,8 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
                 padding: '5px 10px',
                 borderRadius: 'var(--radius-sm)',
                 border: 'none',
-                backgroundColor: currentAnnotateTool === 'pen' ? 'var(--bg-primary)' : 'var(--bg-secondary)',
+                backgroundColor:
+                  currentAnnotateTool === 'pen' ? 'var(--bg-primary)' : 'var(--bg-secondary)',
                 color: currentAnnotateTool === 'pen' ? '#ffffff' : 'inherit',
                 cursor: 'pointer',
                 fontSize: 12
@@ -1221,8 +1265,13 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
                 borderRadius: 'var(--radius-sm)',
                 border: 'none',
                 backgroundColor:
-                  (currentAnnotateTool === 'marker' || currentAnnotateTool === 'highlighter') ? 'var(--bg-primary)' : 'var(--bg-secondary)',
-                color: (currentAnnotateTool === 'marker' || currentAnnotateTool === 'highlighter') ? '#ffffff' : 'inherit',
+                  currentAnnotateTool === 'marker' || currentAnnotateTool === 'highlighter'
+                    ? 'var(--bg-primary)'
+                    : 'var(--bg-secondary)',
+                color:
+                  currentAnnotateTool === 'marker' || currentAnnotateTool === 'highlighter'
+                    ? '#ffffff'
+                    : 'inherit',
                 cursor: 'pointer',
                 fontSize: 12
               }}
@@ -1297,7 +1346,9 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
             </select>
           </div>
 
-          <div style={{ width: 1, height: 18, backgroundColor: 'var(--bg-border)', margin: '0 2px' }} />
+          <div
+            style={{ width: 1, height: 18, backgroundColor: 'var(--bg-border)', margin: '0 2px' }}
+          />
 
           {/* Text Markup Tools (Task 12.1) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -1360,7 +1411,9 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
             </button>
           </div>
 
-          <div style={{ width: 1, height: 18, backgroundColor: 'var(--bg-border)', margin: '0 2px' }} />
+          <div
+            style={{ width: 1, height: 18, backgroundColor: 'var(--bg-border)', margin: '0 2px' }}
+          />
 
           {/* Sticky Note, Stamp, Signature (Tasks 12.2, 12.3, 12.4, 12.5) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -1464,7 +1517,9 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
             </button>
           </div>
 
-          <div style={{ width: 1, height: 18, backgroundColor: 'var(--bg-border)', margin: '0 2px' }} />
+          <div
+            style={{ width: 1, height: 18, backgroundColor: 'var(--bg-border)', margin: '0 2px' }}
+          />
 
           {/* Form & Summary Tools (Tasks 12.7, 12.9, 12.10) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -1670,7 +1725,9 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
             </div>
           )}
 
-          <div style={{ width: 1, height: 20, backgroundColor: 'var(--bg-border)', margin: '0 4px' }} />
+          <div
+            style={{ width: 1, height: 20, backgroundColor: 'var(--bg-border)', margin: '0 4px' }}
+          />
 
           {/* Ruler & Grid Toggles (Task 11.13) */}
           {onToggleRuler && (
@@ -1683,7 +1740,9 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
                 alignItems: 'center',
                 padding: '6px 8px',
                 borderRadius: 'var(--radius-sm)',
-                border: isRulerActive ? '1px solid var(--bg-primary)' : '1px solid var(--bg-border)',
+                border: isRulerActive
+                  ? '1px solid var(--bg-primary)'
+                  : '1px solid var(--bg-border)',
                 backgroundColor: isRulerActive ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-card)',
                 color: isRulerActive ? 'var(--bg-primary)' : 'inherit',
                 cursor: 'pointer'
@@ -1720,7 +1779,12 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
                 data-testid="btn-align-left"
                 onClick={() => onAlign('left')}
                 title="Align Left"
-                style={{ padding: '6px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                style={{
+                  padding: '6px',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer'
+                }}
               >
                 <AlignLeft size={16} />
               </button>
@@ -1728,7 +1792,12 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
                 data-testid="btn-align-center"
                 onClick={() => onAlign('center')}
                 title="Align Center"
-                style={{ padding: '6px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                style={{
+                  padding: '6px',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer'
+                }}
               >
                 <AlignCenter size={16} />
               </button>
@@ -1736,7 +1805,12 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
                 data-testid="btn-align-right"
                 onClick={() => onAlign('right')}
                 title="Align Right"
-                style={{ padding: '6px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                style={{
+                  padding: '6px',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer'
+                }}
               >
                 <AlignRight size={16} />
               </button>
@@ -1750,7 +1824,14 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
                 data-testid="btn-distribute-h"
                 onClick={() => onDistribute('horizontal')}
                 title="Distribute Horizontally"
-                style={{ padding: '4px 6px', fontSize: 11, borderRadius: 4, border: '1px solid var(--bg-border)', background: 'transparent', cursor: 'pointer' }}
+                style={{
+                  padding: '4px 6px',
+                  fontSize: 11,
+                  borderRadius: 4,
+                  border: '1px solid var(--bg-border)',
+                  background: 'transparent',
+                  cursor: 'pointer'
+                }}
               >
                 Dist-H
               </button>
@@ -1758,7 +1839,14 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
                 data-testid="btn-distribute-v"
                 onClick={() => onDistribute('vertical')}
                 title="Distribute Vertically"
-                style={{ padding: '4px 6px', fontSize: 11, borderRadius: 4, border: '1px solid var(--bg-border)', background: 'transparent', cursor: 'pointer' }}
+                style={{
+                  padding: '4px 6px',
+                  fontSize: 11,
+                  borderRadius: 4,
+                  border: '1px solid var(--bg-border)',
+                  background: 'transparent',
+                  cursor: 'pointer'
+                }}
               >
                 Dist-V
               </button>
@@ -1827,7 +1915,9 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
             </button>
           )}
 
-          <div style={{ width: 1, height: 20, backgroundColor: 'var(--bg-border)', margin: '0 4px' }} />
+          <div
+            style={{ width: 1, height: 20, backgroundColor: 'var(--bg-border)', margin: '0 4px' }}
+          />
 
           <button
             data-testid="btn-pages-rotate-cw"

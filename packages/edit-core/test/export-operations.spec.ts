@@ -133,7 +133,9 @@ describe('Phase 14: Save, Export, Share, Print operations', () => {
       expect(result1.valid).toBe(false);
       expect(result1.error).toContain('too small');
 
-      const badHeader = new TextEncoder().encode('NOT A VALID PDF FILE AT ALL IN ANY WAY 1234567890');
+      const badHeader = new TextEncoder().encode(
+        'NOT A VALID PDF FILE AT ALL IN ANY WAY 1234567890'
+      );
       const result2 = await validateSavedPdf(badHeader);
       expect(result2.valid).toBe(false);
       expect(result2.error).toContain('Invalid PDF header');

@@ -166,7 +166,10 @@ export class DeleteTextBlockCommand implements EditCommand {
 
   async apply(): Promise<void> {
     if (this.deleteRunsFn) {
-      await this.deleteRunsFn(this.pageIndex, this.deletedRuns.map((r) => r.id));
+      await this.deleteRunsFn(
+        this.pageIndex,
+        this.deletedRuns.map((r) => r.id)
+      );
     }
   }
 
@@ -499,7 +502,9 @@ export class SetTextAlignmentCommand implements EditCommand {
     public readonly blockId: string,
     public readonly oldAlign: 'left' | 'center' | 'right' | 'justify',
     public readonly newAlign: 'left' | 'center' | 'right' | 'justify',
-    private readonly applyFn?: (align: 'left' | 'center' | 'right' | 'justify') => Promise<void> | void
+    private readonly applyFn?: (
+      align: 'left' | 'center' | 'right' | 'justify'
+    ) => Promise<void> | void
   ) {
     this.name = `Set alignment of block ${blockId} to "${newAlign}"`;
   }

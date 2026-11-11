@@ -85,19 +85,38 @@ export function matchFieldToProfile(
   const norm = fieldName.toLowerCase().replace(/[^a-z0-9]/g, '');
 
   // Check full name first
-  if (norm.includes('fullname') || norm.includes('legalname') || norm.includes('applicantname') || norm.includes('clientname')) {
+  if (
+    norm.includes('fullname') ||
+    norm.includes('legalname') ||
+    norm.includes('applicantname') ||
+    norm.includes('clientname')
+  ) {
     if (profile.fullName) return profile.fullName;
   }
-  if ((norm.includes('firstname') || norm === 'fname' || norm.includes('givenname')) && profile.firstName) {
+  if (
+    (norm.includes('firstname') || norm === 'fname' || norm.includes('givenname')) &&
+    profile.firstName
+  ) {
     return profile.firstName;
   }
-  if ((norm.includes('lastname') || norm === 'lname' || norm.includes('surname') || norm.includes('familyname')) && profile.lastName) {
+  if (
+    (norm.includes('lastname') ||
+      norm === 'lname' ||
+      norm.includes('surname') ||
+      norm.includes('familyname')) &&
+    profile.lastName
+  ) {
     return profile.lastName;
   }
   if (norm.includes('email') || norm.includes('mail')) {
     if (profile.email) return profile.email;
   }
-  if (norm.includes('phone') || norm.includes('tel') || norm.includes('mobile') || norm.includes('cell')) {
+  if (
+    norm.includes('phone') ||
+    norm.includes('tel') ||
+    norm.includes('mobile') ||
+    norm.includes('cell')
+  ) {
     if (profile.phone) return profile.phone;
   }
   if (norm.includes('address') || norm.includes('street') || norm.includes('addr')) {

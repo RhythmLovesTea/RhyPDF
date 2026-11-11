@@ -4,7 +4,6 @@ import {
   STARTER_BUNDLED_FONTS,
   NOTO_SCRIPT_FONTS,
   parseFsType,
-  parseFontBuffer,
   generateRandomSubsetTag,
   subsetFont,
   classifyCodePoint,

@@ -183,11 +183,22 @@ export class RenderScheduler {
       .render(job.abortController.signal)
       .then((bitmap) => {
         this.activeJobs.delete(job.request.id);
-        this.completedCount++;
-        if (this.cache) {
-          this.cache.put(job.request.id, bitmap);
+        if (job.abortController.signal.aborted) {
+          if (typeof bitmap?.close === 'function') {
+            try {
+              bitmap.close();
+            } catch {
+              // ignore
+            }
+          }
+          job.reject(new PdfError('Cancelled', `Job ${job.request.id} cancelled during execution`));
+        } else {
+          this.completedCount++;
+          if (this.cache) {
+            this.cache.put(job.request.id, bitmap);
+          }
+          job.resolve(bitmap);
         }
-        job.resolve(bitmap);
         this.processNext();
       })
       .catch((err) => {

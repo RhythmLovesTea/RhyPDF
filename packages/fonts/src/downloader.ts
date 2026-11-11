@@ -101,10 +101,7 @@ export class FontDownloadManager {
     // Privacy guard: Never call external non-self-hosted runtime URLs (Task 8.4)
     if (/^https?:\/\//i.test(url)) {
       const parsed = new URL(url, 'http://localhost');
-      if (
-        typeof window !== 'undefined' &&
-        parsed.origin !== window.location.origin
-      ) {
+      if (typeof window !== 'undefined' && parsed.origin !== window.location.origin) {
         throw new Error(
           `Privacy violation: External font runtime fetch blocked for "${url}". Fonts must be self-hosted.`
         );
@@ -152,7 +149,9 @@ export class FontDownloadManager {
             }
             chunks.push(value);
             const total = contentLength || receivedBytes;
-            const percent = contentLength ? Math.min(100, Math.round((receivedBytes / total) * 100)) : 50;
+            const percent = contentLength
+              ? Math.min(100, Math.round((receivedBytes / total) * 100))
+              : 50;
             options.onProgress?.({
               loadedBytes: receivedBytes,
               totalBytes: total,
@@ -202,7 +201,9 @@ export class FontDownloadManager {
       clearTimeout(timer);
       const isAbort = (err as Error)?.name === 'AbortError';
       if (isAbort) {
-        throw new Error(`Font download for "${font.family}" timed out after ${timeoutMs}ms`);
+        throw new Error(`Font download for "${font.family}" timed out after ${timeoutMs}ms`, {
+          cause: err
+        });
       }
       throw err;
     }

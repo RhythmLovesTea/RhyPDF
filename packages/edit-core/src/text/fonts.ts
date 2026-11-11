@@ -9,7 +9,12 @@ export function getRecommendedBundledFont(fontName: string): string {
   if (lower.includes('courier') || lower.includes('mono') || lower.includes('consolas')) {
     return 'Courier';
   }
-  if (lower.includes('times') || lower.includes('serif') || lower.includes('georgia') || lower.includes('cambria')) {
+  if (
+    lower.includes('times') ||
+    lower.includes('serif') ||
+    lower.includes('georgia') ||
+    lower.includes('cambria')
+  ) {
     return 'Times-Roman';
   }
   return 'Roboto';

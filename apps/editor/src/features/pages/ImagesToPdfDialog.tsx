@@ -32,7 +32,8 @@ export const ImagesToPdfDialog: React.FC<ImagesToPdfDialogProps> = ({
       try {
         const buffer = await file.arrayBuffer();
         const data = new Uint8Array(buffer);
-        const format = file.type === 'image/png' || file.name.toLowerCase().endsWith('.png') ? 'png' : 'jpeg';
+        const format =
+          file.type === 'image/png' || file.name.toLowerCase().endsWith('.png') ? 'png' : 'jpeg';
         newItems.push({
           name: file.name,
           data,
@@ -151,7 +152,14 @@ export const ImagesToPdfDialog: React.FC<ImagesToPdfDialogProps> = ({
           }}
         >
           {images.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 20, color: 'var(--bg-muted-foreground)', fontSize: 13 }}>
+            <div
+              style={{
+                textAlign: 'center',
+                padding: 20,
+                color: 'var(--bg-muted-foreground)',
+                fontSize: 13
+              }}
+            >
               No images added. Click "Add Images..." to select photos or scans.
             </div>
           ) : (
@@ -170,13 +178,28 @@ export const ImagesToPdfDialog: React.FC<ImagesToPdfDialogProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
-                  <span style={{ fontWeight: 600, fontSize: 12, color: 'var(--bg-muted-foreground)' }}>
+                  <span
+                    style={{ fontWeight: 600, fontSize: 12, color: 'var(--bg-muted-foreground)' }}
+                  >
                     {idx + 1}.
                   </span>
-                  <span style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span
+                    style={{
+                      fontSize: 13,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
                     {img.name}
                   </span>
-                  <span style={{ fontSize: 11, color: 'var(--bg-muted-foreground)', textTransform: 'uppercase' }}>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: 'var(--bg-muted-foreground)',
+                      textTransform: 'uppercase'
+                    }}
+                  >
                     [{img.format}]
                   </span>
                 </div>

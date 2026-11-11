@@ -73,7 +73,9 @@ export const InsertTableDialog: React.FC<InsertTableDialogProps> = ({
           gap: 16
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 600 }}>
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 600 }}
+        >
           <Table size={20} />
           <span>{t('editor.tables.insertTable', 'Insert Table')}</span>
         </div>
@@ -86,7 +88,13 @@ export const InsertTableDialog: React.FC<InsertTableDialogProps> = ({
               <button
                 data-testid="btn-table-dec-rows"
                 onClick={() => setRows(Math.max(1, rows - 1))}
-                style={{ width: 28, height: 28, borderRadius: 4, border: '1px solid var(--bg-border)', cursor: 'pointer' }}
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 4,
+                  border: '1px solid var(--bg-border)',
+                  cursor: 'pointer'
+                }}
               >
                 -
               </button>
@@ -102,7 +110,13 @@ export const InsertTableDialog: React.FC<InsertTableDialogProps> = ({
               <button
                 data-testid="btn-table-inc-rows"
                 onClick={() => setRows(Math.min(25, rows + 1))}
-                style={{ width: 28, height: 28, borderRadius: 4, border: '1px solid var(--bg-border)', cursor: 'pointer' }}
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 4,
+                  border: '1px solid var(--bg-border)',
+                  cursor: 'pointer'
+                }}
               >
                 +
               </button>
@@ -115,7 +129,13 @@ export const InsertTableDialog: React.FC<InsertTableDialogProps> = ({
               <button
                 data-testid="btn-table-dec-cols"
                 onClick={() => setCols(Math.max(1, cols - 1))}
-                style={{ width: 28, height: 28, borderRadius: 4, border: '1px solid var(--bg-border)', cursor: 'pointer' }}
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 4,
+                  border: '1px solid var(--bg-border)',
+                  cursor: 'pointer'
+                }}
               >
                 -
               </button>
@@ -131,14 +151,28 @@ export const InsertTableDialog: React.FC<InsertTableDialogProps> = ({
               <button
                 data-testid="btn-table-inc-cols"
                 onClick={() => setCols(Math.min(12, cols + 1))}
-                style={{ width: 28, height: 28, borderRadius: 4, border: '1px solid var(--bg-border)', cursor: 'pointer' }}
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 4,
+                  border: '1px solid var(--bg-border)',
+                  cursor: 'pointer'
+                }}
               >
                 +
               </button>
             </div>
           </div>
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              cursor: 'pointer',
+              fontSize: 13
+            }}
+          >
             <input
               type="checkbox"
               data-testid="checkbox-table-header"
@@ -148,14 +182,27 @@ export const InsertTableDialog: React.FC<InsertTableDialogProps> = ({
             First row is header
           </label>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: 13
+            }}
+          >
             <span>Border color:</span>
             <input
               type="color"
               data-testid="input-table-border-color"
               value={borderColor}
               onChange={(e) => setBorderColor(e.target.value)}
-              style={{ width: 28, height: 28, border: 'none', cursor: 'pointer', background: 'transparent' }}
+              style={{
+                width: 28,
+                height: 28,
+                border: 'none',
+                cursor: 'pointer',
+                background: 'transparent'
+              }}
             />
           </div>
         </div>

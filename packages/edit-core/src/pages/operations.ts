@@ -1,12 +1,7 @@
 import { PDFDocument, degrees } from 'pdf-lib';
 import { zipSync } from 'fflate';
 import type { Rect } from '@rhypdf/pdf-model';
-import type {
-  ImagesToPdfOptions,
-  PageSizePreset,
-  SplitPdfOptions,
-  SplitResultFile
-} from './types';
+import type { ImagesToPdfOptions, PageSizePreset, SplitPdfOptions, SplitResultFile } from './types';
 import { PAGE_SIZE_PRESETS } from './types';
 
 function toUint8Array(data: Uint8Array | ArrayBuffer): Uint8Array {
@@ -23,7 +18,10 @@ export function parsePageRange(rangeStr: string, totalPages: number): number[] {
   }
 
   const result = new Set<number>();
-  const parts = rangeStr.split(/[,;\s]+/).map((s) => s.trim()).filter(Boolean);
+  const parts = rangeStr
+    .split(/[,;\s]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   for (const part of parts) {
     if (part.toLowerCase() === 'all') {
@@ -62,13 +60,14 @@ export async function rotatePagesInPdf(
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.load(toUint8Array(pdfBytes));
   const total = doc.getPageCount();
-  const targets = pageIndices.length === 0 ? Array.from({ length: total }, (_, i) => i) : pageIndices;
+  const targets =
+    pageIndices.length === 0 ? Array.from({ length: total }, (_, i) => i) : pageIndices;
 
   for (const idx of targets) {
     if (idx >= 0 && idx < total) {
       const page = doc.getPage(idx);
       const current = page.getRotation().angle;
-      const next = ((current + angleDelta) % 360 + 360) % 360;
+      const next = (((current + angleDelta) % 360) + 360) % 360;
       page.setRotation(degrees(next));
     }
   }
@@ -132,7 +131,8 @@ export async function duplicatePageInPdf(
   }
 
   const [copied] = await doc.copyPages(doc, [pageIndex]);
-  const insertAt = targetIndex !== undefined ? Math.max(0, Math.min(targetIndex, total)) : pageIndex + 1;
+  const insertAt =
+    targetIndex !== undefined ? Math.max(0, Math.min(targetIndex, total)) : pageIndex + 1;
   doc.insertPage(insertAt, copied);
   return doc.save();
 }
@@ -244,7 +244,7 @@ export async function splitPdf(
   const total = srcDoc.getPageCount();
   const results: SplitResultFile[] = [];
 
-  let groups: number[][] = [];
+  const groups: number[][] = [];
 
   if (options.mode === 'everyN') {
     const n = Math.max(1, options.everyN ?? 1);
@@ -256,7 +256,10 @@ export async function splitPdf(
       groups.push(group);
     }
   } else if (options.mode === 'ranges' && options.ranges) {
-    const rangeStrings = options.ranges.split(';').map((s) => s.trim()).filter(Boolean);
+    const rangeStrings = options.ranges
+      .split(';')
+      .map((s) => s.trim())
+      .filter(Boolean);
     for (const r of rangeStrings) {
       const indices = parsePageRange(r, total);
       if (indices.length > 0) groups.push(indices);
@@ -265,7 +268,11 @@ export async function splitPdf(
       const allIndices = parsePageRange(options.ranges, total);
       if (allIndices.length > 0) groups.push(allIndices);
     }
-  } else if (options.mode === 'selection' && options.selectedPages && options.selectedPages.length > 0) {
+  } else if (
+    options.mode === 'selection' &&
+    options.selectedPages &&
+    options.selectedPages.length > 0
+  ) {
     const selected = options.selectedPages.filter((i) => i >= 0 && i < total);
     if (selected.length > 0) groups.push(selected);
   } else if (options.mode === 'bookmarks' && options.bookmarks && options.bookmarks.length > 0) {

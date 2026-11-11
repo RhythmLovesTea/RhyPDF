@@ -67,7 +67,7 @@ export function parseLineListInfo(line: string): LineListInfo {
  */
 export function toggleBulletList(text: string): string {
   const lines = text.split('\n');
-  const allBulleted = lines.every(line => {
+  const allBulleted = lines.every((line) => {
     const info = parseLineListInfo(line);
     return !line.trim() || (info.isList && info.type === 'bullet');
   });
@@ -75,7 +75,7 @@ export function toggleBulletList(text: string): string {
   if (allBulleted) {
     // Strip bullets
     return lines
-      .map(line => {
+      .map((line) => {
         const info = parseLineListInfo(line);
         if (info.isList && info.type === 'bullet') {
           return `${INDENT_SPACES.repeat(info.level)}${info.content}`;
@@ -87,7 +87,7 @@ export function toggleBulletList(text: string): string {
 
   // Apply bullets
   return lines
-    .map(line => {
+    .map((line) => {
       if (!line.trim()) return line;
       const info = parseLineListInfo(line);
       const level = Math.min(info.level, BULLET_GLYPHS.length - 1);
@@ -103,7 +103,7 @@ export function toggleBulletList(text: string): string {
  */
 export function toggleNumberedList(text: string): string {
   const lines = text.split('\n');
-  const allNumbered = lines.every(line => {
+  const allNumbered = lines.every((line) => {
     const info = parseLineListInfo(line);
     return !line.trim() || (info.isList && info.type === 'number');
   });
@@ -111,7 +111,7 @@ export function toggleNumberedList(text: string): string {
   if (allNumbered) {
     // Strip numbering
     return lines
-      .map(line => {
+      .map((line) => {
         const info = parseLineListInfo(line);
         if (info.isList && info.type === 'number') {
           return `${INDENT_SPACES.repeat(info.level)}${info.content}`;
@@ -125,7 +125,7 @@ export function toggleNumberedList(text: string): string {
   const counters: Record<number, number> = {};
 
   return lines
-    .map(line => {
+    .map((line) => {
       if (!line.trim()) return line;
       const info = parseLineListInfo(line);
       const level = info.level;
@@ -164,7 +164,7 @@ function formatNumberForLevel(num: number, level: number): string {
 export function indentList(text: string): string {
   const lines = text.split('\n');
   return lines
-    .map(line => {
+    .map((line) => {
       if (!line.trim()) return line;
       const info = parseLineListInfo(line);
       if (info.isList && info.type === 'bullet') {
@@ -183,7 +183,7 @@ export function indentList(text: string): string {
 export function outdentList(text: string): string {
   const lines = text.split('\n');
   return lines
-    .map(line => {
+    .map((line) => {
       if (!line.trim()) return line;
       const info = parseLineListInfo(line);
       if (info.isList && info.level > 0) {
@@ -207,7 +207,7 @@ export function outdentList(text: string): string {
  * Determines prevailing list type of text.
  */
 export function detectListType(text: string): { type: ListType; level: number } {
-  const firstNonEmpty = text.split('\n').find(l => l.trim().length > 0);
+  const firstNonEmpty = text.split('\n').find((l) => l.trim().length > 0);
   if (!firstNonEmpty) {
     return { type: 'none', level: 0 };
   }

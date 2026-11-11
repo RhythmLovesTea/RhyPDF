@@ -37,7 +37,11 @@ export const ShapesPopover: React.FC<ShapesPopoverProps> = ({
 
   const shapes: { type: ShapeType; label: string; icon: React.ReactNode }[] = [
     { type: 'rectangle', label: 'Rectangle', icon: <Square size={16} /> },
-    { type: 'roundedRectangle', label: 'Rounded Rect', icon: <Square size={16} style={{ borderRadius: 4 }} /> },
+    {
+      type: 'roundedRectangle',
+      label: 'Rounded Rect',
+      icon: <Square size={16} style={{ borderRadius: 4 }} />
+    },
     { type: 'ellipse', label: 'Ellipse', icon: <Circle size={16} /> },
     { type: 'line', label: 'Line', icon: <Minus size={16} /> },
     { type: 'arrow', label: 'Arrow', icon: <MoveRight size={16} /> },
@@ -162,7 +166,10 @@ export const ShapesPopover: React.FC<ShapesPopoverProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderRadius: 'var(--radius-sm)',
-                  border: selectedType === s.type ? '2px solid var(--bg-primary)' : '1px solid var(--bg-border)',
+                  border:
+                    selectedType === s.type
+                      ? '2px solid var(--bg-primary)'
+                      : '1px solid var(--bg-border)',
                   backgroundColor: selectedType === s.type ? 'var(--bg-secondary)' : 'transparent',
                   color: 'inherit',
                   cursor: 'pointer'
@@ -191,7 +198,13 @@ export const ShapesPopover: React.FC<ShapesPopoverProps> = ({
                   data-testid="shape-fill-color"
                   value={fillColor}
                   onChange={(e) => setFillColor(e.target.value)}
-                  style={{ width: 24, height: 24, border: 'none', cursor: 'pointer', background: 'transparent' }}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: 'transparent'
+                  }}
                 />
               )}
             </div>
@@ -212,7 +225,13 @@ export const ShapesPopover: React.FC<ShapesPopoverProps> = ({
                   data-testid="shape-stroke-color"
                   value={strokeColor}
                   onChange={(e) => setStrokeColor(e.target.value)}
-                  style={{ width: 24, height: 24, border: 'none', cursor: 'pointer', background: 'transparent' }}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: 'transparent'
+                  }}
                 />
               )}
             </div>
@@ -259,7 +278,9 @@ export const ShapesPopover: React.FC<ShapesPopoverProps> = ({
             Insert Shape
           </button>
 
-          <hr style={{ border: 'none', borderTop: '1px solid var(--bg-border)', margin: '4px 0' }} />
+          <hr
+            style={{ border: 'none', borderTop: '1px solid var(--bg-border)', margin: '4px 0' }}
+          />
 
           {/* Whiteout / Cover Tool (Task 11.3) */}
           <button

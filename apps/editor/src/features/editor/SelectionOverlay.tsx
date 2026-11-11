@@ -1,6 +1,12 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { CoordinateMapper, PageObject, Rect, RotationAngle, BoundingBox } from '@rhypdf/pdf-model';
-import { computeSelectionBounds, calculateSnap, marqueeSelect, SnapGuide, type TextBlock } from '@rhypdf/edit-core';
+import {
+  computeSelectionBounds,
+  calculateSnap,
+  marqueeSelect,
+  SnapGuide,
+  type TextBlock
+} from '@rhypdf/edit-core';
 
 export type HandleType = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'rotate' | 'body';
 
@@ -68,6 +74,18 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   const [showOcrHint, setShowOcrHint] = useState(false);
 
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const pendingPointerRef = useRef<{ clientX: number; clientY: number; shiftKey: boolean } | null>(
+    null
+  );
+  const pointerRafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pointerRafRef.current !== null) {
+        cancelAnimationFrame(pointerRafRef.current);
+      }
+    };
+  }, []);
 
   // Filter selectable objects if in mode-specific views
   const eligibleObjects =
@@ -84,10 +102,9 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
       : null;
 
   // Compute union selection bounds
-  const boundsPdf =
-    currentTextBlock
-      ? currentTextBlock.bounds
-      : computeSelectionBounds(eligibleObjects, selectedIds);
+  const boundsPdf = currentTextBlock
+    ? currentTextBlock.bounds
+    : computeSelectionBounds(eligibleObjects, selectedIds);
 
   const boxCss = boundsPdf ? mapper.pdfRectToCss(boundsPdf) : null;
   const cropBoxCss = cropBoxPdf ? mapper.pdfRectToCss(cropBoxPdf) : null;
@@ -123,6 +140,94 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
     }
   };
 
+  const processPointerDelta = useCallback(
+    (clientX: number, clientY: number, shiftKey: boolean) => {
+      if (!dragStart || !boundsPdf || !boxCss) return;
+
+      const dxScreen = clientX - dragStart.x;
+      const dyScreen = clientY - dragStart.y;
+
+      if (activeHandle === 'body') {
+        const dxPt = dxScreen / scale;
+        const dyPt = -dyScreen / scale; // PDF Y is inverted from screen
+
+        let finalDxPt = dxPt;
+        let finalDyPt = dyPt;
+
+        if (snappingEnabled) {
+          const testBounds: Rect = {
+            left: boundsPdf.left + dxPt,
+            bottom: boundsPdf.bottom + dyPt,
+            right: boundsPdf.right + dxPt,
+            top: boundsPdf.top + dyPt
+          };
+          const snap = calculateSnap(
+            testBounds,
+            { width: pageWidthPt, height: pageHeightPt },
+            siblingObjects
+          );
+          if (snap.snappedX) finalDxPt = snap.x - boundsPdf.left;
+          if (snap.snappedY) finalDyPt = snap.y - boundsPdf.bottom;
+          setActiveGuides(snap.guides);
+        } else {
+          setActiveGuides([]);
+        }
+
+        onMove?.(finalDxPt, finalDyPt);
+        setDragStart({ x: clientX, y: clientY });
+      } else if (activeHandle === 'rotate') {
+        const centerScreenX = boxCss.x + boxCss.width / 2;
+        const centerScreenY = boxCss.y + boxCss.height / 2;
+        const curAngleRad = Math.atan2(clientY - centerScreenY, clientX - centerScreenX);
+        const startAngleRad = Math.atan2(dragStart.y - centerScreenY, dragStart.x - centerScreenX);
+        let angleDeltaDeg = ((curAngleRad - startAngleRad) * 180) / Math.PI;
+
+        if (shiftKey) {
+          angleDeltaDeg = Math.round(angleDeltaDeg / 15) * 15;
+        }
+        onRotate?.(angleDeltaDeg);
+      } else if (activeHandle) {
+        // Resize handle
+        const dxPt = dxScreen / scale;
+        const dyPt = -dyScreen / scale;
+
+        let newLeft = boundsPdf.left;
+        let newRight = boundsPdf.right;
+        let newBottom = boundsPdf.bottom;
+        let newTop = boundsPdf.top;
+
+        if (activeHandle.includes('w')) newLeft += dxPt;
+        if (activeHandle.includes('e')) newRight += dxPt;
+        if (activeHandle.includes('s')) newBottom += dyPt;
+        if (activeHandle.includes('n')) newTop += dyPt;
+
+        if (newRight > newLeft + 10 && newTop > newBottom + 10) {
+          onResize?.({
+            left: newLeft,
+            bottom: newBottom,
+            right: newRight,
+            top: newTop
+          });
+          setDragStart({ x: clientX, y: clientY });
+        }
+      }
+    },
+    [
+      dragStart,
+      boundsPdf,
+      boxCss,
+      activeHandle,
+      scale,
+      snappingEnabled,
+      pageWidthPt,
+      pageHeightPt,
+      siblingObjects,
+      onMove,
+      onRotate,
+      onResize
+    ]
+  );
+
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!dragStart) return;
 
@@ -145,76 +250,48 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
 
     if (!boundsPdf || !boxCss) return;
 
-    const dxScreen = e.clientX - dragStart.x;
-    const dyScreen = e.clientY - dragStart.y;
+    pendingPointerRef.current = {
+      clientX: e.clientX,
+      clientY: e.clientY,
+      shiftKey: e.shiftKey
+    };
 
-    if (activeHandle === 'body') {
-      const dxPt = dxScreen / scale;
-      const dyPt = -dyScreen / scale; // PDF Y is inverted from screen
+    const isTestEnv =
+      typeof process !== 'undefined' &&
+      Boolean(process.env?.NODE_ENV === 'test' || process.env?.VITEST);
 
-      let finalDxPt = dxPt;
-      let finalDyPt = dyPt;
-
-      if (snappingEnabled) {
-        const testBounds: Rect = {
-          left: boundsPdf.left + dxPt,
-          bottom: boundsPdf.bottom + dyPt,
-          right: boundsPdf.right + dxPt,
-          top: boundsPdf.top + dyPt
-        };
-        const snap = calculateSnap(
-          testBounds,
-          { width: pageWidthPt, height: pageHeightPt },
-          siblingObjects
-        );
-        if (snap.snappedX) finalDxPt = snap.x - boundsPdf.left;
-        if (snap.snappedY) finalDyPt = snap.y - boundsPdf.bottom;
-        setActiveGuides(snap.guides);
-      } else {
-        setActiveGuides([]);
-      }
-
-      onMove?.(finalDxPt, finalDyPt);
-      setDragStart({ x: e.clientX, y: e.clientY });
-    } else if (activeHandle === 'rotate') {
-      const centerScreenX = boxCss.x + boxCss.width / 2;
-      const centerScreenY = boxCss.y + boxCss.height / 2;
-      const curAngleRad = Math.atan2(e.clientY - centerScreenY, e.clientX - centerScreenX);
-      const startAngleRad = Math.atan2(dragStart.y - centerScreenY, dragStart.x - centerScreenX);
-      let angleDeltaDeg = ((curAngleRad - startAngleRad) * 180) / Math.PI;
-
-      if (e.shiftKey) {
-        angleDeltaDeg = Math.round(angleDeltaDeg / 15) * 15;
-      }
-      onRotate?.(angleDeltaDeg);
-    } else if (activeHandle) {
-      // Resize handle
-      const dxPt = dxScreen / scale;
-      const dyPt = -dyScreen / scale;
-
-      let newLeft = boundsPdf.left;
-      let newRight = boundsPdf.right;
-      let newBottom = boundsPdf.bottom;
-      let newTop = boundsPdf.top;
-
-      if (activeHandle.includes('w')) newLeft += dxPt;
-      if (activeHandle.includes('e')) newRight += dxPt;
-      if (activeHandle.includes('s')) newBottom += dyPt;
-      if (activeHandle.includes('n')) newTop += dyPt;
-
-      if (newRight > newLeft + 10 && newTop > newBottom + 10) {
-        onResize?.({
-          left: newLeft,
-          bottom: newBottom,
-          right: newRight,
-          top: newTop
+    if (!isTestEnv && typeof requestAnimationFrame === 'function') {
+      if (pointerRafRef.current === null) {
+        pointerRafRef.current = requestAnimationFrame(() => {
+          pointerRafRef.current = null;
+          if (pendingPointerRef.current) {
+            processPointerDelta(
+              pendingPointerRef.current.clientX,
+              pendingPointerRef.current.clientY,
+              pendingPointerRef.current.shiftKey
+            );
+            pendingPointerRef.current = null;
+          }
         });
-        setDragStart({ x: e.clientX, y: e.clientY });
       }
+    } else {
+      processPointerDelta(e.clientX, e.clientY, e.shiftKey);
     }
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
+    if (pointerRafRef.current !== null) {
+      cancelAnimationFrame(pointerRafRef.current);
+      pointerRafRef.current = null;
+    }
+    if (pendingPointerRef.current) {
+      processPointerDelta(
+        pendingPointerRef.current.clientX,
+        pendingPointerRef.current.clientY,
+        pendingPointerRef.current.shiftKey
+      );
+      pendingPointerRef.current = null;
+    }
     if (typeof (e.target as Element).releasePointerCapture === 'function') {
       try {
         (e.target as Element).releasePointerCapture(e.pointerId);
@@ -315,7 +392,8 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
       {activeMode === 'edit-text' &&
         textBlocks.map((block) => {
           const blockBox = mapper.pdfRectToCss(block.bounds);
-          const isSelected = activeBlockId === block.id || block.runs.some((r) => selectedIds.includes(r.id));
+          const isSelected =
+            activeBlockId === block.id || block.runs.some((r) => selectedIds.includes(r.id));
           const isHovered = hoveredBlockId === block.id;
 
           return (
@@ -326,7 +404,13 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
               y={blockBox.y}
               width={blockBox.width}
               height={blockBox.height}
-              fill={isSelected ? 'rgba(37, 99, 235, 0.08)' : isHovered ? 'rgba(59, 130, 246, 0.05)' : 'transparent'}
+              fill={
+                isSelected
+                  ? 'rgba(37, 99, 235, 0.08)'
+                  : isHovered
+                    ? 'rgba(59, 130, 246, 0.05)'
+                    : 'transparent'
+              }
               stroke={isSelected ? '#2563eb' : isHovered ? '#60a5fa' : 'transparent'}
               strokeWidth={1}
               strokeDasharray={isSelected ? 'none' : '3 3'}

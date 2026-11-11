@@ -220,9 +220,7 @@ export function createShape(
         currentAngle += step;
       }
 
-      segments = [
-        { type: 'moveTo', points: [pts[0]!] }
-      ];
+      segments = [{ type: 'moveTo', points: [pts[0]!] }];
       for (let i = 1; i < pts.length; i++) {
         segments.push({ type: 'lineTo', points: [pts[i]!] });
       }

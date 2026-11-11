@@ -62,7 +62,14 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 16
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Printer size={20} color="var(--bg-primary, #2563eb)" />
             <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Print Document</h3>
@@ -88,7 +95,15 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
               Pages to Print (Total {pageCount})
             </label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  fontSize: 13,
+                  cursor: 'pointer'
+                }}
+              >
                 <input
                   type="radio"
                   name="printRange"
@@ -99,7 +114,15 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
                 <span>All pages</span>
               </label>
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  fontSize: 13,
+                  cursor: 'pointer'
+                }}
+              >
                 <input
                   type="radio"
                   name="printRange"
@@ -110,7 +133,15 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
                 <span>Current page ({currentPageIndex + 1})</span>
               </label>
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  fontSize: 13,
+                  cursor: 'pointer'
+                }}
+              >
                 <input
                   type="radio"
                   name="printRange"
@@ -145,7 +176,10 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
 
           {/* Copies */}
           <div>
-            <label htmlFor="input-print-copies" style={{ fontSize: 13, fontWeight: 500, display: 'block', marginBottom: 6 }}>
+            <label
+              htmlFor="input-print-copies"
+              style={{ fontSize: 13, fontWeight: 500, display: 'block', marginBottom: 6 }}
+            >
               Copies
             </label>
             <input

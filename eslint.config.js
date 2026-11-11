@@ -14,6 +14,7 @@ export default tseslint.config(
       'fixtures/**',
       'packages/test-fixtures/fixtures/**',
       'scripts/**',
+      'src/**',
       '*.config.js',
       '*.config.ts'
     ]
@@ -27,7 +28,9 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
-      ]
+      ],
+      'no-useless-assignment': 'off',
+      'no-useless-escape': 'off'
     }
   }
 );

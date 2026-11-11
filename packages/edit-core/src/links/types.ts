@@ -27,10 +27,7 @@ export interface PageLinkDestination {
 }
 
 export type LinkDestination =
-  | UrlLinkDestination
-  | EmailLinkDestination
-  | PhoneLinkDestination
-  | PageLinkDestination;
+  UrlLinkDestination | EmailLinkDestination | PhoneLinkDestination | PageLinkDestination;
 
 export interface ObjectLink {
   target: LinkDestination;

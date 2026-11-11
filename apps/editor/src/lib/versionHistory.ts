@@ -105,7 +105,8 @@ export async function saveDocumentVersion(
 
   const timestamp = Date.now();
   const existing = await getDocumentVersions(docId);
-  const versionNumber = existing.length > 0 ? Math.max(...existing.map((v) => v.versionNumber)) + 1 : 1;
+  const versionNumber =
+    existing.length > 0 ? Math.max(...existing.map((v) => v.versionNumber)) + 1 : 1;
   const id = `ver_${docId}_${timestamp}_${versionNumber}`;
 
   const record: VersionRecord = {

@@ -87,7 +87,16 @@ export const CommentsPanel: React.FC<CommentsPanelProps> = ({
       </div>
 
       {/* List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: 12,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10
+        }}
+      >
         {entries.length === 0 ? (
           <div
             style={{
@@ -97,7 +106,9 @@ export const CommentsPanel: React.FC<CommentsPanelProps> = ({
               fontSize: 13
             }}
           >
-            {t('editor.annotations.noComments', { defaultValue: 'No comments or sticky notes yet.' })}
+            {t('editor.annotations.noComments', {
+              defaultValue: 'No comments or sticky notes yet.'
+            })}
           </div>
         ) : (
           entries.map(({ pageIndex, annot }) => {
@@ -121,7 +132,9 @@ export const CommentsPanel: React.FC<CommentsPanelProps> = ({
                   gap: 4
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
                   <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--bg-primary)' }}>
                     Page {pageIndex + 1} • {annot.author ?? 'Anonymous'}
                   </span>
@@ -131,7 +144,12 @@ export const CommentsPanel: React.FC<CommentsPanelProps> = ({
                         e.stopPropagation();
                         onJumpToPage(pageIndex);
                       }}
-                      style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 2 }}
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        cursor: 'pointer',
+                        padding: 2
+                      }}
                       title="Jump to page"
                     >
                       <ArrowUpRight size={13} />
@@ -142,7 +160,13 @@ export const CommentsPanel: React.FC<CommentsPanelProps> = ({
                           e.stopPropagation();
                           onDeleteComment(pageIndex, annot.id);
                         }}
-                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 2, color: '#dc2626' }}
+                        style={{
+                          border: 'none',
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          padding: 2,
+                          color: '#dc2626'
+                        }}
                         title="Delete"
                       >
                         <Trash2 size={13} />

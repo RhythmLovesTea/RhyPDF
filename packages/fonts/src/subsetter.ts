@@ -43,8 +43,7 @@ export async function subsetFont(
   usedCharsOrCodePoints: string | Set<number> | number[],
   options: SubsetFontOptions = {}
 ): Promise<SubsetFontResult> {
-  const originalBytes =
-    fontBuffer instanceof Uint8Array ? fontBuffer : new Uint8Array(fontBuffer);
+  const originalBytes = fontBuffer instanceof Uint8Array ? fontBuffer : new Uint8Array(fontBuffer);
   const parsed = parseFontBuffer(originalBytes);
 
   // Collect distinct codepoints
@@ -129,10 +128,7 @@ async function tryHarfBuzzSubset(
  * Pure TrueType subsetter
  * Strips unused tables and constructs a compact, valid font binary
  */
-function createPureTrueTypeSubset(
-  fontBytes: Uint8Array,
-  _codepoints: Set<number>
-): Uint8Array {
+function createPureTrueTypeSubset(fontBytes: Uint8Array, _codepoints: Set<number>): Uint8Array {
   // If font is already small or simple, return optimized copy
   if (fontBytes.byteLength <= 1024) {
     return fontBytes;
@@ -185,7 +181,7 @@ function createPureTrueTypeSubset(
   preservedTables.sort((a, b) => a.tag.localeCompare(b.tag));
 
   // Compute total size: 12 bytes header + 16 bytes per table entry + 4-byte padded table data
-  let headerSize = 12 + preservedTables.length * 16;
+  const headerSize = 12 + preservedTables.length * 16;
   let currentOffset = headerSize;
   const offsets: number[] = [];
 

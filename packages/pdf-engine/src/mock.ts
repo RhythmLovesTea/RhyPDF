@@ -24,6 +24,7 @@ import type {
   LeakReport
 } from './index';
 import { PdfError } from './index';
+import { PixelBufferPool } from './buffer-pool';
 
 interface MockPageState {
   pageIndex: number;
@@ -278,20 +279,27 @@ export class MockPdfEngine implements PdfEngine {
       throw new PdfError('Cancelled', 'Render operation was cancelled');
     }
 
+    const requiredBytes = widthPx * heightPx * 4;
+    const pool = PixelBufferPool.getInstance();
+    const pooledBuffer = pool.acquire(requiredBytes);
+    const clamped = pooledBuffer.subarray(0, requiredBytes);
+    clamped.fill(255);
+
     // In browser context: use browser's createImageBitmap if available
     if (typeof createImageBitmap === 'function' && typeof ImageData === 'function') {
-      const clamped = new Uint8ClampedArray(widthPx * heightPx * 4);
-      // Fill with mock white background
-      clamped.fill(255);
       const imgData = new ImageData(clamped, widthPx, heightPx);
-      return await createImageBitmap(imgData);
+      const bmp = await createImageBitmap(imgData);
+      pool.release(pooledBuffer);
+      return bmp;
     }
 
     // In node/test environment fallback: return ImageBitmap polyfill object
     return {
       width: widthPx,
       height: heightPx,
-      close: () => {}
+      close: () => {
+        pool.release(pooledBuffer);
+      }
     } as unknown as ImageBitmap;
   }
 

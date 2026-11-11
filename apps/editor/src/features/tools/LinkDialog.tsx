@@ -31,7 +31,8 @@ export const LinkDialog: React.FC<LinkDialogProps> = ({
       if (initialLink.target.type === 'url') setInputValue(initialLink.target.url);
       else if (initialLink.target.type === 'email') setInputValue(initialLink.target.email);
       else if (initialLink.target.type === 'phone') setInputValue(initialLink.target.phone);
-      else if (initialLink.target.type === 'page') setInputValue(String(initialLink.target.pageIndex + 1));
+      else if (initialLink.target.type === 'page')
+        setInputValue(String(initialLink.target.pageIndex + 1));
     } else {
       setInputValue('');
     }
@@ -55,7 +56,11 @@ export const LinkDialog: React.FC<LinkDialogProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onClose={onClose} title={initialLink ? 'Edit Hyperlink' : 'Add Hyperlink'}>
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      title={initialLink ? 'Edit Hyperlink' : 'Add Hyperlink'}
+    >
       <div
         data-testid="dialog-link"
         style={{
@@ -66,7 +71,9 @@ export const LinkDialog: React.FC<LinkDialogProps> = ({
           gap: 14
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 600 }}>
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 600 }}
+        >
           <LinkIcon size={18} />
           <span>{initialLink ? 'Edit Hyperlink' : 'Add Hyperlink'}</span>
         </div>
@@ -125,7 +132,13 @@ export const LinkDialog: React.FC<LinkDialogProps> = ({
                     ? '+1-555-123-4567'
                     : '1'
             }
-            style={{ width: '100%', padding: '6px 8px', fontSize: 13, border: '1px solid var(--bg-border)', borderRadius: 4 }}
+            style={{
+              width: '100%',
+              padding: '6px 8px',
+              fontSize: 13,
+              border: '1px solid var(--bg-border)',
+              borderRadius: 4
+            }}
           />
         </div>
 
@@ -145,7 +158,14 @@ export const LinkDialog: React.FC<LinkDialogProps> = ({
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: 8
+          }}
+        >
           {initialLink && onRemoveLink ? (
             <button
               data-testid="btn-remove-link"
@@ -169,13 +189,21 @@ export const LinkDialog: React.FC<LinkDialogProps> = ({
               <Trash2 size={13} />
               Remove Link
             </button>
-          ) : <div />}
+          ) : (
+            <div />
+          )}
 
           <div style={{ display: 'flex', gap: 8 }}>
             <button
               data-testid="btn-cancel-link"
               onClick={onClose}
-              style={{ padding: '6px 12px', borderRadius: 4, border: '1px solid var(--bg-border)', background: 'transparent', cursor: 'pointer' }}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 4,
+                border: '1px solid var(--bg-border)',
+                background: 'transparent',
+                cursor: 'pointer'
+              }}
             >
               Cancel
             </button>

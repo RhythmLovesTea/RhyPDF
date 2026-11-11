@@ -14,7 +14,8 @@ export interface MarkupAnnotationOptions {
   zIndex?: number;
 }
 
-export type StickyNoteIcon = 'Comment' | 'Key' | 'Note' | 'Help' | 'NewParagraph' | 'Paragraph' | 'Insert';
+export type StickyNoteIcon =
+  'Comment' | 'Key' | 'Note' | 'Help' | 'NewParagraph' | 'Paragraph' | 'Insert';
 
 export interface StickyNoteOptions {
   position: { x: number; y: number };

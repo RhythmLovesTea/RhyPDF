@@ -100,7 +100,13 @@ export const WatermarkDialog: React.FC<WatermarkDialogProps> = ({
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Enter watermark text..."
-              style={{ width: '100%', padding: '6px 8px', fontSize: 13, border: '1px solid var(--bg-border)', borderRadius: 4 }}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                fontSize: 13,
+                border: '1px solid var(--bg-border)',
+                borderRadius: 4
+              }}
             />
           </div>
 
@@ -167,7 +173,13 @@ export const WatermarkDialog: React.FC<WatermarkDialogProps> = ({
                 placeholder="e.g. 1-3"
                 value={customRange}
                 onChange={(e) => setCustomRange(e.target.value)}
-                style={{ width: 80, padding: '4px 6px', fontSize: 12, border: '1px solid var(--bg-border)', borderRadius: 4 }}
+                style={{
+                  width: 80,
+                  padding: '4px 6px',
+                  fontSize: 12,
+                  border: '1px solid var(--bg-border)',
+                  borderRadius: 4
+                }}
               />
             )}
           </div>
@@ -177,14 +189,28 @@ export const WatermarkDialog: React.FC<WatermarkDialogProps> = ({
           <button
             data-testid="btn-watermark-cancel"
             onClick={onClose}
-            style={{ padding: '6px 14px', borderRadius: 4, border: '1px solid var(--bg-border)', background: 'transparent', cursor: 'pointer' }}
+            style={{
+              padding: '6px 14px',
+              borderRadius: 4,
+              border: '1px solid var(--bg-border)',
+              background: 'transparent',
+              cursor: 'pointer'
+            }}
           >
             Cancel
           </button>
           <button
             data-testid="btn-watermark-apply"
             onClick={handleApply}
-            style={{ padding: '6px 16px', borderRadius: 4, border: 'none', background: 'var(--bg-primary)', color: '#ffffff', cursor: 'pointer', fontWeight: 500 }}
+            style={{
+              padding: '6px 16px',
+              borderRadius: 4,
+              border: 'none',
+              background: 'var(--bg-primary)',
+              color: '#ffffff',
+              cursor: 'pointer',
+              fontWeight: 500
+            }}
           >
             Apply Watermark
           </button>

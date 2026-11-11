@@ -132,7 +132,14 @@ export const VersionHistoryDialog: React.FC<VersionHistoryDialogProps> = ({
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 14
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <History size={20} color="var(--bg-primary, #2563eb)" />
             <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Version History</h3>
@@ -163,7 +170,15 @@ export const VersionHistoryDialog: React.FC<VersionHistoryDialogProps> = ({
             marginBottom: 14
           }}
         >
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 13,
+              cursor: 'pointer'
+            }}
+          >
             <input
               data-testid="toggle-enable-version-history"
               type="checkbox"
@@ -191,7 +206,16 @@ export const VersionHistoryDialog: React.FC<VersionHistoryDialogProps> = ({
         </div>
 
         {/* Version List */}
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, minHeight: 180 }}>
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+            minHeight: 180
+          }}
+        >
           {isLoading ? (
             <div style={{ textAlign: 'center', padding: 24, color: 'var(--bg-muted-foreground)' }}>
               Loading versions...

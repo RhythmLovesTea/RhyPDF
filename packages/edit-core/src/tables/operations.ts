@@ -10,7 +10,8 @@ import { createTable } from './generator';
  * Adds a new row to the table at the given index (or at the end if omitted).
  */
 export function addTableRow(table: TableStructure, atIndex?: number): GeneratedTable {
-  const insertIndex = atIndex !== undefined ? Math.max(0, Math.min(table.rowCount, atIndex)) : table.rowCount;
+  const insertIndex =
+    atIndex !== undefined ? Math.max(0, Math.min(table.rowCount, atIndex)) : table.rowCount;
   const newRowCount = table.rowCount + 1;
 
   // Preserve existing cell texts where possible
@@ -39,7 +40,7 @@ export function addTableRow(table: TableStructure, atIndex?: number): GeneratedT
     const prevText = prevCellMap.get(`${oldR},${newCell.col}`);
     if (prevText !== undefined) {
       newCell.text = prevText;
-      const block = generated.textBlocks.find(b => b.id === newCell.blockId);
+      const block = generated.textBlocks.find((b) => b.id === newCell.blockId);
       if (block) {
         block.lines[0]!.text = prevText;
         block.lines[0]!.spans[0]!.text = prevText;
@@ -78,7 +79,7 @@ export function removeTableRow(table: TableStructure, rowIndex: number): Generat
     const prevText = prevCellMap.get(`${oldR},${newCell.col}`);
     if (prevText !== undefined) {
       newCell.text = prevText;
-      const block = generated.textBlocks.find(b => b.id === newCell.blockId);
+      const block = generated.textBlocks.find((b) => b.id === newCell.blockId);
       if (block) {
         block.lines[0]!.text = prevText;
         block.lines[0]!.spans[0]!.text = prevText;
@@ -93,7 +94,8 @@ export function removeTableRow(table: TableStructure, rowIndex: number): Generat
  * Adds a new column to the table at the given index (or at the end if omitted).
  */
 export function addTableColumn(table: TableStructure, atIndex?: number): GeneratedTable {
-  const insertIndex = atIndex !== undefined ? Math.max(0, Math.min(table.colCount, atIndex)) : table.colCount;
+  const insertIndex =
+    atIndex !== undefined ? Math.max(0, Math.min(table.colCount, atIndex)) : table.colCount;
   const newColCount = table.colCount + 1;
 
   const prevCellMap = new Map<string, string>();
@@ -120,7 +122,7 @@ export function addTableColumn(table: TableStructure, atIndex?: number): Generat
     const prevText = prevCellMap.get(`${newCell.row},${oldC}`);
     if (prevText !== undefined) {
       newCell.text = prevText;
-      const block = generated.textBlocks.find(b => b.id === newCell.blockId);
+      const block = generated.textBlocks.find((b) => b.id === newCell.blockId);
       if (block) {
         block.lines[0]!.text = prevText;
         block.lines[0]!.spans[0]!.text = prevText;
@@ -159,7 +161,7 @@ export function removeTableColumn(table: TableStructure, colIndex: number): Gene
     const prevText = prevCellMap.get(`${newCell.row},${oldC}`);
     if (prevText !== undefined) {
       newCell.text = prevText;
-      const block = generated.textBlocks.find(b => b.id === newCell.blockId);
+      const block = generated.textBlocks.find((b) => b.id === newCell.blockId);
       if (block) {
         block.lines[0]!.text = prevText;
         block.lines[0]!.spans[0]!.text = prevText;

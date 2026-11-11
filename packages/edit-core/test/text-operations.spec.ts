@@ -13,7 +13,6 @@ import {
   MoveTextBlockCommand,
   ResizeTextBlockWidthCommand,
   RotateTextBlockCommand,
-  BatchReplaceTextCommand,
   SetFontFamilyCommand,
   SetFontSizeCommand,
   SetTextStyleCommand,
@@ -122,19 +121,31 @@ describe('Phase 7: Text Grouping, Detection, and Operations', () => {
     });
 
     it('identifies headers and footers based on vertical margin positions', () => {
-      const header = createMockTextRun('hdr', 'Document Header Section', {
-        left: 50,
-        bottom: 780,
-        right: 250,
-        top: 800
-      }, 'Helvetica-Bold', 18);
+      const header = createMockTextRun(
+        'hdr',
+        'Document Header Section',
+        {
+          left: 50,
+          bottom: 780,
+          right: 250,
+          top: 800
+        },
+        'Helvetica-Bold',
+        18
+      );
 
-      const footer = createMockTextRun('ftr', 'Page 1 of 10 - Confidential', {
-        left: 200,
-        bottom: 30,
-        right: 380,
-        top: 40
-      }, 'Helvetica', 9);
+      const footer = createMockTextRun(
+        'ftr',
+        'Page 1 of 10 - Confidential',
+        {
+          left: 200,
+          bottom: 30,
+          right: 380,
+          top: 40
+        },
+        'Helvetica',
+        9
+      );
 
       const blocks = groupTextRunsToBlocks([header, footer], 0, { pageHeight: 842 });
       expect(blocks.length).toBe(2);
@@ -167,11 +178,31 @@ describe('Phase 7: Text Grouping, Detection, and Operations', () => {
 
     it('detects table structures with grid-aligned columns', () => {
       // Row 1
-      const c1r1 = createMockTextRun('c1r1', 'Item A', { left: 50, bottom: 500, right: 120, top: 512 });
-      const c2r1 = createMockTextRun('c2r1', '$100.00', { left: 200, bottom: 500, right: 260, top: 512 });
+      const c1r1 = createMockTextRun('c1r1', 'Item A', {
+        left: 50,
+        bottom: 500,
+        right: 120,
+        top: 512
+      });
+      const c2r1 = createMockTextRun('c2r1', '$100.00', {
+        left: 200,
+        bottom: 500,
+        right: 260,
+        top: 512
+      });
       // Row 2
-      const c1r2 = createMockTextRun('c1r2', 'Item B', { left: 50, bottom: 480, right: 120, top: 492 });
-      const c2r2 = createMockTextRun('c2r2', '$250.00', { left: 200, bottom: 480, right: 260, top: 492 });
+      const c1r2 = createMockTextRun('c1r2', 'Item B', {
+        left: 50,
+        bottom: 480,
+        right: 120,
+        top: 492
+      });
+      const c2r2 = createMockTextRun('c2r2', '$250.00', {
+        left: 200,
+        bottom: 480,
+        right: 260,
+        top: 492
+      });
 
       const blocks = groupTextRunsToBlocks([c1r1, c2r1, c1r2, c2r2], 0);
       expect(blocks.some((b) => b.isTableCell)).toBe(true);
@@ -180,19 +211,33 @@ describe('Phase 7: Text Grouping, Detection, and Operations', () => {
 
   describe('Task 7.3: Rotated text, vertical CJK text, and character spacing', () => {
     it('handles 90-degree rotated text runs without crashing and groups them correctly', () => {
-      const rot1 = createMockTextRun('rot1', 'Rotated vertical label line 1', {
-        left: 50,
-        bottom: 100,
-        right: 64,
-        top: 250
-      }, 'Helvetica', 12, { rotation: 90 });
+      const rot1 = createMockTextRun(
+        'rot1',
+        'Rotated vertical label line 1',
+        {
+          left: 50,
+          bottom: 100,
+          right: 64,
+          top: 250
+        },
+        'Helvetica',
+        12,
+        { rotation: 90 }
+      );
 
-      const rot2 = createMockTextRun('rot2', 'Rotated vertical label line 2', {
-        left: 70,
-        bottom: 100,
-        right: 84,
-        top: 250
-      }, 'Helvetica', 12, { rotation: 90 });
+      const rot2 = createMockTextRun(
+        'rot2',
+        'Rotated vertical label line 2',
+        {
+          left: 70,
+          bottom: 100,
+          right: 84,
+          top: 250
+        },
+        'Helvetica',
+        12,
+        { rotation: 90 }
+      );
 
       const blocks = groupTextRunsToBlocks([rot1, rot2], 0);
       expect(blocks.length).toBe(1);
@@ -200,12 +245,18 @@ describe('Phase 7: Text Grouping, Detection, and Operations', () => {
     });
 
     it('identifies vertical CJK text writing mode', () => {
-      const cjkRun = createMockTextRun('cjk1', '東京都千代田区', {
-        left: 50,
-        bottom: 100,
-        right: 64,
-        top: 260
-      }, 'HeitiSC', 14);
+      const cjkRun = createMockTextRun(
+        'cjk1',
+        '東京都千代田区',
+        {
+          left: 50,
+          bottom: 100,
+          right: 64,
+          top: 260
+        },
+        'HeitiSC',
+        14
+      );
 
       const blocks = groupTextRunsToBlocks([cjkRun], 0);
       expect(blocks.length).toBe(1);
@@ -213,15 +264,22 @@ describe('Phase 7: Text Grouping, Detection, and Operations', () => {
     });
 
     it('preserves horizontal scaling and character spacing attributes on runs', () => {
-      const spacedRun = createMockTextRun('sp1', 'EXPANDED TEXT', {
-        left: 50,
-        bottom: 500,
-        right: 250,
-        top: 514
-      }, 'Helvetica', 14, {
-        charSpacing: 2.5,
-        horizontalScale: 1.2
-      });
+      const spacedRun = createMockTextRun(
+        'sp1',
+        'EXPANDED TEXT',
+        {
+          left: 50,
+          bottom: 500,
+          right: 250,
+          top: 514
+        },
+        'Helvetica',
+        14,
+        {
+          charSpacing: 2.5,
+          horizontalScale: 1.2
+        }
+      );
 
       const blocks = groupTextRunsToBlocks([spacedRun], 0);
       expect(blocks[0]!.runs[0]!.charSpacing).toBe(2.5);
@@ -231,15 +289,22 @@ describe('Phase 7: Text Grouping, Detection, and Operations', () => {
 
   describe('Task 7.4: Font reusability and subset detection', () => {
     it('allows full reuse for standard 14 and full fonts', () => {
-      const run = createMockTextRun('std1', 'Hello World', {
-        left: 50,
-        bottom: 500,
-        right: 150,
-        top: 512
-      }, 'Helvetica', 12, {
-        isEmbeddedSubset: false,
-        fontInfo: { isEmbedded: false, isSubset: false }
-      });
+      const run = createMockTextRun(
+        'std1',
+        'Hello World',
+        {
+          left: 50,
+          bottom: 500,
+          right: 150,
+          top: 512
+        },
+        'Helvetica',
+        12,
+        {
+          isEmbeddedSubset: false,
+          fontInfo: { isEmbedded: false, isSubset: false }
+        }
+      );
 
       const reusability = detectFontReusability([run], 'Any newly typed text 12345!');
       expect(reusability.canReuseFont).toBe(true);
@@ -248,15 +313,22 @@ describe('Phase 7: Text Grouping, Detection, and Operations', () => {
     });
 
     it('detects subset font tag and flags missing glyphs when new letters are typed', () => {
-      const subsetRun = createMockTextRun('sub1', 'ABC Only', {
-        left: 50,
-        bottom: 500,
-        right: 150,
-        top: 512
-      }, 'XYZABC+CustomFont', 12, {
-        isEmbeddedSubset: true,
-        fontInfo: { isEmbedded: true, isSubset: true, subsetTag: 'XYZABC' }
-      });
+      const subsetRun = createMockTextRun(
+        'sub1',
+        'ABC Only',
+        {
+          left: 50,
+          bottom: 500,
+          right: 150,
+          top: 512
+        },
+        'XYZABC+CustomFont',
+        12,
+        {
+          isEmbeddedSubset: true,
+          fontInfo: { isEmbedded: true, isSubset: true, subsetTag: 'XYZABC' }
+        }
+      );
 
       // Contains letters 'A', 'B', 'C', 'O', 'n', 'l', 'y'
       const reusabilitySame = detectFontReusability([subsetRun], 'ABC');
@@ -274,9 +346,24 @@ describe('Phase 7: Text Grouping, Detection, and Operations', () => {
 
   describe('Task 7.6: Select text region tool (drag rectangle)', () => {
     it('groups runs strictly within selected region rectangle', () => {
-      const r1 = createMockTextRun('r1', 'Inside box 1', { left: 50, bottom: 500, right: 120, top: 512 });
-      const r2 = createMockTextRun('r2', 'Inside box 2', { left: 50, bottom: 480, right: 120, top: 492 });
-      const rFar = createMockTextRun('rFar', 'Far away', { left: 50, bottom: 200, right: 120, top: 212 });
+      const r1 = createMockTextRun('r1', 'Inside box 1', {
+        left: 50,
+        bottom: 500,
+        right: 120,
+        top: 512
+      });
+      const r2 = createMockTextRun('r2', 'Inside box 2', {
+        left: 50,
+        bottom: 480,
+        right: 120,
+        top: 492
+      });
+      const rFar = createMockTextRun('rFar', 'Far away', {
+        left: 50,
+        bottom: 200,
+        right: 120,
+        top: 212
+      });
 
       const regionRect: Rect = { left: 40, bottom: 470, right: 130, top: 520 };
       const block = groupRunsInRegion([r1, r2, rFar], regionRect, 0);
@@ -331,11 +418,16 @@ describe('Phase 7: Text Grouping, Detection, and Operations', () => {
       const match = findInTextBlocks(blocks, 'note')[0]!;
 
       // Huge replacement string that expands past bounds
-      const longReplacement = 'very extremely immensely expanded paragraph that definitely exceeds the 70pt width';
+      const longReplacement =
+        'very extremely immensely expanded paragraph that definitely exceeds the 70pt width';
       const isOverflow = checkReplacementOverflow(match, longReplacement, blocks[0]!);
       expect(isOverflow).toBe(true);
 
-      const { updatedLines, isOverflow: flag } = applyReplacementToBlock(blocks[0]!, match, longReplacement);
+      const { updatedLines, isOverflow: flag } = applyReplacementToBlock(
+        blocks[0]!,
+        match,
+        longReplacement
+      );
       expect(flag).toBe(true);
       expect(updatedLines[0]).toContain('very extremely immensely expanded');
     });
@@ -343,7 +435,12 @@ describe('Phase 7: Text Grouping, Detection, and Operations', () => {
 
   describe('Task 7.11, 7.15, 7.16, 7.17, 7.19: Commands and EditSession integration', () => {
     it('coalesces rapid consecutive typing commits on the same block (Task 7.19)', () => {
-      const r = createMockTextRun('r1', 'Initial text', { left: 50, bottom: 500, right: 150, top: 512 });
+      const r = createMockTextRun('r1', 'Initial text', {
+        left: 50,
+        bottom: 500,
+        right: 150,
+        top: 512
+      });
       const block = groupTextRunsToBlocks([r], 0)[0]!;
 
       const cmd1 = new CommitTextBlockCommand(0, block.id, block, ['Initial text a']);
@@ -387,7 +484,12 @@ describe('Phase 7: Text Grouping, Detection, and Operations', () => {
 
     it('executes and undoes DeleteTextBlockCommand (Task 7.16)', async () => {
       const session = new EditSession('doc-text-delete', 1);
-      const r = createMockTextRun('del-run', 'To be deleted', { left: 50, bottom: 500, right: 150, top: 512 });
+      const r = createMockTextRun('del-run', 'To be deleted', {
+        left: 50,
+        bottom: 500,
+        right: 150,
+        top: 512
+      });
       const block = groupTextRunsToBlocks([r], 0)[0]!;
 
       let deletedIds: string[] = [];
@@ -537,7 +639,10 @@ describe('Phase 7: Text Grouping, Detection, and Operations', () => {
         { lineSpacing: 1.0, letterSpacing: 0 },
         { lineSpacing: 1.5, letterSpacing: 2 },
         (sp) => {
-          currentSpacing = { lineSpacing: sp.lineSpacing ?? 1.0, letterSpacing: sp.letterSpacing ?? 0 };
+          currentSpacing = {
+            lineSpacing: sp.lineSpacing ?? 1.0,
+            letterSpacing: sp.letterSpacing ?? 0
+          };
         }
       );
       await spacingCmd.apply();

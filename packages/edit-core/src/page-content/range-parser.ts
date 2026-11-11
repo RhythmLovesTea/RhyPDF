@@ -32,13 +32,13 @@ export function resolvePageIndices(
       if (!customRange || !customRange.trim()) {
         indices = Array.from({ length: totalPages }, (_, i) => i);
       } else {
-        const parts = customRange.split(',').map(s => s.trim());
+        const parts = customRange.split(',').map((s) => s.trim());
         const set = new Set<number>();
 
         for (const part of parts) {
           if (!part) continue;
           if (part.includes('-')) {
-            const [startStr, endStr] = part.split('-').map(s => s.trim());
+            const [startStr, endStr] = part.split('-').map((s) => s.trim());
             const start = parseInt(startStr!, 10);
             const end = parseInt(endStr!, 10);
             if (!isNaN(start) && !isNaN(end)) {
@@ -67,7 +67,7 @@ export function resolvePageIndices(
   }
 
   if (excludeFirstPage) {
-    indices = indices.filter(idx => idx !== 0);
+    indices = indices.filter((idx) => idx !== 0);
   }
 
   return indices;

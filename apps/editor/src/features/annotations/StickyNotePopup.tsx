@@ -27,9 +27,7 @@ export const StickyNotePopup: React.FC<StickyNotePopupProps> = ({
     setIsEditing(false);
   };
 
-  const formattedDate = annotation.createdAt
-    ? new Date(annotation.createdAt).toLocaleString()
-    : '';
+  const formattedDate = annotation.createdAt ? new Date(annotation.createdAt).toLocaleString() : '';
 
   return (
     <div
@@ -133,7 +131,14 @@ export const StickyNotePopup: React.FC<StickyNotePopupProps> = ({
           </p>
         )}
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: 4
+          }}
+        >
           <span style={{ fontSize: 10, color: '#854d0e' }}>{formattedDate}</span>
           {isEditing && (
             <button

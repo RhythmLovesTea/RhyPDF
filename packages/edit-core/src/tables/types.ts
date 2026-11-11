@@ -33,7 +33,7 @@ export interface TableStructure {
   rowCount: number;
   colCount: number;
   rowHeights: number[]; // Height of each row in points
-  colWidths: number[];  // Width of each column in points
+  colWidths: number[]; // Width of each column in points
   options: TableOptions;
   cells: TableCellData[];
   gridPathId: string;

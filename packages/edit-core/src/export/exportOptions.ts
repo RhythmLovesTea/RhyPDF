@@ -55,7 +55,7 @@ export async function exportPdfDocument(
       savedBytes[1] === 0x50 && // P
       savedBytes[2] === 0x44 && // D
       savedBytes[3] === 0x46 && // F
-      savedBytes[4] === 0x2d    // -
+      savedBytes[4] === 0x2d // -
     ) {
       const copy = new Uint8Array(savedBytes);
       for (let i = 0; i < Math.min(headerBytes.length, 8); i++) {

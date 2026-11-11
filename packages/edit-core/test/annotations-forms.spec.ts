@@ -8,12 +8,8 @@ import {
   stickyNoteToPageObjects,
   createStampAnnotation,
   stampToPageObjects,
-  STAMP_PRESETS,
   generateAnnotationSummary,
   flattenAnnotations,
-  AddAnnotationCommand,
-  UpdateAnnotationCommand,
-  DeleteAnnotationCommand,
   deriveKeyFromPassphrase,
   encryptSignaturePayload,
   decryptSignaturePayload,
@@ -32,8 +28,7 @@ import {
   loadAutofillProfile,
   flattenFormFields,
   SetFormFieldValueCommand,
-  CreateFormFieldCommand,
-  DeleteFormFieldCommand
+  CreateFormFieldCommand
 } from '../src';
 import type { AnnotationObject } from '@rhypdf/pdf-model';
 import type { AcroFormField } from '../src/forms/types';

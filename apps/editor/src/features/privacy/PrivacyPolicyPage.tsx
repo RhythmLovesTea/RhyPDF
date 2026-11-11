@@ -35,7 +35,8 @@ export const PrivacyPolicyPage: React.FC<PrivacyPolicyPageProps> = ({ onBack }) 
       </div>
 
       <p style={{ fontSize: 14, color: 'var(--bg-muted-foreground, #64748b)', marginBottom: 28 }}>
-        RhyPDF is built on an uncompromising zero-trust privacy model: your files never leave your computer.
+        RhyPDF is built on an uncompromising zero-trust privacy model: your files never leave your
+        computer.
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20, lineHeight: 1.6 }}>
@@ -49,10 +50,14 @@ export const PrivacyPolicyPage: React.FC<PrivacyPolicyPageProps> = ({ onBack }) 
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <HardDrive size={18} color="var(--bg-primary, #2563eb)" />
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>100% Client-Side On-Device Processing</h3>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
+              100% Client-Side On-Device Processing
+            </h3>
           </div>
           <p style={{ margin: 0, fontSize: 13, color: 'var(--bg-muted-foreground, #64748b)' }}>
-            Every operation — text rendering, editing, OCR, page manipulation, compression, and saving — runs strictly inside your web browser via WebAssembly (PDFium, HarfBuzz, Tesseract). No document bytes are ever uploaded or transmitted over the network.
+            Every operation — text rendering, editing, OCR, page manipulation, compression, and
+            saving — runs strictly inside your web browser via WebAssembly (PDFium, HarfBuzz,
+            Tesseract). No document bytes are ever uploaded or transmitted over the network.
           </p>
         </section>
 
@@ -66,10 +71,13 @@ export const PrivacyPolicyPage: React.FC<PrivacyPolicyPageProps> = ({ onBack }) 
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <EyeOff size={18} color="#f59e0b" />
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Zero Tracking of Document Content</h3>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
+              Zero Tracking of Document Content
+            </h3>
           </div>
           <p style={{ margin: 0, fontSize: 13, color: 'var(--bg-muted-foreground, #64748b)' }}>
-            We do not collect document contents, filenames, metadata, or search queries. Any diagnostics are strictly opt-in, anonymous, cookie-less, and content-free.
+            We do not collect document contents, filenames, metadata, or search queries. Any
+            diagnostics are strictly opt-in, anonymous, cookie-less, and content-free.
           </p>
         </section>
 
@@ -83,10 +91,14 @@ export const PrivacyPolicyPage: React.FC<PrivacyPolicyPageProps> = ({ onBack }) 
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <Lock size={18} color="#8b5cf6" />
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Local Encryption & Safe Storage</h3>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
+              Local Encryption & Safe Storage
+            </h3>
           </div>
           <p style={{ margin: 0, fontSize: 13, color: 'var(--bg-muted-foreground, #64748b)' }}>
-            Signatures and local data are protected using WebCrypto PBKDF2 with 100,000 iterations and 256-bit AES-GCM encryption. Temporary working copies are saved in your browser's private origin filesystem (OPFS) and are wiped upon closing or manual clearing.
+            Signatures and local data are protected using WebCrypto PBKDF2 with 100,000 iterations
+            and 256-bit AES-GCM encryption. Temporary working copies are saved in your browser's
+            private origin filesystem (OPFS) and are wiped upon closing or manual clearing.
           </p>
         </section>
       </div>

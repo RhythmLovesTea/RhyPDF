@@ -7,7 +7,11 @@ export interface PdfToImagesDialogProps {
   onClose: () => void;
   currentPageIndex: number;
   totalPages: number;
-  onRenderPageToImage?: (pageIndex: number, dpi: number, format: 'png' | 'jpeg' | 'webp') => Promise<Uint8Array>;
+  onRenderPageToImage?: (
+    pageIndex: number,
+    dpi: number,
+    format: 'png' | 'jpeg' | 'webp'
+  ) => Promise<Uint8Array>;
 }
 
 export const PdfToImagesDialog: React.FC<PdfToImagesDialogProps> = ({
@@ -69,7 +73,8 @@ export const PdfToImagesDialog: React.FC<PdfToImagesDialogProps> = ({
             ctx.font = `${Math.round(24 * scale)}px sans-serif`;
             ctx.fillText(`Page ${p + 1}`, 50 * scale, 100 * scale);
           }
-          const mimeType = format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
+          const mimeType =
+            format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
           const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, mimeType));
           const buf = blob ? await blob.arrayBuffer() : new ArrayBuffer(0);
           imageBytes = new Uint8Array(buf);
@@ -84,7 +89,8 @@ export const PdfToImagesDialog: React.FC<PdfToImagesDialogProps> = ({
 
       if (files.length === 1 && files[0]) {
         // Direct image download
-        const mimeType = format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
+        const mimeType =
+          format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
         const blob = new Blob([files[0].bytes], { type: mimeType });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -122,7 +128,15 @@ export const PdfToImagesDialog: React.FC<PdfToImagesDialogProps> = ({
             Pages to Export
           </label>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                cursor: 'pointer',
+                fontSize: 13
+              }}
+            >
               <input
                 data-testid="export-scope-all"
                 type="radio"
@@ -133,7 +147,15 @@ export const PdfToImagesDialog: React.FC<PdfToImagesDialogProps> = ({
               />
               All Pages ({totalPages} pages)
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                cursor: 'pointer',
+                fontSize: 13
+              }}
+            >
               <input
                 data-testid="export-scope-current"
                 type="radio"
@@ -144,7 +166,15 @@ export const PdfToImagesDialog: React.FC<PdfToImagesDialogProps> = ({
               />
               Current Page (Page {currentPageIndex + 1})
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                cursor: 'pointer',
+                fontSize: 13
+              }}
+            >
               <input
                 data-testid="export-scope-custom"
                 type="radio"
@@ -222,11 +252,7 @@ export const PdfToImagesDialog: React.FC<PdfToImagesDialogProps> = ({
           </div>
         </div>
 
-        {progress && (
-          <div style={{ fontSize: 12, color: 'var(--color-primary)' }}>
-            {progress}
-          </div>
-        )}
+        {progress && <div style={{ fontSize: 12, color: 'var(--color-primary)' }}>{progress}</div>}
 
         {error && <div style={{ color: '#ef4444', fontSize: 13 }}>{error}</div>}
 

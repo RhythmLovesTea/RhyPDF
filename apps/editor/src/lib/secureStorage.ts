@@ -86,7 +86,10 @@ export async function pruneExpiredRecovery(maxAgeMs = SEVEN_DAYS_MS): Promise<nu
     }
 
     if (prunedCount > 0) {
-      logger.info('SecureStorage', `Pruned ${prunedCount} expired recovery records older than 7 days`);
+      logger.info(
+        'SecureStorage',
+        `Pruned ${prunedCount} expired recovery records older than 7 days`
+      );
     }
     return prunedCount;
   } catch (err) {

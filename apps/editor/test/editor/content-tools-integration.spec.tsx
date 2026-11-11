@@ -47,10 +47,14 @@ describe('Phase 11 UI Integration: Word-like Content Tools', () => {
     it('opens shape popover, selects star shape, and triggers insert', async () => {
       const handleInsert = vi.fn();
       await act(async () => {
-        root.render(<ShapesPopover onInsertShape={handleInsert} pageWidthPt={612} pageHeightPt={792} />);
+        root.render(
+          <ShapesPopover onInsertShape={handleInsert} pageWidthPt={612} pageHeightPt={792} />
+        );
       });
 
-      const menuBtn = container.querySelector('[data-testid="btn-shapes-menu"]') as HTMLButtonElement;
+      const menuBtn = container.querySelector(
+        '[data-testid="btn-shapes-menu"]'
+      ) as HTMLButtonElement;
       expect(menuBtn).not.toBeNull();
       await act(async () => {
         menuBtn.click();
@@ -60,14 +64,18 @@ describe('Phase 11 UI Integration: Word-like Content Tools', () => {
       expect(popover).not.toBeNull();
 
       // Select star shape
-      const starBtn = container.querySelector('[data-testid="shape-option-star"]') as HTMLButtonElement;
+      const starBtn = container.querySelector(
+        '[data-testid="shape-option-star"]'
+      ) as HTMLButtonElement;
       expect(starBtn).not.toBeNull();
       await act(async () => {
         starBtn.click();
       });
 
       // Confirm insertion
-      const confirmBtn = container.querySelector('[data-testid="btn-insert-shape-confirm"]') as HTMLButtonElement;
+      const confirmBtn = container.querySelector(
+        '[data-testid="btn-insert-shape-confirm"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         confirmBtn.click();
       });
@@ -84,12 +92,16 @@ describe('Phase 11 UI Integration: Word-like Content Tools', () => {
         root.render(<ShapesPopover onInsertShape={handleInsert} />);
       });
 
-      const menuBtn = container.querySelector('[data-testid="btn-shapes-menu"]') as HTMLButtonElement;
+      const menuBtn = container.querySelector(
+        '[data-testid="btn-shapes-menu"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         menuBtn.click();
       });
 
-      const whiteoutBtn = container.querySelector('[data-testid="btn-insert-whiteout"]') as HTMLButtonElement;
+      const whiteoutBtn = container.querySelector(
+        '[data-testid="btn-insert-whiteout"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         whiteoutBtn.click();
       });
@@ -118,13 +130,36 @@ describe('Phase 11 UI Integration: Word-like Content Tools', () => {
         );
       });
 
-      const canvas = container.querySelector('[data-testid="drawing-canvas-overlay"]') as HTMLCanvasElement;
+      const canvas = container.querySelector(
+        '[data-testid="drawing-canvas-overlay"]'
+      ) as HTMLCanvasElement;
       expect(canvas).not.toBeNull();
 
       await act(async () => {
-        canvas.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 100, clientY: 100, pressure: 0.6 }));
-        canvas.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: 140, clientY: 120, pressure: 0.8 }));
-        canvas.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: 180, clientY: 150, pressure: 0.5 }));
+        canvas.dispatchEvent(
+          new PointerEvent('pointerdown', {
+            bubbles: true,
+            clientX: 100,
+            clientY: 100,
+            pressure: 0.6
+          })
+        );
+        canvas.dispatchEvent(
+          new PointerEvent('pointermove', {
+            bubbles: true,
+            clientX: 140,
+            clientY: 120,
+            pressure: 0.8
+          })
+        );
+        canvas.dispatchEvent(
+          new PointerEvent('pointermove', {
+            bubbles: true,
+            clientX: 180,
+            clientY: 150,
+            pressure: 0.5
+          })
+        );
         canvas.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
       });
 
@@ -143,7 +178,10 @@ describe('Phase 11 UI Integration: Word-like Content Tools', () => {
         isDrawingStroke: true as const,
         tool: 'pen' as const,
         bounds: { left: 90, bottom: 600, right: 190, top: 710 },
-        rawPoints: [{ x: 100, y: 692 }, { x: 180, y: 612 }],
+        rawPoints: [
+          { x: 100, y: 692 },
+          { x: 180, y: 612 }
+        ],
         matrix: [1, 0, 0, 1, 0, 0] as const,
         zIndex: 50,
         lineWidth: 3,
@@ -163,9 +201,13 @@ describe('Phase 11 UI Integration: Word-like Content Tools', () => {
         );
       });
 
-      const canvas = container.querySelector('[data-testid="drawing-canvas-overlay"]') as HTMLCanvasElement;
+      const canvas = container.querySelector(
+        '[data-testid="drawing-canvas-overlay"]'
+      ) as HTMLCanvasElement;
       await act(async () => {
-        canvas.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 140, clientY: 140 }));
+        canvas.dispatchEvent(
+          new PointerEvent('pointerdown', { bubbles: true, clientX: 140, clientY: 140 })
+        );
       });
 
       expect(handleErase).toHaveBeenCalledWith('stroke-test-1');
@@ -179,14 +221,18 @@ describe('Phase 11 UI Integration: Word-like Content Tools', () => {
         root.render(<LinkDialog isOpen={true} onClose={vi.fn()} onSaveLink={handleSave} />);
       });
 
-      const input = document.body.querySelector('[data-testid="input-link-destination"]') as HTMLInputElement;
+      const input = document.body.querySelector(
+        '[data-testid="input-link-destination"]'
+      ) as HTMLInputElement;
       expect(input).not.toBeNull();
 
       await act(async () => {
         setInputValue(input, 'javascript:alert(1)');
       });
 
-      const saveBtn = document.body.querySelector('[data-testid="btn-apply-link"]') as HTMLButtonElement;
+      const saveBtn = document.body.querySelector(
+        '[data-testid="btn-apply-link"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         saveBtn.click();
       });
@@ -222,13 +268,17 @@ describe('Phase 11 UI Integration: Word-like Content Tools', () => {
       expect(chip).not.toBeNull();
       expect(chip?.textContent).toContain('https://github.com/rhypdf');
 
-      const editBtn = container.querySelector('[data-testid="btn-edit-link-chip"]') as HTMLButtonElement;
+      const editBtn = container.querySelector(
+        '[data-testid="btn-edit-link-chip"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         editBtn.click();
       });
       expect(handleEdit).toHaveBeenCalled();
 
-      const removeBtn = container.querySelector('[data-testid="btn-remove-link-chip"]') as HTMLButtonElement;
+      const removeBtn = container.querySelector(
+        '[data-testid="btn-remove-link-chip"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         removeBtn.click();
       });
@@ -252,13 +302,17 @@ describe('Phase 11 UI Integration: Word-like Content Tools', () => {
         );
       });
 
-      const incBtn = document.body.querySelector('[data-testid="btn-table-inc-rows"]') as HTMLButtonElement;
+      const incBtn = document.body.querySelector(
+        '[data-testid="btn-table-inc-rows"]'
+      ) as HTMLButtonElement;
       expect(incBtn).not.toBeNull();
       await act(async () => {
         incBtn.click();
       });
 
-      const confirmBtn = document.body.querySelector('[data-testid="btn-confirm-insert-table"]') as HTMLButtonElement;
+      const confirmBtn = document.body.querySelector(
+        '[data-testid="btn-confirm-insert-table"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         confirmBtn.click();
       });
@@ -287,13 +341,17 @@ describe('Phase 11 UI Integration: Word-like Content Tools', () => {
         );
       });
 
-      const leftInput = document.body.querySelector('[data-testid="input-hf-header-left"]') as HTMLInputElement;
+      const leftInput = document.body.querySelector(
+        '[data-testid="input-hf-header-left"]'
+      ) as HTMLInputElement;
       expect(leftInput).not.toBeNull();
       await act(async () => {
         setInputValue(leftInput, 'Company Internal');
       });
 
-      const applyBtn = document.body.querySelector('[data-testid="btn-hf-apply"]') as HTMLButtonElement;
+      const applyBtn = document.body.querySelector(
+        '[data-testid="btn-hf-apply"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         applyBtn.click();
       });
@@ -317,19 +375,25 @@ describe('Phase 11 UI Integration: Word-like Content Tools', () => {
         );
       });
 
-      const batesTab = document.body.querySelector('[data-testid="tab-bates"]') as HTMLButtonElement;
+      const batesTab = document.body.querySelector(
+        '[data-testid="tab-bates"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         batesTab.click();
       });
 
-      const prefixInput = document.body.querySelector('[data-testid="input-bates-prefix"]') as HTMLInputElement;
+      const prefixInput = document.body.querySelector(
+        '[data-testid="input-bates-prefix"]'
+      ) as HTMLInputElement;
       expect(prefixInput.value).toBe('CONF-');
 
       await act(async () => {
         setInputValue(prefixInput, 'EXHIBIT-');
       });
 
-      const applyBtn = document.body.querySelector('[data-testid="btn-bates-apply"]') as HTMLButtonElement;
+      const applyBtn = document.body.querySelector(
+        '[data-testid="btn-bates-apply"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         applyBtn.click();
       });
@@ -354,20 +418,28 @@ describe('Phase 11 UI Integration: Word-like Content Tools', () => {
         );
       });
 
-      const draftPreset = document.body.querySelector('[data-testid="wm-preset-draft"]') as HTMLButtonElement;
+      const draftPreset = document.body.querySelector(
+        '[data-testid="wm-preset-draft"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         draftPreset.click();
       });
 
-      const textInput = document.body.querySelector('[data-testid="input-watermark-text"]') as HTMLInputElement;
+      const textInput = document.body.querySelector(
+        '[data-testid="input-watermark-text"]'
+      ) as HTMLInputElement;
       expect(textInput.value).toBe('DRAFT');
 
-      const opacitySlider = document.body.querySelector('[data-testid="input-watermark-opacity"]') as HTMLInputElement;
+      const opacitySlider = document.body.querySelector(
+        '[data-testid="input-watermark-opacity"]'
+      ) as HTMLInputElement;
       await act(async () => {
         setInputValue(opacitySlider, '0.4');
       });
 
-      const applyBtn = document.body.querySelector('[data-testid="btn-watermark-apply"]') as HTMLButtonElement;
+      const applyBtn = document.body.querySelector(
+        '[data-testid="btn-watermark-apply"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         applyBtn.click();
       });
@@ -409,13 +481,17 @@ describe('Phase 11 UI Integration: Word-like Content Tools', () => {
         root.render(<SpecialItemsPopover onInsertText={handleText} onInsertPath={handlePath} />);
       });
 
-      const menuBtn = container.querySelector('[data-testid="btn-special-items-menu"]') as HTMLButtonElement;
+      const menuBtn = container.querySelector(
+        '[data-testid="btn-special-items-menu"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         menuBtn.click();
       });
 
       // 1. Insert Date
-      const dateConfirmBtn = container.querySelector('[data-testid="btn-insert-date-confirm"]') as HTMLButtonElement;
+      const dateConfirmBtn = container.querySelector(
+        '[data-testid="btn-insert-date-confirm"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         dateConfirmBtn.click();
       });
@@ -426,11 +502,15 @@ describe('Phase 11 UI Integration: Word-like Content Tools', () => {
       await act(async () => {
         menuBtn.click();
       });
-      const symTab = container.querySelector('[data-testid="tab-special-symbols"]') as HTMLButtonElement;
+      const symTab = container.querySelector(
+        '[data-testid="tab-special-symbols"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         symTab.click();
       });
-      const firstSymbol = container.querySelector('[data-testid="btn-symbol-0"]') as HTMLButtonElement;
+      const firstSymbol = container.querySelector(
+        '[data-testid="btn-symbol-0"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         firstSymbol.click();
       });
@@ -444,11 +524,15 @@ describe('Phase 11 UI Integration: Word-like Content Tools', () => {
       await act(async () => {
         qrTab.click();
       });
-      const qrInput = container.querySelector('[data-testid="input-qr-content"]') as HTMLInputElement;
+      const qrInput = container.querySelector(
+        '[data-testid="input-qr-content"]'
+      ) as HTMLInputElement;
       await act(async () => {
         setInputValue(qrInput, 'https://rhypdf.app');
       });
-      const qrConfirmBtn = container.querySelector('[data-testid="btn-insert-qr-confirm"]') as HTMLButtonElement;
+      const qrConfirmBtn = container.querySelector(
+        '[data-testid="btn-insert-qr-confirm"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         qrConfirmBtn.click();
       });

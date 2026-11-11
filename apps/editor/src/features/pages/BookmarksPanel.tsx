@@ -129,7 +129,14 @@ export const BookmarksPanel: React.FC<BookmarksPanelProps> = ({
       </div>
 
       {/* Toolbar */}
-      <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--bg-border)', display: 'flex', gap: 8 }}>
+      <div
+        style={{
+          padding: '8px 16px',
+          borderBottom: '1px solid var(--bg-border)',
+          display: 'flex',
+          gap: 8
+        }}
+      >
         <Button
           data-testid="add-bookmark-btn"
           size="sm"
@@ -173,7 +180,12 @@ export const BookmarksPanel: React.FC<BookmarksPanelProps> = ({
             <Button size="sm" variant="secondary" onClick={() => setShowAddForm(false)}>
               Cancel
             </Button>
-            <Button data-testid="confirm-add-bookmark-btn" size="sm" variant="primary" onClick={handleConfirmAdd}>
+            <Button
+              data-testid="confirm-add-bookmark-btn"
+              size="sm"
+              variant="primary"
+              onClick={handleConfirmAdd}
+            >
               Save
             </Button>
           </div>
@@ -183,8 +195,16 @@ export const BookmarksPanel: React.FC<BookmarksPanelProps> = ({
       {/* Bookmarks List */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
         {flatList.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 32, color: 'var(--bg-muted-foreground)', fontSize: 13 }}>
-            No bookmarks found in this document. Click "Add Bookmark" to create chapters and sections.
+          <div
+            style={{
+              textAlign: 'center',
+              padding: 32,
+              color: 'var(--bg-muted-foreground)',
+              fontSize: 13
+            }}
+          >
+            No bookmarks found in this document. Click "Add Bookmark" to create chapters and
+            sections.
           </div>
         ) : (
           flatList.map(({ item, depth }) => (
@@ -198,7 +218,8 @@ export const BookmarksPanel: React.FC<BookmarksPanelProps> = ({
                 padding: '6px 12px 6px ' + (12 + depth * 16) + 'px',
                 borderBottom: '1px solid rgba(0, 0, 0, 0.04)',
                 cursor: 'pointer',
-                backgroundColor: item.pageIndex === currentPageIndex ? 'rgba(59, 130, 246, 0.08)' : 'transparent'
+                backgroundColor:
+                  item.pageIndex === currentPageIndex ? 'rgba(59, 130, 246, 0.08)' : 'transparent'
               }}
             >
               {editingId === item.id ? (
@@ -235,14 +256,26 @@ export const BookmarksPanel: React.FC<BookmarksPanelProps> = ({
                     data-testid={`save-edit-btn-${item.id}`}
                     type="button"
                     onClick={() => handleSaveEdit(item.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#16a34a', padding: 4 }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#16a34a',
+                      padding: 4
+                    }}
                   >
                     <Check size={14} />
                   </button>
                   <button
                     type="button"
                     onClick={() => setEditingId(null)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 4 }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#ef4444',
+                      padding: 4
+                    }}
                   >
                     <X size={14} />
                   </button>
@@ -252,13 +285,36 @@ export const BookmarksPanel: React.FC<BookmarksPanelProps> = ({
                   <div
                     data-testid={`bookmark-jump-${item.id}`}
                     onClick={() => onJumpToPage(item.pageIndex)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, overflow: 'hidden' }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      flex: 1,
+                      overflow: 'hidden'
+                    }}
                   >
-                    <ChevronRight size={12} style={{ color: 'var(--bg-muted-foreground)', flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <ChevronRight
+                      size={12}
+                      style={{ color: 'var(--bg-muted-foreground)', flexShrink: 0 }}
+                    />
+                    <span
+                      style={{
+                        fontSize: 13,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
                       {item.title}
                     </span>
-                    <span style={{ fontSize: 11, color: 'var(--bg-muted-foreground)', marginLeft: 'auto', paddingRight: 8 }}>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: 'var(--bg-muted-foreground)',
+                        marginLeft: 'auto',
+                        paddingRight: 8
+                      }}
+                    >
                       p. {item.pageIndex + 1}
                     </span>
                   </div>
@@ -268,7 +324,13 @@ export const BookmarksPanel: React.FC<BookmarksPanelProps> = ({
                       type="button"
                       title="Add child section"
                       onClick={() => handleStartAdd(item.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--bg-muted-foreground)', padding: 4 }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--bg-muted-foreground)',
+                        padding: 4
+                      }}
                     >
                       <Plus size={13} />
                     </button>
@@ -277,7 +339,13 @@ export const BookmarksPanel: React.FC<BookmarksPanelProps> = ({
                       type="button"
                       title="Edit"
                       onClick={() => handleStartEdit(item)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--bg-muted-foreground)', padding: 4 }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--bg-muted-foreground)',
+                        padding: 4
+                      }}
                     >
                       <Edit2 size={13} />
                     </button>
@@ -286,7 +354,13 @@ export const BookmarksPanel: React.FC<BookmarksPanelProps> = ({
                       type="button"
                       title="Delete"
                       onClick={() => handleDelete(item.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 4 }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: '#ef4444',
+                        padding: 4
+                      }}
                     >
                       <Trash2 size={13} />
                     </button>

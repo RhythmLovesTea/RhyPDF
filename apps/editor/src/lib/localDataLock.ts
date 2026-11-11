@@ -77,11 +77,7 @@ export async function verifyPassphrase(passphrase: string): Promise<boolean> {
     const ciphertext = new Uint8Array(data.ciphertext);
 
     const key = await deriveKey(passphrase, salt);
-    const decrypted = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv },
-      key,
-      ciphertext
-    );
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
     const text = new TextDecoder().decode(decrypted);
     return text === 'RHYPDF_LOCK_VERIFIED';
   } catch {
@@ -117,7 +113,10 @@ export async function encryptWithLock(plainText: string, passphrase: string): Pr
   });
 }
 
-export async function decryptWithLock(cipherPayload: string, passphrase: string): Promise<string | null> {
+export async function decryptWithLock(
+  cipherPayload: string,
+  passphrase: string
+): Promise<string | null> {
   try {
     const parsed = JSON.parse(cipherPayload);
     const salt = new Uint8Array(parsed.salt);
@@ -125,11 +124,7 @@ export async function decryptWithLock(cipherPayload: string, passphrase: string)
     const data = new Uint8Array(parsed.data);
 
     const key = await deriveKey(passphrase, salt);
-    const decrypted = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv },
-      key,
-      data
-    );
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
 
     return new TextDecoder().decode(decrypted);
   } catch {

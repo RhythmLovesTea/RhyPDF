@@ -25,13 +25,16 @@ Object.defineProperty(navigator, 'clipboard', {
   configurable: true
 });
 
-function setInputValue(el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement, val: string) {
+function setInputValue(
+  el: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
+  val: string
+) {
   const proto =
     el instanceof HTMLTextAreaElement
       ? window.HTMLTextAreaElement.prototype
       : el instanceof HTMLSelectElement
-      ? window.HTMLSelectElement.prototype
-      : window.HTMLInputElement.prototype;
+        ? window.HTMLSelectElement.prototype
+        : window.HTMLInputElement.prototype;
   const descriptor = Object.getOwnPropertyDescriptor(proto, 'value');
   descriptor?.set?.call(el, val);
   el.dispatchEvent(new Event('input', { bubbles: true }));
@@ -65,18 +68,16 @@ describe('Phase 12 UI Integration: Annotations, Signatures, and Forms', () => {
 
       await act(async () => {
         root.render(
-          <StampsPopover
-            isOpen={true}
-            onClose={handleClose}
-            onSelectStamp={handleSelectStamp}
-          />
+          <StampsPopover isOpen={true} onClose={handleClose} onSelectStamp={handleSelectStamp} />
         );
       });
 
       const popover = container.querySelector('[data-testid="stamps-popover"]');
       expect(popover).not.toBeNull();
 
-      const approvedBtn = container.querySelector('[data-testid="btn-stamp-approved"]') as HTMLButtonElement;
+      const approvedBtn = container.querySelector(
+        '[data-testid="btn-stamp-approved"]'
+      ) as HTMLButtonElement;
       expect(approvedBtn).not.toBeNull();
 
       await act(async () => {
@@ -97,27 +98,29 @@ describe('Phase 12 UI Integration: Annotations, Signatures, and Forms', () => {
 
       await act(async () => {
         root.render(
-          <StampsPopover
-            isOpen={true}
-            onClose={vi.fn()}
-            onSelectStamp={handleSelectStamp}
-          />
+          <StampsPopover isOpen={true} onClose={vi.fn()} onSelectStamp={handleSelectStamp} />
         );
       });
 
-      const customTab = container.querySelector('[data-testid="tab-stamp-custom"]') as HTMLButtonElement;
+      const customTab = container.querySelector(
+        '[data-testid="tab-stamp-custom"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         customTab.click();
       });
 
-      const textInput = container.querySelector('[data-testid="input-custom-stamp-text"]') as HTMLInputElement;
+      const textInput = container.querySelector(
+        '[data-testid="input-custom-stamp-text"]'
+      ) as HTMLInputElement;
       expect(textInput).not.toBeNull();
 
       await act(async () => {
         setInputValue(textInput, 'REVIEWED BY LEGAL');
       });
 
-      const insertBtn = container.querySelector('[data-testid="btn-apply-custom-stamp"]') as HTMLButtonElement;
+      const insertBtn = container.querySelector(
+        '[data-testid="btn-apply-custom-stamp"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         insertBtn.click();
       });
@@ -144,20 +147,26 @@ describe('Phase 12 UI Integration: Annotations, Signatures, and Forms', () => {
         );
       });
 
-      const typeTab = document.body.querySelector('[data-testid="tab-sig-type"]') as HTMLButtonElement;
+      const typeTab = document.body.querySelector(
+        '[data-testid="tab-sig-type"]'
+      ) as HTMLButtonElement;
       expect(typeTab).not.toBeNull();
       await act(async () => {
         typeTab.click();
       });
 
-      const nameInput = document.body.querySelector('[data-testid="input-sig-typed-name"]') as HTMLInputElement;
+      const nameInput = document.body.querySelector(
+        '[data-testid="input-sig-typed-name"]'
+      ) as HTMLInputElement;
       expect(nameInput).not.toBeNull();
 
       await act(async () => {
         setInputValue(nameInput, 'Alexander Hamilton');
       });
 
-      const insertBtn = document.body.querySelector('[data-testid="btn-insert-signature"]') as HTMLButtonElement;
+      const insertBtn = document.body.querySelector(
+        '[data-testid="btn-insert-signature"]'
+      ) as HTMLButtonElement;
       expect(insertBtn).not.toBeNull();
       await act(async () => {
         insertBtn.click();
@@ -198,7 +207,9 @@ describe('Phase 12 UI Integration: Annotations, Signatures, and Forms', () => {
         );
       });
 
-      const textEl = container.querySelector('[data-testid="text-sticky-note-content"]') as HTMLElement;
+      const textEl = container.querySelector(
+        '[data-testid="text-sticky-note-content"]'
+      ) as HTMLElement;
       expect(textEl.textContent).toContain('Initial review comment');
 
       // Click to edit
@@ -206,14 +217,18 @@ describe('Phase 12 UI Integration: Annotations, Signatures, and Forms', () => {
         textEl.click();
       });
 
-      const textarea = container.querySelector('[data-testid="textarea-sticky-note"]') as HTMLTextAreaElement;
+      const textarea = container.querySelector(
+        '[data-testid="textarea-sticky-note"]'
+      ) as HTMLTextAreaElement;
       expect(textarea).not.toBeNull();
 
       await act(async () => {
         setInputValue(textarea, 'Updated legal review comment');
       });
 
-      const saveBtn = container.querySelector('[data-testid="btn-save-sticky-note"]') as HTMLButtonElement;
+      const saveBtn = container.querySelector(
+        '[data-testid="btn-save-sticky-note"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         saveBtn.click();
       });
@@ -273,7 +288,9 @@ describe('Phase 12 UI Integration: Annotations, Signatures, and Forms', () => {
       expect(banner).not.toBeNull();
       expect(banner?.textContent).toContain('XFA forms are not supported');
 
-      const dismissBtn = container.querySelector('[data-testid="btn-dismiss-xfa-warning"]') as HTMLButtonElement;
+      const dismissBtn = container.querySelector(
+        '[data-testid="btn-dismiss-xfa-warning"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         dismissBtn.click();
       });
@@ -317,7 +334,9 @@ describe('Phase 12 UI Integration: Annotations, Signatures, and Forms', () => {
         );
       });
 
-      const input = container.querySelector('[data-testid="form-input-FullName"]') as HTMLInputElement;
+      const input = container.querySelector(
+        '[data-testid="form-input-FullName"]'
+      ) as HTMLInputElement;
       expect(input).not.toBeNull();
       expect(input.value).toBe('John Public');
       expect(input.tabIndex).toBe(1);
@@ -328,7 +347,9 @@ describe('Phase 12 UI Integration: Annotations, Signatures, and Forms', () => {
 
       expect(handleFieldChange).toHaveBeenCalledWith('field-name', 'John Q. Public');
 
-      const checkbox = container.querySelector('[data-testid="form-checkbox-AgreeTerms"]') as HTMLInputElement;
+      const checkbox = container.querySelector(
+        '[data-testid="form-checkbox-AgreeTerms"]'
+      ) as HTMLInputElement;
       expect(checkbox).not.toBeNull();
       expect(checkbox.checked).toBe(false);
 
@@ -346,22 +367,22 @@ describe('Phase 12 UI Integration: Annotations, Signatures, and Forms', () => {
 
       await act(async () => {
         root.render(
-          <AutofillDialog
-            isOpen={true}
-            onClose={vi.fn()}
-            onApplyAutofill={handleAutofill}
-          />
+          <AutofillDialog isOpen={true} onClose={vi.fn()} onApplyAutofill={handleAutofill} />
         );
       });
 
-      const nameInput = document.body.querySelector('[data-testid="input-autofill-fullname"]') as HTMLInputElement;
+      const nameInput = document.body.querySelector(
+        '[data-testid="input-autofill-fullname"]'
+      ) as HTMLInputElement;
       expect(nameInput).not.toBeNull();
 
       await act(async () => {
         setInputValue(nameInput, 'Martha Washington');
       });
 
-      const applyBtn = document.body.querySelector('[data-testid="btn-apply-autofill"]') as HTMLButtonElement;
+      const applyBtn = document.body.querySelector(
+        '[data-testid="btn-apply-autofill"]'
+      ) as HTMLButtonElement;
       expect(applyBtn).not.toBeNull();
       await act(async () => {
         applyBtn.click();
@@ -390,19 +411,25 @@ describe('Phase 12 UI Integration: Annotations, Signatures, and Forms', () => {
         );
       });
 
-      const typeSelect = document.body.querySelector('[data-testid="select-create-field-type"]') as HTMLSelectElement;
+      const typeSelect = document.body.querySelector(
+        '[data-testid="select-create-field-type"]'
+      ) as HTMLSelectElement;
       expect(typeSelect).not.toBeNull();
       await act(async () => {
         setInputValue(typeSelect, 'dropdown');
       });
 
-      const nameInput = document.body.querySelector('[data-testid="input-create-field-name"]') as HTMLInputElement;
+      const nameInput = document.body.querySelector(
+        '[data-testid="input-create-field-name"]'
+      ) as HTMLInputElement;
       expect(nameInput).not.toBeNull();
       await act(async () => {
         setInputValue(nameInput, 'state_code');
       });
 
-      const submitBtn = document.body.querySelector('[data-testid="btn-submit-create-field"]') as HTMLButtonElement;
+      const submitBtn = document.body.querySelector(
+        '[data-testid="btn-submit-create-field"]'
+      ) as HTMLButtonElement;
       expect(submitBtn).not.toBeNull();
       await act(async () => {
         submitBtn.click();
@@ -445,12 +472,16 @@ describe('Phase 12 UI Integration: Annotations, Signatures, and Forms', () => {
         );
       });
 
-      const textarea = document.body.querySelector('[data-testid="textarea-summary-preview"]') as HTMLTextAreaElement;
+      const textarea = document.body.querySelector(
+        '[data-testid="textarea-summary-preview"]'
+      ) as HTMLTextAreaElement;
       expect(textarea).not.toBeNull();
       expect(textarea.value).toContain('Document Annotation Summary');
       expect(textarea.value).toContain('Standard termination clause');
 
-      const copyBtn = document.body.querySelector('[data-testid="btn-copy-summary"]') as HTMLButtonElement;
+      const copyBtn = document.body.querySelector(
+        '[data-testid="btn-copy-summary"]'
+      ) as HTMLButtonElement;
       expect(copyBtn).not.toBeNull();
       await act(async () => {
         copyBtn.click();

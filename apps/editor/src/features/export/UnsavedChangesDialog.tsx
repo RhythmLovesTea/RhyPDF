@@ -48,8 +48,16 @@ export const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
           <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Unsaved Changes</h3>
         </div>
 
-        <p style={{ fontSize: 14, color: 'var(--bg-muted-foreground, #64748b)', margin: '0 0 20px 0', lineHeight: 1.5 }}>
-          You have unsaved changes in <strong>{filename}</strong>. What would you like to do before leaving?
+        <p
+          style={{
+            fontSize: 14,
+            color: 'var(--bg-muted-foreground, #64748b)',
+            margin: '0 0 20px 0',
+            lineHeight: 1.5
+          }}
+        >
+          You have unsaved changes in <strong>{filename}</strong>. What would you like to do before
+          leaving?
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

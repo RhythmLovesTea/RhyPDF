@@ -71,7 +71,9 @@ describe('Phase 13 UI Integration: Page Management, Bookmarks, and Conversion', 
       expect(container.querySelector('[data-testid="page-card-p3"]')).not.toBeNull();
 
       // Click card 1 checkbox
-      const chk1 = container.querySelector('[data-testid="page-select-checkbox-p1"]') as HTMLInputElement;
+      const chk1 = container.querySelector(
+        '[data-testid="page-select-checkbox-p1"]'
+      ) as HTMLInputElement;
       expect(chk1.checked).toBe(false);
       await act(async () => {
         chk1.click();
@@ -79,15 +81,21 @@ describe('Phase 13 UI Integration: Page Management, Bookmarks, and Conversion', 
       expect(chk1.checked).toBe(true);
 
       // Select All button
-      const selectAllBtn = container.querySelector('[data-testid="select-all-pages-btn"]') as HTMLButtonElement;
+      const selectAllBtn = container.querySelector(
+        '[data-testid="select-all-pages-btn"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         selectAllBtn.click();
       });
-      const chk2 = container.querySelector('[data-testid="page-select-checkbox-p2"]') as HTMLInputElement;
+      const chk2 = container.querySelector(
+        '[data-testid="page-select-checkbox-p2"]'
+      ) as HTMLInputElement;
       expect(chk2.checked).toBe(true);
 
       // Deselect All
-      const deselectBtn = container.querySelector('[data-testid="deselect-all-pages-btn"]') as HTMLButtonElement;
+      const deselectBtn = container.querySelector(
+        '[data-testid="deselect-all-pages-btn"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         deselectBtn.click();
       });
@@ -165,13 +173,17 @@ describe('Phase 13 UI Integration: Page Management, Bookmarks, and Conversion', 
         );
       });
 
-      const presetSelect = document.body.querySelector('[data-testid="page-size-preset-select"]') as HTMLSelectElement;
+      const presetSelect = document.body.querySelector(
+        '[data-testid="page-size-preset-select"]'
+      ) as HTMLSelectElement;
       expect(presetSelect).not.toBeNull();
       await act(async () => {
         setInputValue(presetSelect, 'Letter');
       });
 
-      const confirmBtn = document.body.querySelector('[data-testid="insert-blank-page-confirm"]') as HTMLButtonElement;
+      const confirmBtn = document.body.querySelector(
+        '[data-testid="insert-blank-page-confirm"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         confirmBtn.click();
       });
@@ -204,7 +216,10 @@ describe('Phase 13 UI Integration: Page Management, Bookmarks, and Conversion', 
       });
 
       expect(document.body.querySelector('[data-testid="source-pdf-file-input"]')).not.toBeNull();
-      expect((document.body.querySelector('[data-testid="insert-pages-confirm"]') as HTMLButtonElement).disabled).toBe(true);
+      expect(
+        (document.body.querySelector('[data-testid="insert-pages-confirm"]') as HTMLButtonElement)
+          .disabled
+      ).toBe(true);
     });
   });
 
@@ -217,7 +232,9 @@ describe('Phase 13 UI Integration: Page Management, Bookmarks, and Conversion', 
       });
 
       expect(document.body.querySelector('[data-testid="merge-items-list"]')).not.toBeNull();
-      const mergeBtn = document.body.querySelector('[data-testid="merge-confirm-button"]') as HTMLButtonElement;
+      const mergeBtn = document.body.querySelector(
+        '[data-testid="merge-confirm-button"]'
+      ) as HTMLButtonElement;
       expect(mergeBtn.disabled).toBe(true);
     });
   });
@@ -239,10 +256,14 @@ describe('Phase 13 UI Integration: Page Management, Bookmarks, and Conversion', 
         );
       });
 
-      const everyNRadio = document.body.querySelector('[data-testid="split-mode-every-n"]') as HTMLInputElement;
+      const everyNRadio = document.body.querySelector(
+        '[data-testid="split-mode-every-n"]'
+      ) as HTMLInputElement;
       expect(everyNRadio.checked).toBe(true);
 
-      const rangesRadio = document.body.querySelector('[data-testid="split-mode-ranges"]') as HTMLInputElement;
+      const rangesRadio = document.body.querySelector(
+        '[data-testid="split-mode-ranges"]'
+      ) as HTMLInputElement;
       await act(async () => {
         rangesRadio.click();
       });
@@ -270,12 +291,16 @@ describe('Phase 13 UI Integration: Page Management, Bookmarks, and Conversion', 
         );
       });
 
-      const leftInput = document.body.querySelector('[data-testid="crop-left-input"]') as HTMLInputElement;
+      const leftInput = document.body.querySelector(
+        '[data-testid="crop-left-input"]'
+      ) as HTMLInputElement;
       await act(async () => {
         setInputValue(leftInput, '50');
       });
 
-      const applyBtn = document.body.querySelector('[data-testid="apply-crop-button"]') as HTMLButtonElement;
+      const applyBtn = document.body.querySelector(
+        '[data-testid="apply-crop-button"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         applyBtn.click();
       });
@@ -309,15 +334,21 @@ describe('Phase 13 UI Integration: Page Management, Bookmarks, and Conversion', 
         );
       });
 
-      const presetSelect = document.body.querySelector('[data-testid="resize-preset-select"]') as HTMLSelectElement;
+      const presetSelect = document.body.querySelector(
+        '[data-testid="resize-preset-select"]'
+      ) as HTMLSelectElement;
       await act(async () => {
         setInputValue(presetSelect, 'Letter');
       });
 
-      const scaleChk = document.body.querySelector('[data-testid="scale-content-checkbox"]') as HTMLInputElement;
+      const scaleChk = document.body.querySelector(
+        '[data-testid="scale-content-checkbox"]'
+      ) as HTMLInputElement;
       expect(scaleChk.checked).toBe(true);
 
-      const applyBtn = document.body.querySelector('[data-testid="apply-resize-button"]') as HTMLButtonElement;
+      const applyBtn = document.body.querySelector(
+        '[data-testid="apply-resize-button"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         applyBtn.click();
       });
@@ -336,7 +367,9 @@ describe('Phase 13 UI Integration: Page Management, Bookmarks, and Conversion', 
       });
 
       expect(document.body.querySelector('[data-testid="add-images-button"]')).not.toBeNull();
-      const createBtn = document.body.querySelector('[data-testid="create-pdf-confirm"]') as HTMLButtonElement;
+      const createBtn = document.body.querySelector(
+        '[data-testid="create-pdf-confirm"]'
+      ) as HTMLButtonElement;
       expect(createBtn.disabled).toBe(true);
     });
 
@@ -356,17 +389,23 @@ describe('Phase 13 UI Integration: Page Management, Bookmarks, and Conversion', 
         );
       });
 
-      const formatSelect = document.body.querySelector('[data-testid="export-format-select"]') as HTMLSelectElement;
+      const formatSelect = document.body.querySelector(
+        '[data-testid="export-format-select"]'
+      ) as HTMLSelectElement;
       await act(async () => {
         setInputValue(formatSelect, 'jpeg');
       });
 
-      const dpiSelect = document.body.querySelector('[data-testid="export-dpi-select"]') as HTMLSelectElement;
+      const dpiSelect = document.body.querySelector(
+        '[data-testid="export-dpi-select"]'
+      ) as HTMLSelectElement;
       await act(async () => {
         setInputValue(dpiSelect, '300');
       });
 
-      const exportBtn = document.body.querySelector('[data-testid="export-images-confirm"]') as HTMLButtonElement;
+      const exportBtn = document.body.querySelector(
+        '[data-testid="export-images-confirm"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         exportBtn.click();
       });
@@ -412,26 +451,30 @@ describe('Phase 13 UI Integration: Page Management, Bookmarks, and Conversion', 
       expect(onJump).toHaveBeenCalledWith(2);
 
       // Add new bookmark
-      const addBtn = container.querySelector('[data-testid="add-bookmark-btn"]') as HTMLButtonElement;
+      const addBtn = container.querySelector(
+        '[data-testid="add-bookmark-btn"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         addBtn.click();
       });
       expect(container.querySelector('[data-testid="add-bookmark-form"]')).not.toBeNull();
 
-      const input = container.querySelector('[data-testid="new-bookmark-title-input"]') as HTMLInputElement;
+      const input = container.querySelector(
+        '[data-testid="new-bookmark-title-input"]'
+      ) as HTMLInputElement;
       await act(async () => {
         setInputValue(input, 'Chapter 3: Results');
       });
 
-      const confirmBtn = container.querySelector('[data-testid="confirm-add-bookmark-btn"]') as HTMLButtonElement;
+      const confirmBtn = container.querySelector(
+        '[data-testid="confirm-add-bookmark-btn"]'
+      ) as HTMLButtonElement;
       await act(async () => {
         confirmBtn.click();
       });
 
       expect(onUpdate).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({ title: 'Chapter 3: Results' })
-        ])
+        expect.arrayContaining([expect.objectContaining({ title: 'Chapter 3: Results' })])
       );
 
       // Delete bookmark

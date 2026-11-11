@@ -1,5 +1,9 @@
 import type { AnnotationObject } from '@rhypdf/pdf-model';
-import type { AnnotationSummaryFormat, AnnotationSummaryReport, AnnotationSummaryItem } from './types';
+import type {
+  AnnotationSummaryFormat,
+  AnnotationSummaryReport,
+  AnnotationSummaryItem
+} from './types';
 
 /**
  * Generates a structured summary report of annotations across a document.
@@ -82,7 +86,7 @@ export function generateAnnotationSummary(
 
       const dateStr = item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '';
       lines.push(`### [${item.type}] by ${item.author} ${dateStr ? `(${dateStr})` : ''}`);
-      
+
       if (item.highlightedText) {
         lines.push(`> "${item.highlightedText}"`);
         lines.push('');
@@ -91,7 +95,9 @@ export function generateAnnotationSummary(
         lines.push(`**Comment:** ${item.contents}`);
         lines.push('');
       }
-      lines.push(`*Location: [${Math.round(item.rect.left)}, ${Math.round(item.rect.bottom)}] to [${Math.round(item.rect.right)}, ${Math.round(item.rect.top)}]*`);
+      lines.push(
+        `*Location: [${Math.round(item.rect.left)}, ${Math.round(item.rect.bottom)}] to [${Math.round(item.rect.right)}, ${Math.round(item.rect.top)}]*`
+      );
       lines.push('');
     }
 

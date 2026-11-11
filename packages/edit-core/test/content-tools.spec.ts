@@ -4,7 +4,6 @@ import {
   InsertShapeCommand,
   UpdateShapeStyleCommand,
   smoothPointsToSegments,
-  computeStrokeBounds,
   createDrawingStroke,
   strokeIntersectsPoint,
   AddDrawingStrokeCommand,
@@ -26,7 +25,6 @@ import {
   removeTableRow,
   addTableColumn,
   removeTableColumn,
-  InsertTableCommand,
   substituteTokens,
   generateHeaderFooterBlocks,
   formatBatesNumber,
@@ -44,7 +42,6 @@ import {
   createQrCodePath
 } from '../src';
 import type { TextBlock } from '../src/text/types';
-import type { ShapeObject } from '../src/shapes/types';
 
 describe('Phase 11: Word-like Content Tools', () => {
   describe('Task 11.1: Shapes', () => {
@@ -57,11 +54,11 @@ describe('Phase 11: Word-like Content Tools', () => {
 
       const rounded = createShape('roundedRectangle', bounds, { cornerRadius: 10 });
       expect(rounded.shapeType).toBe('roundedRectangle');
-      expect(rounded.segments.some(s => s.type === 'bezierCurveTo')).toBe(true);
+      expect(rounded.segments.some((s) => s.type === 'bezierCurveTo')).toBe(true);
 
       const ellipse = createShape('ellipse', bounds);
       expect(ellipse.shapeType).toBe('ellipse');
-      expect(ellipse.segments.filter(s => s.type === 'bezierCurveTo').length).toBe(4);
+      expect(ellipse.segments.filter((s) => s.type === 'bezierCurveTo').length).toBe(4);
 
       const line = createShape('line', bounds);
       expect(line.shapeType).toBe('line');
@@ -92,13 +89,7 @@ describe('Phase 11: Word-like Content Tools', () => {
       expect(deleteFn).toHaveBeenCalledWith(0, shape.id);
 
       const updateFn = vi.fn();
-      const updateCmd = new UpdateShapeStyleCommand(
-        0,
-        shape.id,
-        { lineWidth: 5 },
-        shape,
-        updateFn
-      );
+      const updateCmd = new UpdateShapeStyleCommand(0, shape.id, { lineWidth: 5 }, shape, updateFn);
       await updateCmd.apply();
       expect(updateFn).toHaveBeenCalledWith(0, shape.id, { lineWidth: 5 });
       await updateCmd.revert();
@@ -122,7 +113,10 @@ describe('Phase 11: Word-like Content Tools', () => {
     });
 
     it('creates pen and marker stroke objects with appropriate presets', () => {
-      const points = [{ x: 10, y: 10 }, { x: 50, y: 50 }];
+      const points = [
+        { x: 10, y: 10 },
+        { x: 50, y: 50 }
+      ];
 
       const pen = createDrawingStroke(points, { tool: 'pen' });
       expect(pen.tool).toBe('pen');
@@ -148,7 +142,10 @@ describe('Phase 11: Word-like Content Tools', () => {
     });
 
     it('supports undo/redo via AddDrawingStrokeCommand and EraseDrawingStrokeCommand', async () => {
-      const stroke = createDrawingStroke([{ x: 10, y: 10 }, { x: 20, y: 20 }]);
+      const stroke = createDrawingStroke([
+        { x: 10, y: 10 },
+        { x: 20, y: 20 }
+      ]);
       const insertFn = vi.fn();
       const deleteFn = vi.fn();
 
@@ -485,19 +482,37 @@ describe('Phase 11: Word-like Content Tools', () => {
   });
 
   describe('Task 11.13: Alignment and Distribution', () => {
-    const objA = { id: 'a', type: 'path' as const, matrix: [1, 0, 0, 1, 0, 0] as const, zIndex: 1, bounds: { left: 10, bottom: 10, right: 30, top: 30 } };
-    const objB = { id: 'b', type: 'path' as const, matrix: [1, 0, 0, 1, 0, 0] as const, zIndex: 1, bounds: { left: 50, bottom: 20, right: 90, top: 60 } };
-    const objC = { id: 'c', type: 'path' as const, matrix: [1, 0, 0, 1, 0, 0] as const, zIndex: 1, bounds: { left: 120, bottom: 5, right: 140, top: 25 } };
+    const objA = {
+      id: 'a',
+      type: 'path' as const,
+      matrix: [1, 0, 0, 1, 0, 0] as const,
+      zIndex: 1,
+      bounds: { left: 10, bottom: 10, right: 30, top: 30 }
+    };
+    const objB = {
+      id: 'b',
+      type: 'path' as const,
+      matrix: [1, 0, 0, 1, 0, 0] as const,
+      zIndex: 1,
+      bounds: { left: 50, bottom: 20, right: 90, top: 60 }
+    };
+    const objC = {
+      id: 'c',
+      type: 'path' as const,
+      matrix: [1, 0, 0, 1, 0, 0] as const,
+      zIndex: 1,
+      bounds: { left: 120, bottom: 5, right: 140, top: 25 }
+    };
 
     it('aligns objects to left, center, right, top, middle, bottom', () => {
       const leftAlign = alignObjects([objA, objB], 'left');
-      expect(leftAlign.find(d => d.id === 'b')?.newBounds.left).toBe(10);
+      expect(leftAlign.find((d) => d.id === 'b')?.newBounds.left).toBe(10);
 
       const topAlign = alignObjects([objA, objB], 'top');
-      expect(topAlign.find(d => d.id === 'a')?.newBounds.top).toBe(60);
+      expect(topAlign.find((d) => d.id === 'a')?.newBounds.top).toBe(60);
 
       const bottomAlign = alignObjects([objA, objB], 'bottom');
-      expect(bottomAlign.find(d => d.id === 'b')?.newBounds.bottom).toBe(10);
+      expect(bottomAlign.find((d) => d.id === 'b')?.newBounds.bottom).toBe(10);
     });
 
     it('distributes 3 objects evenly horizontally and vertically', () => {
@@ -506,14 +521,16 @@ describe('Phase 11: Word-like Content Tools', () => {
       // objA left: 10..30 (width 20)
       // objC left: 120..140 (width 20)
       // Span is 10 to 140 = 130. Total obj width = 20 + 40 + 20 = 80. Gap = 50 / 2 = 25.
-      const bDelta = distH.find(d => d.id === 'b');
+      const bDelta = distH.find((d) => d.id === 'b');
       expect(bDelta?.newBounds.left).toBe(30 + 25); // 55
     });
 
     it('supports undo/redo via AlignObjectsCommand', async () => {
       const applyFn = vi.fn();
       const revertFn = vi.fn();
-      const deltas = [{ id: 'a', prevBounds: objA.bounds, newBounds: { ...objA.bounds, left: 20, right: 40 } }];
+      const deltas = [
+        { id: 'a', prevBounds: objA.bounds, newBounds: { ...objA.bounds, left: 20, right: 40 } }
+      ];
 
       const cmd = new AlignObjectsCommand(0, deltas, 'Align left', applyFn, revertFn);
       await cmd.apply();
@@ -535,11 +552,11 @@ describe('Phase 11: Word-like Content Tools', () => {
 
     it('provides categorized symbols for math, currency, arrows, typography, greek, and misc', () => {
       expect(SYMBOL_CATEGORIES.length).toBe(6);
-      const math = SYMBOL_CATEGORIES.find(c => c.id === 'math');
+      const math = SYMBOL_CATEGORIES.find((c) => c.id === 'math');
       expect(math?.symbols).toContain('±');
       expect(math?.symbols).toContain('π');
 
-      const currency = SYMBOL_CATEGORIES.find(c => c.id === 'currency');
+      const currency = SYMBOL_CATEGORIES.find((c) => c.id === 'currency');
       expect(currency?.symbols).toContain('€');
       expect(currency?.symbols).toContain('₿');
     });

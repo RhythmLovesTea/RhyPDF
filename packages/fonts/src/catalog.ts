@@ -652,7 +652,10 @@ export class FontCatalog {
   }
 
   getByFamily(family: string): FontCatalogEntry | undefined {
-    const clean = family.trim().replace(/^['"]|['"]$/g, '').toLowerCase();
+    const clean = family
+      .trim()
+      .replace(/^['"]|['"]$/g, '')
+      .toLowerCase();
     return this.entries.get(clean);
   }
 
@@ -685,9 +688,7 @@ export class FontCatalog {
       if (query) {
         const matchName = font.displayName.toLowerCase().includes(query);
         const matchFamily = font.family.toLowerCase().includes(query);
-        const matchCompat = font.metricCompatibleWith?.some((c) =>
-          c.toLowerCase().includes(query)
-        );
+        const matchCompat = font.metricCompatibleWith?.some((c) => c.toLowerCase().includes(query));
         if (!matchName && !matchFamily && !matchCompat) return false;
       }
       return true;
@@ -732,11 +733,19 @@ export class FontCatalog {
     }
 
     // Heuristic fallbacks:
-    if (cleanLower.includes('helvetica') || cleanLower.includes('arial') || cleanLower.includes('sans')) {
+    if (
+      cleanLower.includes('helvetica') ||
+      cleanLower.includes('arial') ||
+      cleanLower.includes('sans')
+    ) {
       const sans = this.getByFamily('Liberation Sans') || this.getByFamily('Roboto');
       if (sans) return { matchedEntry: sans, isExact: false, isMetricEquivalent: true };
     }
-    if (cleanLower.includes('times') || cleanLower.includes('roman') || cleanLower.includes('serif')) {
+    if (
+      cleanLower.includes('times') ||
+      cleanLower.includes('roman') ||
+      cleanLower.includes('serif')
+    ) {
       const serif = this.getByFamily('Liberation Serif') || this.getByFamily('Merriweather');
       if (serif) return { matchedEntry: serif, isExact: false, isMetricEquivalent: true };
     }
@@ -763,7 +772,10 @@ export class FontCatalog {
 
   addRecentFont(family: string): void {
     const clean = family.trim().replace(/^['"]|['"]$/g, '');
-    this.recentFamilies = [clean, ...this.recentFamilies.filter((f) => f.toLowerCase() !== clean.toLowerCase())].slice(0, 8);
+    this.recentFamilies = [
+      clean,
+      ...this.recentFamilies.filter((f) => f.toLowerCase() !== clean.toLowerCase())
+    ].slice(0, 8);
     this.saveRecentToStorage();
   }
 

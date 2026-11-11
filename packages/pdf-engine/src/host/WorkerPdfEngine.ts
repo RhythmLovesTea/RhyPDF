@@ -21,6 +21,7 @@ import type { PdfEngineWorkerApi } from '../protocol';
 export interface WorkerPdfEngineOptions {
   workerFactory?: () => Worker;
   heapThresholdBytes?: number;
+  onWorkerCrash?: (error: unknown) => void;
 }
 
 export class WorkerPdfEngine implements PdfEngine {
@@ -28,6 +29,8 @@ export class WorkerPdfEngine implements PdfEngine {
   private workerInstance?: Worker;
   private workerFactory?: () => Worker;
   private heapThresholdBytes: number;
+  private onWorkerCrash?: (error: unknown) => void;
+  private isCrashed = false;
   private idCounter = 0;
 
   constructor(endpointOrWorker: Worker | Comlink.Endpoint, options?: WorkerPdfEngineOptions) {
@@ -35,9 +38,26 @@ export class WorkerPdfEngine implements PdfEngine {
       this.workerInstance = endpointOrWorker;
     }
     this.workerFactory = options?.workerFactory;
+    this.onWorkerCrash = options?.onWorkerCrash;
     // Default threshold: 150 MB (standard mobile/Safari threshold)
     this.heapThresholdBytes = options?.heapThresholdBytes ?? 150 * 1024 * 1024;
     this.remote = Comlink.wrap<PdfEngineWorkerApi>(endpointOrWorker);
+    this.attachWorkerErrorHandler();
+  }
+
+  private attachWorkerErrorHandler(): void {
+    if (this.workerInstance && typeof this.workerInstance.addEventListener === 'function') {
+      this.workerInstance.addEventListener('error', (event) => {
+        this.isCrashed = true;
+        if (this.onWorkerCrash) {
+          this.onWorkerCrash(event);
+        }
+      });
+    }
+  }
+
+  getIsCrashed(): boolean {
+    return this.isCrashed;
   }
 
   private nextId(prefix = 'req'): string {
@@ -49,7 +69,14 @@ export class WorkerPdfEngine implements PdfEngine {
     try {
       return await fn();
     } catch (err) {
-      throw mapToPdfError(err);
+      const pdfErr = mapToPdfError(err);
+      if (this.isCrashed || String(err).includes('Worker') || String(err).includes('terminated')) {
+        this.isCrashed = true;
+        if (this.onWorkerCrash) {
+          this.onWorkerCrash(pdfErr);
+        }
+      }
+      throw pdfErr;
     }
   }
 
@@ -181,6 +208,8 @@ export class WorkerPdfEngine implements PdfEngine {
     const newWorker = this.workerFactory();
     this.workerInstance = newWorker;
     this.remote = Comlink.wrap<PdfEngineWorkerApi>(newWorker);
+    this.attachWorkerErrorHandler();
+    this.isCrashed = false;
     await this.init();
   }
 

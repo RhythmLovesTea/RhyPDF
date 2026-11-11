@@ -70,7 +70,15 @@ export const SplitPdfDialog: React.FC<SplitPdfDialogProps> = ({
             Split Mode
           </label>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                cursor: 'pointer',
+                fontSize: 13
+              }}
+            >
               <input
                 data-testid="split-mode-every-n"
                 type="radio"
@@ -81,7 +89,15 @@ export const SplitPdfDialog: React.FC<SplitPdfDialogProps> = ({
               />
               Every N pages
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                cursor: 'pointer',
+                fontSize: 13
+              }}
+            >
               <input
                 data-testid="split-mode-ranges"
                 type="radio"
@@ -93,7 +109,15 @@ export const SplitPdfDialog: React.FC<SplitPdfDialogProps> = ({
               By Page Ranges (e.g. 1-2; 3-5)
             </label>
             {selectedPages.length > 0 && (
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  cursor: 'pointer',
+                  fontSize: 13
+                }}
+              >
                 <input
                   data-testid="split-mode-selection"
                   type="radio"
@@ -106,7 +130,15 @@ export const SplitPdfDialog: React.FC<SplitPdfDialogProps> = ({
               </label>
             )}
             {bookmarks.length > 0 && (
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  cursor: 'pointer',
+                  fontSize: 13
+                }}
+              >
                 <input
                   data-testid="split-mode-bookmarks"
                   type="radio"

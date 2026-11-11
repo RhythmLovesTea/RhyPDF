@@ -8,13 +8,7 @@
 import type { Rect, BasePageObject } from '@rhypdf/pdf-model';
 import type { EditCommand } from './types';
 
-export type AlignmentMode =
-  | 'left'
-  | 'center'
-  | 'right'
-  | 'top'
-  | 'middle'
-  | 'bottom';
+export type AlignmentMode = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
 
 export type DistributionMode = 'horizontal' | 'vertical';
 
@@ -38,10 +32,10 @@ export function alignObjects(
 
   // Calculate enclosing bounds of the group if targetBounds not specified
   const groupBounds: Rect = targetBounds ?? {
-    left: Math.min(...objects.map(o => o.bounds.left)),
-    bottom: Math.min(...objects.map(o => o.bounds.bottom)),
-    right: Math.max(...objects.map(o => o.bounds.right)),
-    top: Math.max(...objects.map(o => o.bounds.top))
+    left: Math.min(...objects.map((o) => o.bounds.left)),
+    bottom: Math.min(...objects.map((o) => o.bounds.bottom)),
+    right: Math.max(...objects.map((o) => o.bounds.right)),
+    top: Math.max(...objects.map((o) => o.bounds.top))
   };
 
   const groupCenterX = (groupBounds.left + groupBounds.right) / 2;
@@ -116,7 +110,7 @@ export function distributeObjects(
     const spanStart = first.bounds.left;
     const spanEnd = last.bounds.right;
     const totalObjectWidth = sorted.reduce((sum, o) => sum + (o.bounds.right - o.bounds.left), 0);
-    const totalGap = (spanEnd - spanStart) - totalObjectWidth;
+    const totalGap = spanEnd - spanStart - totalObjectWidth;
     const gap = totalGap / (sorted.length - 1);
 
     let currentX = spanStart;
@@ -149,7 +143,7 @@ export function distributeObjects(
     const spanStart = first.bounds.bottom;
     const spanEnd = last.bounds.top;
     const totalObjectHeight = sorted.reduce((sum, o) => sum + (o.bounds.top - o.bounds.bottom), 0);
-    const totalGap = (spanEnd - spanStart) - totalObjectHeight;
+    const totalGap = spanEnd - spanStart - totalObjectHeight;
     const gap = totalGap / (sorted.length - 1);
 
     let currentY = spanStart;
@@ -188,8 +182,14 @@ export class AlignObjectsCommand implements EditCommand {
     public readonly pageIndex: number,
     public readonly deltas: ObjectBoundsDelta[],
     description: string,
-    private readonly applyFn?: (pageIndex: number, deltas: ObjectBoundsDelta[]) => Promise<void> | void,
-    private readonly revertFn?: (pageIndex: number, deltas: ObjectBoundsDelta[]) => Promise<void> | void
+    private readonly applyFn?: (
+      pageIndex: number,
+      deltas: ObjectBoundsDelta[]
+    ) => Promise<void> | void,
+    private readonly revertFn?: (
+      pageIndex: number,
+      deltas: ObjectBoundsDelta[]
+    ) => Promise<void> | void
   ) {
     this.name = description;
     this.approximateBytes = 128 + deltas.length * 64;
@@ -203,7 +203,7 @@ export class AlignObjectsCommand implements EditCommand {
 
   async revert(): Promise<void> {
     if (this.revertFn) {
-      const inverted = this.deltas.map(d => ({
+      const inverted = this.deltas.map((d) => ({
         id: d.id,
         prevBounds: d.newBounds,
         newBounds: d.prevBounds

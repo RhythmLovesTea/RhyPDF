@@ -32,7 +32,7 @@ export class ApplyHeaderFooterCommand implements EditCommand {
 
   async revert(): Promise<void> {
     if (this.removeFn) {
-      await this.removeFn(this.generatedBlocks.map(b => b.id));
+      await this.removeFn(this.generatedBlocks.map((b) => b.id));
     }
   }
 }
@@ -61,7 +61,7 @@ export class ApplyBatesNumberingCommand implements EditCommand {
 
   async revert(): Promise<void> {
     if (this.removeFn) {
-      await this.removeFn(this.batesBlocks.map(b => b.id));
+      await this.removeFn(this.batesBlocks.map((b) => b.id));
     }
   }
 }
@@ -91,7 +91,7 @@ export class ApplyWatermarkCommand implements EditCommand {
 
   async revert(): Promise<void> {
     if (this.removeFn) {
-      await this.removeFn(this.watermarkObjects.map(o => o.id));
+      await this.removeFn(this.watermarkObjects.map((o) => o.id));
     }
   }
 }
@@ -106,7 +106,10 @@ export class SetPageBackgroundCommand implements EditCommand {
   constructor(
     public readonly pageIndices: number[],
     public readonly backgroundPaths: PathObject[],
-    private readonly insertFn?: (pageIndices: number[], paths: PathObject[]) => Promise<void> | void,
+    private readonly insertFn?: (
+      pageIndices: number[],
+      paths: PathObject[]
+    ) => Promise<void> | void,
     private readonly removeFn?: (pageIndices: number[], pathIds: string[]) => Promise<void> | void
   ) {
     this.pageIndex = pageIndices[0] ?? 0;
@@ -120,7 +123,10 @@ export class SetPageBackgroundCommand implements EditCommand {
 
   async revert(): Promise<void> {
     if (this.removeFn) {
-      await this.removeFn(this.pageIndices, this.backgroundPaths.map(p => p.id));
+      await this.removeFn(
+        this.pageIndices,
+        this.backgroundPaths.map((p) => p.id)
+      );
     }
   }
 }

@@ -44,7 +44,10 @@ export function validateLinkTarget(raw: string, totalPages: number = 1000): Vali
     }
     const pageIndex = pageNum - 1;
     if (pageIndex >= totalPages) {
-      return { valid: false, error: `Page number ${pageNum} exceeds document page count (${totalPages})` };
+      return {
+        valid: false,
+        error: `Page number ${pageNum} exceeds document page count (${totalPages})`
+      };
     }
     return {
       valid: true,
@@ -127,11 +130,14 @@ function isValidPhone(phone: string): boolean {
 /**
  * Scans text content for embedded URLs and email addresses.
  */
-export function findLinksInText(text: string): { match: string; index: number; target: LinkDestination }[] {
+export function findLinksInText(
+  text: string
+): { match: string; index: number; target: LinkDestination }[] {
   const results: { match: string; index: number; target: LinkDestination }[] = [];
 
   // Match URLs
-  const urlRegex = /\b(?:https?:\/\/|www\.)[^\s<>()]+(?:\([^\s()<>]+\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’])/gi;
+  const urlRegex =
+    /\b(?:https?:\/\/|www\.)[^\s<>()]+(?:\([^\s()<>]+\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’])/gi;
   let match: RegExpExecArray | null;
 
   while ((match = urlRegex.exec(text)) !== null) {
@@ -151,7 +157,9 @@ export function findLinksInText(text: string): { match: string; index: number; t
   while ((match = emailRegex.exec(text)) !== null) {
     const matchedStr = match[0];
     // Skip if already inside a matched URL
-    const overlaps = results.some(r => match!.index >= r.index && match!.index < r.index + r.match.length);
+    const overlaps = results.some(
+      (r) => match!.index >= r.index && match!.index < r.index + r.match.length
+    );
     if (!overlaps) {
       results.push({
         match: matchedStr,

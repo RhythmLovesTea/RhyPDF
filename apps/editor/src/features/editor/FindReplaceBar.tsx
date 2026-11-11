@@ -104,7 +104,12 @@ export const FindReplaceBar: React.FC<FindReplaceBarProps> = ({
         />
         <span
           data-testid="find-match-counter"
-          style={{ fontSize: 12, color: 'var(--bg-muted-foreground)', minWidth: 48, textAlign: 'center' }}
+          style={{
+            fontSize: 12,
+            color: 'var(--bg-muted-foreground)',
+            minWidth: 48,
+            textAlign: 'center'
+          }}
         >
           {totalMatches > 0 ? `${currentNum} of ${totalMatches}` : query ? '0 matches' : ''}
         </span>

@@ -77,7 +77,8 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
   onRedo
 }) => {
   const { t } = useTranslation();
-  const { filename, isDirty, isSaving, renameDoc, activeMode, setActiveMode, fileHandle } = useDocStore();
+  const { filename, isDirty, isSaving, renameDoc, activeMode, setActiveMode, fileHandle } =
+    useDocStore();
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState(filename || 'document.pdf');

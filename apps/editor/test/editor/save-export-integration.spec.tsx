@@ -80,14 +80,18 @@ describe('Phase 14 UI Integration: Save, Export, Share, Print', () => {
       expect(dialog).not.toBeNull();
       expect(dialog?.textContent).toContain('my-report.pdf');
 
-      const btnSave = document.querySelector('[data-testid="btn-save-confirm"]') as HTMLButtonElement;
+      const btnSave = document.querySelector(
+        '[data-testid="btn-save-confirm"]'
+      ) as HTMLButtonElement;
       expect(btnSave).not.toBeNull();
       act(() => {
         btnSave.click();
       });
       expect(onSaveOriginal).toHaveBeenCalledTimes(1);
 
-      const btnCopy = document.querySelector('[data-testid="btn-save-as-copy"]') as HTMLButtonElement;
+      const btnCopy = document.querySelector(
+        '[data-testid="btn-save-as-copy"]'
+      ) as HTMLButtonElement;
       act(() => {
         btnCopy.click();
       });
@@ -165,18 +169,24 @@ describe('Phase 14 UI Integration: Save, Export, Share, Print', () => {
       expect(banner).not.toBeNull();
 
       // Toggle checkboxes
-      const toggleFlattenAnnots = document.querySelector('[data-testid="toggle-flatten-annotations"]') as HTMLInputElement;
+      const toggleFlattenAnnots = document.querySelector(
+        '[data-testid="toggle-flatten-annotations"]'
+      ) as HTMLInputElement;
       act(() => {
         toggleFlattenAnnots.click();
       });
 
-      const toggleFlattenForms = document.querySelector('[data-testid="toggle-flatten-forms"]') as HTMLInputElement;
+      const toggleFlattenForms = document.querySelector(
+        '[data-testid="toggle-flatten-forms"]'
+      ) as HTMLInputElement;
       act(() => {
         toggleFlattenForms.click();
       });
 
       // Submit
-      const btnExport = document.querySelector('[data-testid="btn-confirm-export"]') as HTMLButtonElement;
+      const btnExport = document.querySelector(
+        '[data-testid="btn-confirm-export"]'
+      ) as HTMLButtonElement;
       act(() => {
         btnExport.click();
       });
@@ -235,10 +245,14 @@ describe('Phase 14 UI Integration: Save, Export, Share, Print', () => {
       expect(dialog).not.toBeNull();
       expect(dialog?.textContent).toContain('Total 5');
 
-      const copiesInput = document.querySelector('[data-testid="input-print-copies"]') as HTMLInputElement;
+      const copiesInput = document.querySelector(
+        '[data-testid="input-print-copies"]'
+      ) as HTMLInputElement;
       expect(copiesInput.value).toBe('1');
 
-      const btnPrint = document.querySelector('[data-testid="btn-confirm-print"]') as HTMLButtonElement;
+      const btnPrint = document.querySelector(
+        '[data-testid="btn-confirm-print"]'
+      ) as HTMLButtonElement;
       act(() => {
         btnPrint.click();
       });
@@ -280,10 +294,14 @@ describe('Phase 14 UI Integration: Save, Export, Share, Print', () => {
       const status = document.querySelector('[data-testid="text-save-progress-status"]');
       expect(status?.textContent).toContain('Optimizing PDF... (75%)');
 
-      const progressBar = document.querySelector('[data-testid="save-progress-bar"]') as HTMLDivElement;
+      const progressBar = document.querySelector(
+        '[data-testid="save-progress-bar"]'
+      ) as HTMLDivElement;
       expect(progressBar.style.width).toBe('75%');
 
-      const btnCancel = document.querySelector('[data-testid="btn-cancel-save-progress"]') as HTMLButtonElement;
+      const btnCancel = document.querySelector(
+        '[data-testid="btn-cancel-save-progress"]'
+      ) as HTMLButtonElement;
       act(() => {
         btnCancel.click();
       });
@@ -331,19 +349,25 @@ describe('Phase 14 UI Integration: Save, Export, Share, Print', () => {
       expect(dialog).not.toBeNull();
       expect(dialog?.textContent).toContain('quarterly_report.pdf');
 
-      const btnSave = document.querySelector('[data-testid="btn-unsaved-save"]') as HTMLButtonElement;
+      const btnSave = document.querySelector(
+        '[data-testid="btn-unsaved-save"]'
+      ) as HTMLButtonElement;
       act(() => {
         btnSave.click();
       });
       expect(onSave).toHaveBeenCalledTimes(1);
 
-      const btnDiscard = document.querySelector('[data-testid="btn-unsaved-discard"]') as HTMLButtonElement;
+      const btnDiscard = document.querySelector(
+        '[data-testid="btn-unsaved-discard"]'
+      ) as HTMLButtonElement;
       act(() => {
         btnDiscard.click();
       });
       expect(onDiscard).toHaveBeenCalledTimes(1);
 
-      const btnStay = document.querySelector('[data-testid="btn-unsaved-cancel"]') as HTMLButtonElement;
+      const btnStay = document.querySelector(
+        '[data-testid="btn-unsaved-cancel"]'
+      ) as HTMLButtonElement;
       act(() => {
         btnStay.click();
       });
@@ -417,7 +441,9 @@ describe('Phase 14 UI Integration: Save, Export, Share, Print', () => {
         await new Promise((r) => setTimeout(r, 50));
       });
 
-      const restoreBtn = document.querySelector('[data-testid^="btn-restore-version-"]') as HTMLButtonElement;
+      const restoreBtn = document.querySelector(
+        '[data-testid^="btn-restore-version-"]'
+      ) as HTMLButtonElement;
       if (restoreBtn) {
         act(() => {
           restoreBtn.click();
@@ -456,12 +482,16 @@ describe('Phase 14 UI Integration: Save, Export, Share, Print', () => {
       expect(card?.textContent).toContain('4.00 MB');
 
       // Select Extreme compression preset
-      const presetExtreme = document.querySelector('[data-testid="preset-extreme"]') as HTMLLabelElement;
+      const presetExtreme = document.querySelector(
+        '[data-testid="preset-extreme"]'
+      ) as HTMLLabelElement;
       act(() => {
         presetExtreme.click();
       });
 
-      const btnConfirm = document.querySelector('[data-testid="btn-confirm-compress"]') as HTMLButtonElement;
+      const btnConfirm = document.querySelector(
+        '[data-testid="btn-confirm-compress"]'
+      ) as HTMLButtonElement;
       act(() => {
         btnConfirm.click();
       });
@@ -509,14 +539,18 @@ describe('Phase 14 UI Integration: Save, Export, Share, Print', () => {
       });
 
       // Check Print and Share buttons in topbar
-      const btnPrint = document.querySelector('[data-testid="btn-topbar-print"]') as HTMLButtonElement;
+      const btnPrint = document.querySelector(
+        '[data-testid="btn-topbar-print"]'
+      ) as HTMLButtonElement;
       expect(btnPrint).not.toBeNull();
       act(() => {
         btnPrint.click();
       });
       expect(onPrint).toHaveBeenCalledTimes(1);
 
-      const btnShare = document.querySelector('[data-testid="btn-topbar-share"]') as HTMLButtonElement;
+      const btnShare = document.querySelector(
+        '[data-testid="btn-topbar-share"]'
+      ) as HTMLButtonElement;
       expect(btnShare).not.toBeNull();
       act(() => {
         btnShare.click();
@@ -524,7 +558,9 @@ describe('Phase 14 UI Integration: Save, Export, Share, Print', () => {
       expect(onShare).toHaveBeenCalledTimes(1);
 
       // Open save dropdown menu
-      const btnMenu = document.querySelector('[data-testid="btn-topbar-save-menu"]') as HTMLButtonElement;
+      const btnMenu = document.querySelector(
+        '[data-testid="btn-topbar-save-menu"]'
+      ) as HTMLButtonElement;
       expect(btnMenu).not.toBeNull();
       act(() => {
         btnMenu.click();
@@ -534,7 +570,9 @@ describe('Phase 14 UI Integration: Save, Export, Share, Print', () => {
       expect(menu).not.toBeNull();
 
       // Click Download a Copy
-      const itemCopy = document.querySelector('[data-testid="menu-item-download-copy"]') as HTMLButtonElement;
+      const itemCopy = document.querySelector(
+        '[data-testid="menu-item-download-copy"]'
+      ) as HTMLButtonElement;
       act(() => {
         itemCopy.click();
       });
@@ -544,7 +582,9 @@ describe('Phase 14 UI Integration: Save, Export, Share, Print', () => {
       act(() => {
         btnMenu.click();
       });
-      const itemExport = document.querySelector('[data-testid="menu-item-export-options"]') as HTMLButtonElement;
+      const itemExport = document.querySelector(
+        '[data-testid="menu-item-export-options"]'
+      ) as HTMLButtonElement;
       act(() => {
         itemExport.click();
       });
@@ -554,7 +594,9 @@ describe('Phase 14 UI Integration: Save, Export, Share, Print', () => {
       act(() => {
         btnMenu.click();
       });
-      const itemCompress = document.querySelector('[data-testid="menu-item-compress"]') as HTMLButtonElement;
+      const itemCompress = document.querySelector(
+        '[data-testid="menu-item-compress"]'
+      ) as HTMLButtonElement;
       act(() => {
         itemCompress.click();
       });
@@ -564,7 +606,9 @@ describe('Phase 14 UI Integration: Save, Export, Share, Print', () => {
       act(() => {
         btnMenu.click();
       });
-      const itemVersions = document.querySelector('[data-testid="menu-item-version-history"]') as HTMLButtonElement;
+      const itemVersions = document.querySelector(
+        '[data-testid="menu-item-version-history"]'
+      ) as HTMLButtonElement;
       act(() => {
         itemVersions.click();
       });

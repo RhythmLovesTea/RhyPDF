@@ -61,9 +61,21 @@ export interface PageOrganizerPageProps {
   onDuplicatePage?: (sourceIndex: number) => void;
   onReorderPages?: (newOrder: number[]) => void;
   onExtractPages?: (indices: number[]) => void;
-  onInsertBlankPage?: (params: { targetIndex: number; width: number; height: number; preset: string }) => void;
-  onInsertPagesFromPdf?: (params: { sourceBytes: Uint8Array; pageRange: string; targetIndex: number }) => void;
-  onCropPage?: (pageIndex: number, cropBox: { left: number; bottom: number; right: number; top: number }) => void;
+  onInsertBlankPage?: (params: {
+    targetIndex: number;
+    width: number;
+    height: number;
+    preset: string;
+  }) => void;
+  onInsertPagesFromPdf?: (params: {
+    sourceBytes: Uint8Array;
+    pageRange: string;
+    targetIndex: number;
+  }) => void;
+  onCropPage?: (
+    pageIndex: number,
+    cropBox: { left: number; bottom: number; right: number; top: number }
+  ) => void;
   onResizePage?: (pageIndex: number, width: number, height: number, scaleContent: boolean) => void;
 }
 
@@ -90,7 +102,9 @@ const SortablePageCard: React.FC<SortablePageCardProps> = ({
   onCrop,
   onResize
 }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: page.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: page.id
+  });
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -115,7 +129,15 @@ const SortablePageCard: React.FC<SortablePageCardProps> = ({
       onClick={() => onToggleSelect(page.id)}
     >
       {/* Top Header: Drag Handle & Selection Checkbox */}
-      <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+      <div
+        style={{
+          display: 'flex',
+          width: '100%',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 8
+        }}
+      >
         <button
           {...attributes}
           {...listeners}
@@ -172,7 +194,9 @@ const SortablePageCard: React.FC<SortablePageCardProps> = ({
         }}
       >
         <span style={{ fontSize: 16 }}>{index + 1}</span>
-        <span style={{ fontSize: 10, color: '#64748b' }}>{Math.round(page.width)}×{Math.round(page.height)}</span>
+        <span style={{ fontSize: 10, color: '#64748b' }}>
+          {Math.round(page.width)}×{Math.round(page.height)}
+        </span>
       </div>
 
       {/* Rotation indicator */}
@@ -324,7 +348,9 @@ export default function PageOrganizerPage({
 
   const rotatePage = (id: string, delta: number) => {
     setPages((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, rotation: ((p.rotation + delta) % 360 + 360) % 360 } : p))
+      prev.map((p) =>
+        p.id === id ? { ...p, rotation: (((p.rotation + delta) % 360) + 360) % 360 } : p
+      )
     );
     const target = pages.find((p) => p.id === id);
     if (target) {
@@ -336,7 +362,7 @@ export default function PageOrganizerPage({
     const targetIds = selectedIds.size > 0 ? selectedIds : new Set(pages.map((p) => p.id));
     setPages((prev) =>
       prev.map((p) =>
-        targetIds.has(p.id) ? { ...p, rotation: ((p.rotation + delta) % 360 + 360) % 360 } : p
+        targetIds.has(p.id) ? { ...p, rotation: (((p.rotation + delta) % 360) + 360) % 360 } : p
       )
     );
     const targetIndices = pages.filter((p) => targetIds.has(p.id)).map((p) => p.originalIndex);
@@ -395,9 +421,7 @@ export default function PageOrganizerPage({
   };
 
   const extractSelected = () => {
-    const targetIndices = pages
-      .filter((p) => selectedIds.has(p.id))
-      .map((p) => p.originalIndex);
+    const targetIndices = pages.filter((p) => selectedIds.has(p.id)).map((p) => p.originalIndex);
 
     if (targetIndices.length === 0) return;
     onExtractPages?.(targetIndices);
@@ -427,7 +451,8 @@ export default function PageOrganizerPage({
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Page Organizer</h1>
             <p style={{ color: 'var(--bg-muted-foreground)', fontSize: 13, margin: '2px 0 0' }}>
-              {pages.length} {pages.length === 1 ? 'page' : 'pages'} &bull; {selectedIds.size} selected
+              {pages.length} {pages.length === 1 ? 'page' : 'pages'} &bull; {selectedIds.size}{' '}
+              selected
             </p>
           </div>
         </div>
@@ -493,10 +518,20 @@ export default function PageOrganizerPage({
         }}
       >
         <div style={{ display: 'flex', gap: 8 }}>
-          <Button size="sm" variant="secondary" onClick={selectAll} data-testid="select-all-pages-btn">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={selectAll}
+            data-testid="select-all-pages-btn"
+          >
             Select All
           </Button>
-          <Button size="sm" variant="secondary" onClick={deselectAll} data-testid="deselect-all-pages-btn">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={deselectAll}
+            data-testid="deselect-all-pages-btn"
+          >
             Deselect All
           </Button>
         </div>
@@ -654,10 +689,7 @@ export default function PageOrganizerPage({
       )}
 
       {openImagesToPdf && (
-        <ImagesToPdfDialog
-          open={openImagesToPdf}
-          onClose={() => setOpenImagesToPdf(false)}
-        />
+        <ImagesToPdfDialog open={openImagesToPdf} onClose={() => setOpenImagesToPdf(false)} />
       )}
 
       {openPdfToImages && (

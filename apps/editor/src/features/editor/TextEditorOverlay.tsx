@@ -203,14 +203,18 @@ export const TextEditorOverlay: React.FC<TextEditorOverlayProps> = ({
           width: '100%',
           minHeight: boxCss.height,
           padding: '2px 4px',
-          fontFamily: fontFamily.includes('sans') ? 'sans-serif' : fontFamily.includes('mono') ? 'monospace' : fontFamily,
+          fontFamily: fontFamily.includes('sans')
+            ? 'sans-serif'
+            : fontFamily.includes('mono')
+              ? 'monospace'
+              : fontFamily,
           fontSize: fontSize * scale,
           fontWeight: block.isBold ? 'bold' : 'normal',
           fontStyle: block.isItalic ? 'italic' : 'normal',
-          textDecoration: [
-            block.isUnderline ? 'underline' : '',
-            block.isStrikethrough ? 'line-through' : ''
-          ].filter(Boolean).join(' ') || 'none',
+          textDecoration:
+            [block.isUnderline ? 'underline' : '', block.isStrikethrough ? 'line-through' : '']
+              .filter(Boolean)
+              .join(' ') || 'none',
           letterSpacing: block.letterSpacing !== undefined ? `${block.letterSpacing}pt` : undefined,
           lineHeight: block.lineSpacing ? block.lineSpacing : 1.25,
           color: colorRgba,

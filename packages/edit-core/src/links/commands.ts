@@ -17,7 +17,11 @@ export class SetObjectLinkCommand implements EditCommand {
     public readonly objectId: string,
     public readonly link: ObjectLink,
     public readonly prevLink: ObjectLink | undefined,
-    private readonly updateFn: (pageIndex: number, objectId: string, link: ObjectLink | undefined) => Promise<void> | void
+    private readonly updateFn: (
+      pageIndex: number,
+      objectId: string,
+      link: ObjectLink | undefined
+    ) => Promise<void> | void
   ) {}
 
   async apply(): Promise<void> {
@@ -39,7 +43,11 @@ export class RemoveObjectLinkCommand implements EditCommand {
     public readonly pageIndex: number,
     public readonly objectId: string,
     public readonly prevLink: ObjectLink,
-    private readonly updateFn: (pageIndex: number, objectId: string, link: ObjectLink | undefined) => Promise<void> | void
+    private readonly updateFn: (
+      pageIndex: number,
+      objectId: string,
+      link: ObjectLink | undefined
+    ) => Promise<void> | void
   ) {}
 
   async apply(): Promise<void> {

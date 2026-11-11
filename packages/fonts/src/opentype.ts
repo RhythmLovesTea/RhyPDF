@@ -69,7 +69,8 @@ export function parseFsType(fsTypeVal: number): FsTypePermissions {
 
   // Can be embedded for PDF text editing:
   // Must NOT be restricted (0x0002), and must be either Installable (0x0000) or Editable (0x0008)
-  const embeddableForEditing = !isRestricted && !isPreviewPrintOnly && (isInstallable || isEditable);
+  const embeddableForEditing =
+    !isRestricted && !isPreviewPrintOnly && (isInstallable || isEditable);
 
   return {
     raw: fsTypeVal,
@@ -194,12 +195,7 @@ export function parseFontBuffer(buffer: ArrayBuffer | Uint8Array): ParsedFontInf
   };
 }
 
-function parseNameTable(
-  bytes: Uint8Array,
-  view: DataView,
-  offset: number,
-  names: FontNameRecords
-) {
+function parseNameTable(bytes: Uint8Array, view: DataView, offset: number, names: FontNameRecords) {
   const count = view.getUint16(offset + 2, false);
   const stringOffset = offset + view.getUint16(offset + 4, false);
 
@@ -266,12 +262,7 @@ function parseNameTable(
   if (psFallback) names.postScriptName = psFallback;
 }
 
-function parseCmapTable(
-  bytes: Uint8Array,
-  view: DataView,
-  offset: number,
-  supported: Set<number>
-) {
+function parseCmapTable(bytes: Uint8Array, view: DataView, offset: number, supported: Set<number>) {
   const numSubtables = view.getUint16(offset + 2, false);
 
   for (let i = 0; i < numSubtables; i++) {
@@ -320,11 +311,7 @@ function parseCmapFormat4(
   }
 }
 
-function parseCmapFormat12(
-  view: DataView,
-  offset: number,
-  supported: Set<number>
-) {
+function parseCmapFormat12(view: DataView, offset: number, supported: Set<number>) {
   const numGroups = view.getUint32(offset + 12, false);
   let groupOffset = offset + 16;
 

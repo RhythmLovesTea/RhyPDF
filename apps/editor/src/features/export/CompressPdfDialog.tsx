@@ -65,7 +65,14 @@ export const CompressPdfDialog: React.FC<CompressPdfDialogProps> = ({
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 16
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Minimize2 size={20} color="var(--bg-primary, #2563eb)" />
             <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Compress PDF</h3>
@@ -98,12 +105,16 @@ export const CompressPdfDialog: React.FC<CompressPdfDialogProps> = ({
           }}
         >
           <div>
-            <div style={{ fontSize: 12, color: 'var(--bg-muted-foreground, #64748b)' }}>Current Size</div>
+            <div style={{ fontSize: 12, color: 'var(--bg-muted-foreground, #64748b)' }}>
+              Current Size
+            </div>
             <div style={{ fontSize: 16, fontWeight: 600 }}>{formatSize(currentFileSize)}</div>
           </div>
           <div style={{ fontSize: 20, color: 'var(--bg-muted-foreground, #94a3b8)' }}>→</div>
           <div>
-            <div style={{ fontSize: 12, color: 'var(--bg-muted-foreground, #64748b)' }}>Estimated Size</div>
+            <div style={{ fontSize: 12, color: 'var(--bg-muted-foreground, #64748b)' }}>
+              Estimated Size
+            </div>
             <div style={{ fontSize: 16, fontWeight: 600, color: '#10b981' }}>
               {formatSize(estimatedSize)} (-{savingsPercent}%)
             </div>
@@ -145,7 +156,8 @@ export const CompressPdfDialog: React.FC<CompressPdfDialogProps> = ({
               padding: '10px 14px',
               borderRadius: 8,
               border: `1px solid ${selectedPreset === 'medium' ? 'var(--bg-primary, #2563eb)' : 'var(--bg-border, #e2e8f0)'}`,
-              backgroundColor: selectedPreset === 'medium' ? 'rgba(37, 99, 235, 0.05)' : 'transparent',
+              backgroundColor:
+                selectedPreset === 'medium' ? 'rgba(37, 99, 235, 0.05)' : 'transparent',
               cursor: 'pointer'
             }}
           >
@@ -168,7 +180,8 @@ export const CompressPdfDialog: React.FC<CompressPdfDialogProps> = ({
               padding: '10px 14px',
               borderRadius: 8,
               border: `1px solid ${selectedPreset === 'high' ? 'var(--bg-primary, #2563eb)' : 'var(--bg-border, #e2e8f0)'}`,
-              backgroundColor: selectedPreset === 'high' ? 'rgba(37, 99, 235, 0.05)' : 'transparent',
+              backgroundColor:
+                selectedPreset === 'high' ? 'rgba(37, 99, 235, 0.05)' : 'transparent',
               cursor: 'pointer'
             }}
           >
@@ -184,7 +197,15 @@ export const CompressPdfDialog: React.FC<CompressPdfDialogProps> = ({
 
         {/* Options */}
         <div style={{ marginBottom: 20 }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 13,
+              cursor: 'pointer'
+            }}
+          >
             <input
               data-testid="toggle-remove-metadata"
               type="checkbox"

@@ -237,3 +237,5 @@ export { EngineService } from './worker/engine-service';
 export type { PdfEngineWorkerApi } from './protocol';
 export { loadPdfiumWasm, resetWasmCache } from './wasm-loader';
 export type { WasmLoadProgress, WasmProgressCallback, WasmLoaderOptions } from './wasm-loader';
+export { PixelBufferPool } from './buffer-pool';
+export type { BufferPoolOptions } from './buffer-pool';

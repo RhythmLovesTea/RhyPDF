@@ -70,6 +70,7 @@ export interface OcrEngineOptions {
   workerPath?: string;
   corePath?: string;
   langPath?: string;
+  enableMultithreading?: boolean;
   onProgress?: (progress: OcrProgress) => void;
   signal?: AbortSignal;
 }
@@ -132,6 +133,44 @@ export interface BatchOcrOptions {
   outputMode: OcrOutputMode;
   onProgress?: (progress: BatchOcrProgress) => void;
   signal?: AbortSignal;
+  throttleOnHidden?: boolean;
+  pauseOnLowBattery?: boolean;
+  onThrottled?: (reason: 'tab_hidden' | 'low_battery') => void;
+}
+
+/**
+ * Task 16.10: Helper to detect multithreaded WASM (SharedArrayBuffer) capability.
+ * Returns true only when cross-origin isolated and SharedArrayBuffer is defined.
+ */
+export function isMultithreadingSupported(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    window.crossOriginIsolated === true &&
+    typeof SharedArrayBuffer !== 'undefined'
+  );
+}
+
+/**
+ * Task 16.7: Helper to check if battery level is low (< 20%) and discharging.
+ */
+export async function checkBatteryLow(): Promise<boolean> {
+  if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const battery = await (navigator as any).getBattery();
+      if (
+        battery &&
+        typeof battery.level === 'number' &&
+        battery.charging === false &&
+        battery.level <= 0.2
+      ) {
+        return true;
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return false;
 }
 
 export interface BatchOcrProgress {

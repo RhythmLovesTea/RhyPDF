@@ -7,7 +7,12 @@ export interface InsertBlankPageDialogProps {
   onClose: () => void;
   currentPageIndex: number;
   totalPages: number;
-  onInsert: (params: { targetIndex: number; width: number; height: number; preset: string }) => void;
+  onInsert: (params: {
+    targetIndex: number;
+    width: number;
+    height: number;
+    preset: string;
+  }) => void;
 }
 
 export const InsertBlankPageDialog: React.FC<InsertBlankPageDialogProps> = ({
@@ -86,7 +91,14 @@ export const InsertBlankPageDialog: React.FC<InsertBlankPageDialogProps> = ({
         {preset === 'Custom' ? (
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 12, color: 'var(--bg-muted-foreground)', display: 'block', marginBottom: 4 }}>
+              <label
+                style={{
+                  fontSize: 12,
+                  color: 'var(--bg-muted-foreground)',
+                  display: 'block',
+                  marginBottom: 4
+                }}
+              >
                 Width (pt)
               </label>
               <input
@@ -104,7 +116,14 @@ export const InsertBlankPageDialog: React.FC<InsertBlankPageDialogProps> = ({
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 12, color: 'var(--bg-muted-foreground)', display: 'block', marginBottom: 4 }}>
+              <label
+                style={{
+                  fontSize: 12,
+                  color: 'var(--bg-muted-foreground)',
+                  display: 'block',
+                  marginBottom: 4
+                }}
+              >
                 Height (pt)
               </label>
               <input
@@ -128,7 +147,15 @@ export const InsertBlankPageDialog: React.FC<InsertBlankPageDialogProps> = ({
               Orientation
             </label>
             <div style={{ display: 'flex', gap: 12 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  cursor: 'pointer',
+                  fontSize: 13
+                }}
+              >
                 <input
                   type="radio"
                   name="orientation"
@@ -138,7 +165,15 @@ export const InsertBlankPageDialog: React.FC<InsertBlankPageDialogProps> = ({
                 />
                 Portrait
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  cursor: 'pointer',
+                  fontSize: 13
+                }}
+              >
                 <input
                   type="radio"
                   name="orientation"

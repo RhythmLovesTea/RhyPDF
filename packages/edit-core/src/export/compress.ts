@@ -76,9 +76,9 @@ export function estimateExportSize(
     multiplier *= 0.95;
   }
   if ('quality' in options) {
-    if (options.quality === 'low') multiplier *= 0.60;
+    if (options.quality === 'low') multiplier *= 0.6;
     else if (options.quality === 'medium') multiplier *= 0.75;
-    else if (options.quality === 'high') multiplier *= 0.90;
+    else if (options.quality === 'high') multiplier *= 0.9;
     else if (typeof options.quality === 'number') {
       multiplier *= Math.max(0.4, Math.min(1.0, options.quality));
     }

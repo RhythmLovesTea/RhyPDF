@@ -125,7 +125,8 @@ export const MergePdfDialog: React.FC<MergePdfDialogProps> = ({
     <Dialog open={open} onClose={onClose} title="Merge Multiple PDFs">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 380 }}>
         <p style={{ fontSize: 13, color: 'var(--bg-muted-foreground)', margin: 0 }}>
-          Arrange the order of documents below. They will be merged in top-to-bottom sequence into a single PDF.
+          Arrange the order of documents below. They will be merged in top-to-bottom sequence into a
+          single PDF.
         </p>
 
         <input
@@ -162,7 +163,14 @@ export const MergePdfDialog: React.FC<MergePdfDialogProps> = ({
           }}
         >
           {items.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 24, color: 'var(--bg-muted-foreground)', fontSize: 13 }}>
+            <div
+              style={{
+                textAlign: 'center',
+                padding: 24,
+                color: 'var(--bg-muted-foreground)',
+                fontSize: 13
+              }}
+            >
               No PDF files added yet. Click "Add PDF Files..." to get started.
             </div>
           ) : (
@@ -181,10 +189,24 @@ export const MergePdfDialog: React.FC<MergePdfDialogProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
-                  <span style={{ fontWeight: 600, fontSize: 12, color: 'var(--bg-muted-foreground)', minWidth: 20 }}>
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      fontSize: 12,
+                      color: 'var(--bg-muted-foreground)',
+                      minWidth: 20
+                    }}
+                  >
                     {idx + 1}.
                   </span>
-                  <span style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span
+                    style={{
+                      fontSize: 13,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
                     {item.name}
                   </span>
                   {item.pageCount !== undefined && (

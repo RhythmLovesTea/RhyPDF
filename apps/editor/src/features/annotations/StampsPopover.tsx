@@ -301,14 +301,24 @@ export const StampsPopover: React.FC<StampsPopoverProps> = ({
               />
             </div>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 12,
+                cursor: 'pointer'
+              }}
+            >
               <input
                 data-testid="checkbox-custom-stamp-date"
                 type="checkbox"
                 checked={includeDate}
                 onChange={(e) => setIncludeDate(e.target.checked)}
               />
-              <span>{t('editor.annotations.includeDate', { defaultValue: 'Append Current Date' })}</span>
+              <span>
+                {t('editor.annotations.includeDate', { defaultValue: 'Append Current Date' })}
+              </span>
             </label>
 
             <button

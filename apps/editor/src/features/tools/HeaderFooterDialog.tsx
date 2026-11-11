@@ -80,7 +80,13 @@ export const HeaderFooterDialog: React.FC<HeaderFooterDialogProps> = ({
 
     const allBlocks: TextBlock[] = [];
     for (const pIdx of targetIndices) {
-      const blocks = generateHeaderFooterBlocks(config, pIdx, totalPages, pageWidthPt, pageHeightPt);
+      const blocks = generateHeaderFooterBlocks(
+        config,
+        pIdx,
+        totalPages,
+        pageWidthPt,
+        pageHeightPt
+      );
       allBlocks.push(...blocks);
     }
 
@@ -168,21 +174,36 @@ export const HeaderFooterDialog: React.FC<HeaderFooterDialogProps> = ({
                   placeholder="Left header"
                   value={headerLeft}
                   onChange={(e) => setHeaderLeft(e.target.value)}
-                  style={{ padding: '6px 8px', fontSize: 12, border: '1px solid var(--bg-border)', borderRadius: 4 }}
+                  style={{
+                    padding: '6px 8px',
+                    fontSize: 12,
+                    border: '1px solid var(--bg-border)',
+                    borderRadius: 4
+                  }}
                 />
                 <input
                   data-testid="input-hf-header-center"
                   placeholder="Center header"
                   value={headerCenter}
                   onChange={(e) => setHeaderCenter(e.target.value)}
-                  style={{ padding: '6px 8px', fontSize: 12, border: '1px solid var(--bg-border)', borderRadius: 4 }}
+                  style={{
+                    padding: '6px 8px',
+                    fontSize: 12,
+                    border: '1px solid var(--bg-border)',
+                    borderRadius: 4
+                  }}
                 />
                 <input
                   data-testid="input-hf-header-right"
                   placeholder="Right header"
                   value={headerRight}
                   onChange={(e) => setHeaderRight(e.target.value)}
-                  style={{ padding: '6px 8px', fontSize: 12, border: '1px solid var(--bg-border)', borderRadius: 4 }}
+                  style={{
+                    padding: '6px 8px',
+                    fontSize: 12,
+                    border: '1px solid var(--bg-border)',
+                    borderRadius: 4
+                  }}
                 />
               </div>
             </div>
@@ -196,32 +217,56 @@ export const HeaderFooterDialog: React.FC<HeaderFooterDialogProps> = ({
                   placeholder="Left footer"
                   value={footerLeft}
                   onChange={(e) => setFooterLeft(e.target.value)}
-                  style={{ padding: '6px 8px', fontSize: 12, border: '1px solid var(--bg-border)', borderRadius: 4 }}
+                  style={{
+                    padding: '6px 8px',
+                    fontSize: 12,
+                    border: '1px solid var(--bg-border)',
+                    borderRadius: 4
+                  }}
                 />
                 <input
                   data-testid="input-hf-footer-center"
                   placeholder="Center footer"
                   value={footerCenter}
                   onChange={(e) => setFooterCenter(e.target.value)}
-                  style={{ padding: '6px 8px', fontSize: 12, border: '1px solid var(--bg-border)', borderRadius: 4 }}
+                  style={{
+                    padding: '6px 8px',
+                    fontSize: 12,
+                    border: '1px solid var(--bg-border)',
+                    borderRadius: 4
+                  }}
                 />
                 <input
                   data-testid="input-hf-footer-right"
                   placeholder="Right footer"
                   value={footerRight}
                   onChange={(e) => setFooterRight(e.target.value)}
-                  style={{ padding: '6px 8px', fontSize: 12, border: '1px solid var(--bg-border)', borderRadius: 4 }}
+                  style={{
+                    padding: '6px 8px',
+                    fontSize: 12,
+                    border: '1px solid var(--bg-border)',
+                    borderRadius: 4
+                  }}
                 />
               </div>
             </div>
 
             {/* Quick tokens info */}
             <div style={{ fontSize: 11, color: 'var(--bg-muted-foreground)' }}>
-              Variables: {'{page}'} = Current Page, {'{pages}'} = Total Pages, {'{date}'} = Today's Date
+              Variables: {'{page}'} = Current Page, {'{pages}'} = Total Pages, {'{date}'} = Today's
+              Date
             </div>
 
             {/* Options */}
-            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                cursor: 'pointer',
+                fontSize: 13
+              }}
+            >
               <input
                 type="checkbox"
                 data-testid="checkbox-first-page-diff"
@@ -237,7 +282,11 @@ export const HeaderFooterDialog: React.FC<HeaderFooterDialogProps> = ({
                 data-testid="select-hf-range"
                 value={hfRangeMode}
                 onChange={(e) => setHfRangeMode(e.target.value as PageRangeMode)}
-                style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid var(--bg-border)' }}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: 4,
+                  border: '1px solid var(--bg-border)'
+                }}
               >
                 <option value="all">All Pages</option>
                 <option value="excludeFirstPage">Exclude First Page</option>
@@ -250,7 +299,13 @@ export const HeaderFooterDialog: React.FC<HeaderFooterDialogProps> = ({
                   placeholder="e.g. 1-5, 8"
                   value={hfCustomRange}
                   onChange={(e) => setHfCustomRange(e.target.value)}
-                  style={{ width: 100, padding: '4px 6px', fontSize: 12, border: '1px solid var(--bg-border)', borderRadius: 4 }}
+                  style={{
+                    width: 100,
+                    padding: '4px 6px',
+                    fontSize: 12,
+                    border: '1px solid var(--bg-border)',
+                    borderRadius: 4
+                  }}
                 />
               )}
             </div>
@@ -259,14 +314,28 @@ export const HeaderFooterDialog: React.FC<HeaderFooterDialogProps> = ({
               <button
                 data-testid="btn-hf-cancel"
                 onClick={onClose}
-                style={{ padding: '6px 14px', borderRadius: 4, border: '1px solid var(--bg-border)', background: 'transparent', cursor: 'pointer' }}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 4,
+                  border: '1px solid var(--bg-border)',
+                  background: 'transparent',
+                  cursor: 'pointer'
+                }}
               >
                 Cancel
               </button>
               <button
                 data-testid="btn-hf-apply"
                 onClick={handleApplyHf}
-                style={{ padding: '6px 16px', borderRadius: 4, border: 'none', background: 'var(--bg-primary)', color: '#ffffff', cursor: 'pointer', fontWeight: 500 }}
+                style={{
+                  padding: '6px 16px',
+                  borderRadius: 4,
+                  border: 'none',
+                  background: 'var(--bg-primary)',
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                  fontWeight: 500
+                }}
               >
                 Apply Header & Footer
               </button>
@@ -283,7 +352,13 @@ export const HeaderFooterDialog: React.FC<HeaderFooterDialogProps> = ({
                   value={batesPrefix}
                   onChange={(e) => setBatesPrefix(e.target.value)}
                   placeholder="e.g. CONF-"
-                  style={{ width: '100%', padding: '6px 8px', fontSize: 12, border: '1px solid var(--bg-border)', borderRadius: 4 }}
+                  style={{
+                    width: '100%',
+                    padding: '6px 8px',
+                    fontSize: 12,
+                    border: '1px solid var(--bg-border)',
+                    borderRadius: 4
+                  }}
                 />
               </div>
 
@@ -294,7 +369,13 @@ export const HeaderFooterDialog: React.FC<HeaderFooterDialogProps> = ({
                   value={batesSuffix}
                   onChange={(e) => setBatesSuffix(e.target.value)}
                   placeholder="e.g. -PROD"
-                  style={{ width: '100%', padding: '6px 8px', fontSize: 12, border: '1px solid var(--bg-border)', borderRadius: 4 }}
+                  style={{
+                    width: '100%',
+                    padding: '6px 8px',
+                    fontSize: 12,
+                    border: '1px solid var(--bg-border)',
+                    borderRadius: 4
+                  }}
                 />
               </div>
 
@@ -306,7 +387,13 @@ export const HeaderFooterDialog: React.FC<HeaderFooterDialogProps> = ({
                   min="1"
                   value={batesStartNum}
                   onChange={(e) => setBatesStartNum(parseInt(e.target.value) || 1)}
-                  style={{ width: '100%', padding: '6px 8px', fontSize: 12, border: '1px solid var(--bg-border)', borderRadius: 4 }}
+                  style={{
+                    width: '100%',
+                    padding: '6px 8px',
+                    fontSize: 12,
+                    border: '1px solid var(--bg-border)',
+                    borderRadius: 4
+                  }}
                 />
               </div>
 
@@ -319,7 +406,13 @@ export const HeaderFooterDialog: React.FC<HeaderFooterDialogProps> = ({
                   max="12"
                   value={batesNumDigits}
                   onChange={(e) => setBatesNumDigits(parseInt(e.target.value) || 6)}
-                  style={{ width: '100%', padding: '6px 8px', fontSize: 12, border: '1px solid var(--bg-border)', borderRadius: 4 }}
+                  style={{
+                    width: '100%',
+                    padding: '6px 8px',
+                    fontSize: 12,
+                    border: '1px solid var(--bg-border)',
+                    borderRadius: 4
+                  }}
                 />
               </div>
             </div>
@@ -330,7 +423,12 @@ export const HeaderFooterDialog: React.FC<HeaderFooterDialogProps> = ({
                 data-testid="select-bates-position"
                 value={batesPosition}
                 onChange={(e) => setBatesPosition(e.target.value as BatesPosition)}
-                style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--bg-border)' }}
+                style={{
+                  width: '100%',
+                  padding: '6px 8px',
+                  borderRadius: 4,
+                  border: '1px solid var(--bg-border)'
+                }}
               >
                 <option value="bottomRight">Bottom Right</option>
                 <option value="bottomCenter">Bottom Center</option>
@@ -341,22 +439,48 @@ export const HeaderFooterDialog: React.FC<HeaderFooterDialogProps> = ({
               </select>
             </div>
 
-            <div style={{ fontSize: 12, backgroundColor: 'var(--bg-secondary)', padding: 8, borderRadius: 4 }}>
-              Preview: <strong>{batesPrefix}{String(batesStartNum).padStart(batesNumDigits, '0')}{batesSuffix}</strong>
+            <div
+              style={{
+                fontSize: 12,
+                backgroundColor: 'var(--bg-secondary)',
+                padding: 8,
+                borderRadius: 4
+              }}
+            >
+              Preview:{' '}
+              <strong>
+                {batesPrefix}
+                {String(batesStartNum).padStart(batesNumDigits, '0')}
+                {batesSuffix}
+              </strong>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12 }}>
               <button
                 data-testid="btn-bates-cancel"
                 onClick={onClose}
-                style={{ padding: '6px 14px', borderRadius: 4, border: '1px solid var(--bg-border)', background: 'transparent', cursor: 'pointer' }}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 4,
+                  border: '1px solid var(--bg-border)',
+                  background: 'transparent',
+                  cursor: 'pointer'
+                }}
               >
                 Cancel
               </button>
               <button
                 data-testid="btn-bates-apply"
                 onClick={handleApplyBates}
-                style={{ padding: '6px 16px', borderRadius: 4, border: 'none', background: 'var(--bg-primary)', color: '#ffffff', cursor: 'pointer', fontWeight: 500 }}
+                style={{
+                  padding: '6px 16px',
+                  borderRadius: 4,
+                  border: 'none',
+                  background: 'var(--bg-primary)',
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                  fontWeight: 500
+                }}
               >
                 Apply Bates Numbering
               </button>

@@ -79,7 +79,14 @@ export const ResizePageDialog: React.FC<ResizePageDialogProps> = ({
         {preset === 'Custom' ? (
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 12, color: 'var(--bg-muted-foreground)', display: 'block', marginBottom: 4 }}>
+              <label
+                style={{
+                  fontSize: 12,
+                  color: 'var(--bg-muted-foreground)',
+                  display: 'block',
+                  marginBottom: 4
+                }}
+              >
                 Width (pt)
               </label>
               <input
@@ -97,7 +104,14 @@ export const ResizePageDialog: React.FC<ResizePageDialogProps> = ({
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 12, color: 'var(--bg-muted-foreground)', display: 'block', marginBottom: 4 }}>
+              <label
+                style={{
+                  fontSize: 12,
+                  color: 'var(--bg-muted-foreground)',
+                  display: 'block',
+                  marginBottom: 4
+                }}
+              >
                 Height (pt)
               </label>
               <input
@@ -121,7 +135,15 @@ export const ResizePageDialog: React.FC<ResizePageDialogProps> = ({
               Orientation
             </label>
             <div style={{ display: 'flex', gap: 12 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  cursor: 'pointer',
+                  fontSize: 13
+                }}
+              >
                 <input
                   type="radio"
                   name="resize-orientation"
@@ -131,7 +153,15 @@ export const ResizePageDialog: React.FC<ResizePageDialogProps> = ({
                 />
                 Portrait
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  cursor: 'pointer',
+                  fontSize: 13
+                }}
+              >
                 <input
                   type="radio"
                   name="resize-orientation"
@@ -145,7 +175,9 @@ export const ResizePageDialog: React.FC<ResizePageDialogProps> = ({
           </div>
         )}
 
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+        <label
+          style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}
+        >
           <input
             data-testid="scale-content-checkbox"
             type="checkbox"

@@ -102,7 +102,8 @@ export function createTable(
       };
 
       const blockId = `tb-cell-${tableId}-${r}-${c}`;
-      const defaultText = options.headerRow && r === 0 ? `Header ${c + 1}` : `Cell ${r + 1},${c + 1}`;
+      const defaultText =
+        options.headerRow && r === 0 ? `Header ${c + 1}` : `Cell ${r + 1},${c + 1}`;
       const isHeaderCell = Boolean(options.headerRow && r === 0);
 
       cells.push({

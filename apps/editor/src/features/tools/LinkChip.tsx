@@ -19,7 +19,6 @@ export const LinkChip: React.FC<LinkChipProps> = ({
   onOpenLink,
   position
 }) => {
-
   const getDisplayText = () => {
     switch (link.target.type) {
       case 'url':

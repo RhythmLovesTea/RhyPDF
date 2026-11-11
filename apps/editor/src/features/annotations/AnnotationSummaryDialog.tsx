@@ -23,7 +23,10 @@ export const AnnotationSummaryDialog: React.FC<AnnotationSummaryDialogProps> = (
   const [format, setFormat] = useState<AnnotationSummaryFormat>('markdown');
   const [copied, setCopied] = useState(false);
 
-  const report = useMemo(() => generateAnnotationSummary(annotationsByPage, format), [annotationsByPage, format]);
+  const report = useMemo(
+    () => generateAnnotationSummary(annotationsByPage, format),
+    [annotationsByPage, format]
+  );
 
   const handleCopy = () => {
     navigator.clipboard.writeText(report.content).then(() => {
@@ -50,14 +53,28 @@ export const AnnotationSummaryDialog: React.FC<AnnotationSummaryDialogProps> = (
       onClose={onClose}
       title={t('editor.annotations.summaryTitle', { defaultValue: 'Export Annotation Summary' })}
     >
-      <div data-testid="annotation-summary-dialog" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div
+        data-testid="annotation-summary-dialog"
+        style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+      >
         {/* Top Stats & Format Selector */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ fontSize: 13, color: 'var(--bg-muted)' }}>
-            <span>{report.totalAnnotations} annotations across {report.pagesWithAnnotations.length} pages</span>
+            <span>
+              {report.totalAnnotations} annotations across {report.pagesWithAnnotations.length}{' '}
+              pages
+            </span>
           </div>
 
-          <div style={{ display: 'flex', gap: 4, backgroundColor: 'var(--bg-secondary)', padding: 3, borderRadius: 'var(--radius-sm)' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: 4,
+              backgroundColor: 'var(--bg-secondary)',
+              padding: 3,
+              borderRadius: 'var(--radius-sm)'
+            }}
+          >
             {(['markdown', 'text', 'json'] as AnnotationSummaryFormat[]).map((fmt) => (
               <button
                 key={fmt}

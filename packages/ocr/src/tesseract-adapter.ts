@@ -5,14 +5,15 @@
  */
 
 import { createWorker } from 'tesseract.js';
-import type {
-  OcrEngine,
-  OcrEngineOptions,
-  OcrPageResult,
-  OcrBlock,
-  OcrLine,
-  OcrWord,
-  OcrProgress
+import {
+  type OcrEngine,
+  type OcrEngineOptions,
+  type OcrPageResult,
+  type OcrBlock,
+  type OcrLine,
+  type OcrWord,
+  type OcrProgress,
+  isMultithreadingSupported
 } from './types';
 import type { Rect } from '@rhypdf/pdf-model';
 
@@ -24,11 +25,16 @@ export class TesseractOcrEngine implements OcrEngine {
   private worker: any = null;
   private currentLanguage = 'eng';
   private ready = false;
+  private multithreaded = false;
 
   constructor(private readonly defaultOptions: Partial<OcrEngineOptions> = {}) {}
 
   isReady(): boolean {
     return this.ready && this.worker !== null;
+  }
+
+  isMultithreaded(): boolean {
+    return this.multithreaded;
   }
 
   /**
@@ -46,9 +52,15 @@ export class TesseractOcrEngine implements OcrEngine {
       await this.terminate();
     }
 
+    const multithreading = opts.enableMultithreading ?? isMultithreadingSupported();
+    this.multithreaded = multithreading;
+    const defaultCore = multithreading
+      ? '/tesseract/tesseract-core-simd-lstm.js'
+      : '/tesseract/tesseract-core-lstm.js';
+
     const workerOptions = {
       workerPath: opts.workerPath || '/tesseract/worker.min.js',
-      corePath: opts.corePath || '/tesseract/tesseract-core-simd-lstm.js',
+      corePath: opts.corePath || defaultCore,
       langPath: opts.langPath || '/tesseract',
       logger: (m: { status: string; progress: number }) => {
         if (opts.onProgress) {

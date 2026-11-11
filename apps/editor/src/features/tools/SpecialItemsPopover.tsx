@@ -3,11 +3,7 @@ import { useTranslation } from '@rhypdf/i18n';
 import { Calendar, QrCode, Sparkles, ChevronDown } from 'lucide-react';
 import type { PathObject } from '@rhypdf/pdf-model';
 import type { DateFormatPattern } from '@rhypdf/edit-core';
-import {
-  formatCurrentDate,
-  SYMBOL_CATEGORIES,
-  createQrCodePath
-} from '@rhypdf/edit-core';
+import { formatCurrentDate, SYMBOL_CATEGORIES, createQrCodePath } from '@rhypdf/edit-core';
 
 export interface SpecialItemsPopoverProps {
   onInsertText: (text: string) => void;
@@ -109,7 +105,14 @@ export const SpecialItemsPopover: React.FC<SpecialItemsPopoverProps> = ({
           }}
         >
           {/* Sub tabs */}
-          <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid var(--bg-border)', paddingBottom: 6 }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: 6,
+              borderBottom: '1px solid var(--bg-border)',
+              paddingBottom: 6
+            }}
+          >
             <button
               data-testid="tab-special-date"
               onClick={() => setActiveTab('date')}
@@ -182,7 +185,11 @@ export const SpecialItemsPopover: React.FC<SpecialItemsPopoverProps> = ({
                 data-testid="select-date-format"
                 value={dateFormat}
                 onChange={(e) => setDateFormat(e.target.value as DateFormatPattern)}
-                style={{ padding: '6px 8px', borderRadius: 4, border: '1px solid var(--bg-border)' }}
+                style={{
+                  padding: '6px 8px',
+                  borderRadius: 4,
+                  border: '1px solid var(--bg-border)'
+                }}
               >
                 <option value="iso">ISO (YYYY-MM-DD) — {formatCurrentDate('iso')}</option>
                 <option value="us">US (MM/DD/YYYY) — {formatCurrentDate('us')}</option>
@@ -276,7 +283,11 @@ export const SpecialItemsPopover: React.FC<SpecialItemsPopoverProps> = ({
                 value={qrText}
                 onChange={(e) => setQrText(e.target.value)}
                 placeholder="https://example.com"
-                style={{ padding: '6px 8px', borderRadius: 4, border: '1px solid var(--bg-border)' }}
+                style={{
+                  padding: '6px 8px',
+                  borderRadius: 4,
+                  border: '1px solid var(--bg-border)'
+                }}
               />
 
               <div style={{ fontSize: 11, color: 'var(--bg-muted-foreground)' }}>

@@ -749,7 +749,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               >
                 <span>Spacing:</span>
                 <span>
-                  Line: {selectedObject.lineSpacing ?? 1.15}x, Char: {selectedObject.letterSpacing ?? 0}pt
+                  Line: {selectedObject.lineSpacing ?? 1.15}x, Char:{' '}
+                  {selectedObject.letterSpacing ?? 0}pt
                 </span>
               </div>
             )}

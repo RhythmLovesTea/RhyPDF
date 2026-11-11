@@ -6,13 +6,7 @@
 import type { ColorRGBA, PathObject } from '@rhypdf/pdf-model';
 
 export type ShapeType =
-  | 'rectangle'
-  | 'roundedRectangle'
-  | 'ellipse'
-  | 'line'
-  | 'arrow'
-  | 'triangle'
-  | 'star';
+  'rectangle' | 'roundedRectangle' | 'ellipse' | 'line' | 'arrow' | 'triangle' | 'star';
 
 export interface ShapeOptions {
   fill?: boolean;

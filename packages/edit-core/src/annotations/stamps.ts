@@ -1,4 +1,11 @@
-import type { ColorRGBA, AnnotationObject, PathObject, PathSegment, TextRun, ImageObject } from '@rhypdf/pdf-model';
+import type {
+  ColorRGBA,
+  AnnotationObject,
+  PathObject,
+  PathSegment,
+  TextRun,
+  ImageObject
+} from '@rhypdf/pdf-model';
 import type { StampOptions, StampPresetType } from './types';
 
 export interface StampStyle {
@@ -11,19 +18,19 @@ export interface StampStyle {
 export const STAMP_PRESETS: Record<StampPresetType, StampStyle> = {
   Approved: {
     label: 'APPROVED',
-    borderColor: { r: 22, g: 163, b: 74, a: 255 },     // emerald-600
+    borderColor: { r: 22, g: 163, b: 74, a: 255 }, // emerald-600
     textColor: { r: 22, g: 163, b: 74, a: 255 },
     backgroundColor: { r: 240, g: 253, b: 244, a: 200 }
   },
   Draft: {
     label: 'DRAFT',
-    borderColor: { r: 100, g: 116, b: 139, a: 255 },   // slate-500
+    borderColor: { r: 100, g: 116, b: 139, a: 255 }, // slate-500
     textColor: { r: 100, g: 116, b: 139, a: 255 },
     backgroundColor: { r: 248, g: 250, b: 252, a: 200 }
   },
   Confidential: {
     label: 'CONFIDENTIAL',
-    borderColor: { r: 220, g: 38, b: 38, a: 255 },     // red-600
+    borderColor: { r: 220, g: 38, b: 38, a: 255 }, // red-600
     textColor: { r: 220, g: 38, b: 38, a: 255 },
     backgroundColor: { r: 254, g: 242, b: 242, a: 200 }
   },
@@ -35,13 +42,13 @@ export const STAMP_PRESETS: Record<StampPresetType, StampStyle> = {
   },
   Final: {
     label: 'FINAL',
-    borderColor: { r: 37, g: 99, b: 235, a: 255 },     // blue-600
+    borderColor: { r: 37, g: 99, b: 235, a: 255 }, // blue-600
     textColor: { r: 37, g: 99, b: 235, a: 255 },
     backgroundColor: { r: 239, g: 246, b: 255, a: 200 }
   },
   Expired: {
     label: 'EXPIRED',
-    borderColor: { r: 217, g: 119, b: 6, a: 255 },     // amber-600
+    borderColor: { r: 217, g: 119, b: 6, a: 255 }, // amber-600
     textColor: { r: 217, g: 119, b: 6, a: 255 },
     backgroundColor: { r: 255, g: 251, b: 235, a: 200 }
   },
@@ -53,7 +60,7 @@ export const STAMP_PRESETS: Record<StampPresetType, StampStyle> = {
   },
   TopSecret: {
     label: 'TOP SECRET',
-    borderColor: { r: 124, g: 58, b: 237, a: 255 },    // purple-600
+    borderColor: { r: 124, g: 58, b: 237, a: 255 }, // purple-600
     textColor: { r: 124, g: 58, b: 237, a: 255 },
     backgroundColor: { r: 250, g: 245, b: 255, a: 200 }
   },
@@ -100,11 +107,15 @@ export function createStampAnnotation(options: StampOptions): AnnotationObject {
 /**
  * Converts a Stamp annotation into page objects (vector border and text runs) for flattening.
  */
-export function stampToPageObjects(annotation: AnnotationObject): (PathObject | TextRun | ImageObject)[] {
+export function stampToPageObjects(
+  annotation: AnnotationObject
+): (PathObject | TextRun | ImageObject)[] {
   const { left, bottom, right, top } = annotation.bounds;
   const width = right - left;
   const height = top - bottom;
-  const preset = STAMP_PRESETS[(annotation.stampType as StampPresetType) ?? 'Approved'] ?? STAMP_PRESETS.Approved;
+  const preset =
+    STAMP_PRESETS[(annotation.stampType as StampPresetType) ?? 'Approved'] ??
+    STAMP_PRESETS.Approved;
   const text = annotation.customText ?? preset.label;
   const color = annotation.customColor ?? preset.textColor;
   const opacity = annotation.opacity ?? 0.85;
@@ -143,9 +154,9 @@ export function stampToPageObjects(annotation: AnnotationObject): (PathObject | 
   };
 
   // 2. Bold uppercase stamp text
-  const fontSize = Math.min(height * 0.45, (width / (text.length * 0.65)));
+  const fontSize = Math.min(height * 0.45, width / (text.length * 0.65));
   const textY = bottom + (height - fontSize) / 2 + fontSize * 0.2;
-  const textX = left + (width - (text.length * fontSize * 0.55)) / 2;
+  const textX = left + (width - text.length * fontSize * 0.55) / 2;
 
   const textRun: TextRun = {
     id: `${annotation.id}-text`,

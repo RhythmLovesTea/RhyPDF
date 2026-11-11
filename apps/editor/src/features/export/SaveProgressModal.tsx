@@ -46,9 +46,7 @@ export const SaveProgressModal: React.FC<SaveProgressModalProps> = ({
           <Loader2 size={36} color="var(--bg-primary, #2563eb)" className="animate-spin" />
         </div>
 
-        <h4 style={{ margin: '0 0 8px 0', fontSize: 16, fontWeight: 600 }}>
-          Saving Document...
-        </h4>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: 16, fontWeight: 600 }}>Saving Document...</h4>
 
         <p
           data-testid="text-save-progress-status"

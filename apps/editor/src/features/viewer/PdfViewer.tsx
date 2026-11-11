@@ -112,6 +112,7 @@ const ViewerPageCanvas: React.FC<ViewerPageCanvasProps> = ({
 
     return () => {
       cancelled = true;
+      scheduler.cancelJob(jobId);
     };
   }, [renderPageBitmap, pageIndex, docId, scale, dpr, scheduler, isVisible]);
 

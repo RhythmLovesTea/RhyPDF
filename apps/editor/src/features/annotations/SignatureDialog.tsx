@@ -24,11 +24,23 @@ export interface SignatureDialogProps {
 }
 
 const SCRIPT_FONTS = [
-  { name: 'Dancing Script', label: 'Dancing Script (Fluid Cursive)', family: "'Dancing Script', cursive" },
+  {
+    name: 'Dancing Script',
+    label: 'Dancing Script (Fluid Cursive)',
+    family: "'Dancing Script', cursive"
+  },
   { name: 'Caveat', label: 'Caveat (Casual Handwriting)', family: "'Caveat', cursive" },
   { name: 'Pacifico', label: 'Pacifico (Brush Script)', family: "'Pacifico', cursive" },
-  { name: 'Great Vibes', label: 'Great Vibes (Formal Calligraphy)', family: "'Great Vibes', cursive" },
-  { name: 'Homemade Apple', label: 'Homemade Apple (Clean Pen)', family: "'Homemade Apple', cursive" }
+  {
+    name: 'Great Vibes',
+    label: 'Great Vibes (Formal Calligraphy)',
+    family: "'Great Vibes', cursive"
+  },
+  {
+    name: 'Homemade Apple',
+    label: 'Homemade Apple (Clean Pen)',
+    family: "'Homemade Apple', cursive"
+  }
 ];
 
 export const SignatureDialog: React.FC<SignatureDialogProps> = ({
@@ -198,7 +210,10 @@ export const SignatureDialog: React.FC<SignatureDialogProps> = ({
       onClose={onClose}
       title={t('editor.annotations.signatures', { defaultValue: 'Add Signature' })}
     >
-      <div data-testid="signature-dialog" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div
+        data-testid="signature-dialog"
+        style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+      >
         {/* Mode Selector Tabs */}
         <div
           style={{
@@ -345,7 +360,9 @@ export const SignatureDialog: React.FC<SignatureDialogProps> = ({
             <input
               data-testid="input-sig-typed-name"
               type="text"
-              placeholder={t('editor.annotations.typeNamePlaceholder', { defaultValue: 'Type your full name...' })}
+              placeholder={t('editor.annotations.typeNamePlaceholder', {
+                defaultValue: 'Type your full name...'
+              })}
               value={typedName}
               onChange={(e) => setTypedName(e.target.value)}
               style={{
@@ -429,14 +446,26 @@ export const SignatureDialog: React.FC<SignatureDialogProps> = ({
             gap: 8
           }}
         >
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 13,
+              cursor: 'pointer'
+            }}
+          >
             <input
               data-testid="checkbox-save-signature-locally"
               type="checkbox"
               checked={saveLocally}
               onChange={(e) => setSaveLocally(e.target.checked)}
             />
-            <span>{t('editor.annotations.saveSignatureLocally', { defaultValue: 'Save signature for future use' })}</span>
+            <span>
+              {t('editor.annotations.saveSignatureLocally', {
+                defaultValue: 'Save signature for future use'
+              })}
+            </span>
           </label>
 
           {saveLocally && (
@@ -459,15 +488,21 @@ export const SignatureDialog: React.FC<SignatureDialogProps> = ({
                 <Lock size={12} />
                 <span>
                   {showPassphraseInput
-                    ? t('editor.annotations.hidePassphrase', { defaultValue: 'Using custom passphrase' })
-                    : t('editor.annotations.protectPassphrase', { defaultValue: 'Encrypt with optional passphrase (AES-GCM)' })}
+                    ? t('editor.annotations.hidePassphrase', {
+                        defaultValue: 'Using custom passphrase'
+                      })
+                    : t('editor.annotations.protectPassphrase', {
+                        defaultValue: 'Encrypt with optional passphrase (AES-GCM)'
+                      })}
                 </span>
               </button>
               {showPassphraseInput && (
                 <input
                   data-testid="input-sig-encryption-passphrase"
                   type="password"
-                  placeholder={t('editor.annotations.passphrasePlaceholder', { defaultValue: 'Enter encryption passphrase...' })}
+                  placeholder={t('editor.annotations.passphrasePlaceholder', {
+                    defaultValue: 'Enter encryption passphrase...'
+                  })}
                   value={passphrase}
                   onChange={(e) => setPassphrase(e.target.value)}
                   style={{
@@ -509,7 +544,13 @@ export const SignatureDialog: React.FC<SignatureDialogProps> = ({
                   <span>{sig.label}</span>
                   <button
                     onClick={(e) => handleDeleteSavedSignature(sig.id, e)}
-                    style={{ border: 'none', background: 'transparent', padding: 2, cursor: 'pointer', color: 'var(--bg-muted)' }}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      padding: 2,
+                      cursor: 'pointer',
+                      color: 'var(--bg-muted)'
+                    }}
                     title="Delete"
                   >
                     <Trash2 size={13} />

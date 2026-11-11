@@ -29,6 +29,7 @@ import type {
   LeakReport
 } from './index';
 import { PdfError, mapPdfiumErrorCode } from './index';
+import { PixelBufferPool } from './buffer-pool';
 import { loadPdfiumWasm, type WasmLoaderOptions } from './wasm-loader';
 
 interface EmscriptenRuntimeModule {
@@ -371,8 +372,12 @@ export class PdfiumEngine implements PdfEngine {
         stride * destHeightPx
       );
 
-      // Convert BGRA to RGBA
-      const rgba = new Uint8ClampedArray(destWidthPx * destHeightPx * 4);
+      // Convert BGRA to RGBA using pooled pixel buffer
+      const requiredBytes = destWidthPx * destHeightPx * 4;
+      const pool = PixelBufferPool.getInstance();
+      const pooledBuffer = pool.acquire(requiredBytes);
+      const rgba = pooledBuffer.subarray(0, requiredBytes);
+
       for (let y = 0; y < destHeightPx; y++) {
         const rowSrc = y * stride;
         const rowDst = y * destWidthPx * 4;
@@ -397,7 +402,9 @@ export class PdfiumEngine implements PdfEngine {
         typeof globalScope.ImageData === 'function'
       ) {
         const imageData = new globalScope.ImageData(rgba, destWidthPx, destHeightPx);
-        return await globalScope.createImageBitmap(imageData);
+        const bmp = await globalScope.createImageBitmap(imageData);
+        pool.release(pooledBuffer);
+        return bmp;
       }
 
       // Fallback for Node / Vitest test environment with pixel buffer inspection
@@ -405,7 +412,9 @@ export class PdfiumEngine implements PdfEngine {
         width: destWidthPx,
         height: destHeightPx,
         data: rgba,
-        close: () => {}
+        close: () => {
+          pool.release(pooledBuffer);
+        }
       } as unknown as ImageBitmap;
     } finally {
       this.pdfium.FPDFBitmap_Destroy(bitmap);
@@ -1265,7 +1274,9 @@ export class PdfiumEngine implements PdfEngine {
     for (const op of ops) {
       switch (op.type) {
         case 'removeObject': {
-          const found = removePtrMap.get(op.objectId) || this.findPageObjectByPath(pagePtr, pageIndex, op.objectId);
+          const found =
+            removePtrMap.get(op.objectId) ||
+            this.findPageObjectByPath(pagePtr, pageIndex, op.objectId);
           if (found) {
             if (found.parentFormPtr && typeof this.pdfium.FPDFFormObj_RemoveObject === 'function') {
               this.pdfium.FPDFFormObj_RemoveObject(found.parentFormPtr, found.objPtr);

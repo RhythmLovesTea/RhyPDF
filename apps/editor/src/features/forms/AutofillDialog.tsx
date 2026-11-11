@@ -52,10 +52,14 @@ export const AutofillDialog: React.FC<AutofillDialogProps> = ({
       onClose={onClose}
       title={t('editor.forms.autofillTitle', { defaultValue: 'Form Autofill Profile' })}
     >
-      <div data-testid="autofill-dialog" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div
+        data-testid="autofill-dialog"
+        style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+      >
         <p style={{ margin: 0, fontSize: 13, color: 'var(--bg-muted)' }}>
           {t('editor.forms.autofillDesc', {
-            defaultValue: 'Save your profile locally. One click automatically fills matching fields across the document.'
+            defaultValue:
+              'Save your profile locally. One click automatically fills matching fields across the document.'
           })}
         </p>
 
@@ -71,107 +75,195 @@ export const AutofillDialog: React.FC<AutofillDialogProps> = ({
           }}
         >
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>Full Name</label>
+            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>
+              Full Name
+            </label>
             <input
               data-testid="input-autofill-fullname"
               type="text"
               value={profile.fullName}
               onChange={(e) => handleChange('fullName', e.target.value)}
-              style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--bg-border)', fontSize: 12, boxSizing: 'border-box' }}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                borderRadius: 4,
+                border: '1px solid var(--bg-border)',
+                fontSize: 12,
+                boxSizing: 'border-box'
+              }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>Email</label>
+            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>
+              Email
+            </label>
             <input
               data-testid="input-autofill-email"
               type="email"
               value={profile.email}
               onChange={(e) => handleChange('email', e.target.value)}
-              style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--bg-border)', fontSize: 12, boxSizing: 'border-box' }}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                borderRadius: 4,
+                border: '1px solid var(--bg-border)',
+                fontSize: 12,
+                boxSizing: 'border-box'
+              }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>Phone</label>
+            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>
+              Phone
+            </label>
             <input
               data-testid="input-autofill-phone"
               type="tel"
               value={profile.phone}
               onChange={(e) => handleChange('phone', e.target.value)}
-              style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--bg-border)', fontSize: 12, boxSizing: 'border-box' }}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                borderRadius: 4,
+                border: '1px solid var(--bg-border)',
+                fontSize: 12,
+                boxSizing: 'border-box'
+              }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>Company</label>
+            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>
+              Company
+            </label>
             <input
               data-testid="input-autofill-company"
               type="text"
               value={profile.company}
               onChange={(e) => handleChange('company', e.target.value)}
-              style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--bg-border)', fontSize: 12, boxSizing: 'border-box' }}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                borderRadius: 4,
+                border: '1px solid var(--bg-border)',
+                fontSize: 12,
+                boxSizing: 'border-box'
+              }}
             />
           </div>
 
           <div style={{ gridColumn: 'span 2' }}>
-            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>Street Address</label>
+            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>
+              Street Address
+            </label>
             <input
               data-testid="input-autofill-address"
               type="text"
               value={profile.streetAddress}
               onChange={(e) => handleChange('streetAddress', e.target.value)}
-              style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--bg-border)', fontSize: 12, boxSizing: 'border-box' }}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                borderRadius: 4,
+                border: '1px solid var(--bg-border)',
+                fontSize: 12,
+                boxSizing: 'border-box'
+              }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>City</label>
+            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>
+              City
+            </label>
             <input
               data-testid="input-autofill-city"
               type="text"
               value={profile.city}
               onChange={(e) => handleChange('city', e.target.value)}
-              style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--bg-border)', fontSize: 12, boxSizing: 'border-box' }}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                borderRadius: 4,
+                border: '1px solid var(--bg-border)',
+                fontSize: 12,
+                boxSizing: 'border-box'
+              }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>State / Province</label>
+            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>
+              State / Province
+            </label>
             <input
               data-testid="input-autofill-state"
               type="text"
               value={profile.state}
               onChange={(e) => handleChange('state', e.target.value)}
-              style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--bg-border)', fontSize: 12, boxSizing: 'border-box' }}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                borderRadius: 4,
+                border: '1px solid var(--bg-border)',
+                fontSize: 12,
+                boxSizing: 'border-box'
+              }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>ZIP / Postal Code</label>
+            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>
+              ZIP / Postal Code
+            </label>
             <input
               data-testid="input-autofill-zip"
               type="text"
               value={profile.postalCode}
               onChange={(e) => handleChange('postalCode', e.target.value)}
-              style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--bg-border)', fontSize: 12, boxSizing: 'border-box' }}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                borderRadius: 4,
+                border: '1px solid var(--bg-border)',
+                fontSize: 12,
+                boxSizing: 'border-box'
+              }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>Country</label>
+            <label style={{ fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 2 }}>
+              Country
+            </label>
             <input
               data-testid="input-autofill-country"
               type="text"
               value={profile.country}
               onChange={(e) => handleChange('country', e.target.value)}
-              style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid var(--bg-border)', fontSize: 12, boxSizing: 'border-box' }}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                borderRadius: 4,
+                border: '1px solid var(--bg-border)',
+                fontSize: 12,
+                boxSizing: 'border-box'
+              }}
             />
           </div>
         </div>
 
         {/* Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: 6
+          }}
+        >
           <button
             data-testid="btn-save-profile-only"
             onClick={handleSaveOnly}

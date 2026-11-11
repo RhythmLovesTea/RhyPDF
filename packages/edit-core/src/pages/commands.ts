@@ -63,7 +63,11 @@ export class InsertBlankPageCommand implements EditCommand {
     public readonly targetIndex: number,
     public readonly width: number,
     public readonly height: number,
-    private readonly onInsert: (index: number, width: number, height: number) => Promise<void> | void,
+    private readonly onInsert: (
+      index: number,
+      width: number,
+      height: number
+    ) => Promise<void> | void,
     private readonly onRemove: (index: number) => Promise<void> | void
   ) {
     this.id = generateId('insert_blank_page');
@@ -160,7 +164,12 @@ export class ResizePageCommand implements EditCommand {
     public readonly previousSize: { width: number; height: number },
     public readonly newSize: { width: number; height: number },
     public readonly scaleContent = false,
-    private readonly onResize: (index: number, width: number, height: number, scaleContent?: boolean) => Promise<void> | void
+    private readonly onResize: (
+      index: number,
+      width: number,
+      height: number,
+      scaleContent?: boolean
+    ) => Promise<void> | void
   ) {
     this.id = generateId('resize_page');
   }
@@ -170,7 +179,12 @@ export class ResizePageCommand implements EditCommand {
   }
 
   async revert(): Promise<void> {
-    await this.onResize(this.pageIndex, this.previousSize.width, this.previousSize.height, this.scaleContent);
+    await this.onResize(
+      this.pageIndex,
+      this.previousSize.width,
+      this.previousSize.height,
+      this.scaleContent
+    );
   }
 }
 

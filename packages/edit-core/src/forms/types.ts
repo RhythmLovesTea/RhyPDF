@@ -1,13 +1,7 @@
 import type { Rect } from '@rhypdf/pdf-model';
 
 export type FormFieldType =
-  | 'text'
-  | 'checkbox'
-  | 'radio'
-  | 'dropdown'
-  | 'list'
-  | 'button'
-  | 'signature';
+  'text' | 'checkbox' | 'radio' | 'dropdown' | 'list' | 'button' | 'signature';
 
 export interface FormFieldOption {
   label: string;

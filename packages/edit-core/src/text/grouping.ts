@@ -118,10 +118,7 @@ function detectColumnGutters(runs: TextRun[], minGutterWidth = 25): number[] {
 /**
  * Group raw TextRuns into lines based on baseline, rotation, and proximity.
  */
-function groupRunsIntoLines(
-  runs: TextRun[],
-  options?: GroupingOptions
-): TextBlockLine[] {
+function groupRunsIntoLines(runs: TextRun[], options?: GroupingOptions): TextBlockLine[] {
   if (runs.length === 0) return [];
 
   const sortedRuns = [...runs].sort((a, b) => {
@@ -289,7 +286,9 @@ function isTableLayout(runs: TextRun[], lines: TextBlockLine[]): boolean {
     if (rowRuns.length >= 2) multiCellRows++;
   }
 
-  return multiCellRows >= 2 || (lines.length >= 2 && lines.some((l) => /\$\d+|\d+\.\d{2}/.test(l.text)));
+  return (
+    multiCellRows >= 2 || (lines.length >= 2 && lines.some((l) => /\$\d+|\d+\.\d{2}/.test(l.text)))
+  );
 }
 
 /**

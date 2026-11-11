@@ -185,9 +185,7 @@ describe('Phase 8 UI: Fonts and Typography (Google-Docs-Style)', () => {
         root.render(<FontSizeControl fontSize={14} onChangeFontSize={onChangeFontSize} />);
       });
 
-      const input = container.querySelector(
-        '[data-testid="input-fontsize"]'
-      ) as HTMLInputElement;
+      const input = container.querySelector('[data-testid="input-fontsize"]') as HTMLInputElement;
       expect(input).toBeTruthy();
 
       // Direct numeric entry via Enter key
@@ -401,13 +399,27 @@ describe('Phase 8 UI: Fonts and Typography (Google-Docs-Style)', () => {
         );
       });
 
-      const boldBtn = container.querySelector('[data-testid="btn-style-bold"]') as HTMLButtonElement;
-      const italicBtn = container.querySelector('[data-testid="btn-style-italic"]') as HTMLButtonElement;
-      const underlineBtn = container.querySelector('[data-testid="btn-style-underline"]') as HTMLButtonElement;
-      const strikeBtn = container.querySelector('[data-testid="btn-style-strike"]') as HTMLButtonElement;
-      const superBtn = container.querySelector('[data-testid="btn-style-superscript"]') as HTMLButtonElement;
-      const subBtn = container.querySelector('[data-testid="btn-style-subscript"]') as HTMLButtonElement;
-      const centerBtn = container.querySelector('[data-testid="btn-align-center"]') as HTMLButtonElement;
+      const boldBtn = container.querySelector(
+        '[data-testid="btn-style-bold"]'
+      ) as HTMLButtonElement;
+      const italicBtn = container.querySelector(
+        '[data-testid="btn-style-italic"]'
+      ) as HTMLButtonElement;
+      const underlineBtn = container.querySelector(
+        '[data-testid="btn-style-underline"]'
+      ) as HTMLButtonElement;
+      const strikeBtn = container.querySelector(
+        '[data-testid="btn-style-strike"]'
+      ) as HTMLButtonElement;
+      const superBtn = container.querySelector(
+        '[data-testid="btn-style-superscript"]'
+      ) as HTMLButtonElement;
+      const subBtn = container.querySelector(
+        '[data-testid="btn-style-subscript"]'
+      ) as HTMLButtonElement;
+      const centerBtn = container.querySelector(
+        '[data-testid="btn-align-center"]'
+      ) as HTMLButtonElement;
 
       expect(boldBtn).toBeTruthy();
       expect(italicBtn).toBeTruthy();

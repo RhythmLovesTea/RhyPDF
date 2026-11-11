@@ -1,4 +1,11 @@
-import type { Rect, ColorRGBA, AnnotationObject, PathObject, PathSegment, TextRun } from '@rhypdf/pdf-model';
+import type {
+  Rect,
+  ColorRGBA,
+  AnnotationObject,
+  PathObject,
+  PathSegment,
+  TextRun
+} from '@rhypdf/pdf-model';
 import type { StickyNoteOptions } from './types';
 
 export const DEFAULT_STICKY_NOTE_COLOR: ColorRGBA = {

@@ -95,8 +95,20 @@ export const RulerGridOverlay: React.FC<RulerGridOverlayProps> = ({
                 const x = pt * scale;
                 return (
                   <g key={`top-tick-${i}`}>
-                    <line x1={x} y1={rulerSize - 6} x2={x} y2={rulerSize} stroke="var(--bg-muted-foreground)" strokeWidth="1" />
-                    <text x={x + 2} y={rulerSize - 8} fontSize="9" fill="var(--bg-muted-foreground)">
+                    <line
+                      x1={x}
+                      y1={rulerSize - 6}
+                      x2={x}
+                      y2={rulerSize}
+                      stroke="var(--bg-muted-foreground)"
+                      strokeWidth="1"
+                    />
+                    <text
+                      x={x + 2}
+                      y={rulerSize - 8}
+                      fontSize="9"
+                      fill="var(--bg-muted-foreground)"
+                    >
                       {pt}
                     </text>
                   </g>
@@ -125,8 +137,21 @@ export const RulerGridOverlay: React.FC<RulerGridOverlayProps> = ({
                 const y = pt * scale;
                 return (
                   <g key={`left-tick-${i}`}>
-                    <line x1={rulerSize - 6} y1={y} x2={rulerSize} y2={y} stroke="var(--bg-muted-foreground)" strokeWidth="1" />
-                    <text x={2} y={y - 2} fontSize="9" fill="var(--bg-muted-foreground)" transform={`rotate(-90, 2, ${y - 2})`}>
+                    <line
+                      x1={rulerSize - 6}
+                      y1={y}
+                      x2={rulerSize}
+                      y2={y}
+                      stroke="var(--bg-muted-foreground)"
+                      strokeWidth="1"
+                    />
+                    <text
+                      x={2}
+                      y={y - 2}
+                      fontSize="9"
+                      fill="var(--bg-muted-foreground)"
+                      transform={`rotate(-90, 2, ${y - 2})`}
+                    >
                       {pt}
                     </text>
                   </g>
