@@ -20,3 +20,6 @@ export * from './tables';
 export * from './page-content';
 export * from './alignment';
 export * from './tools';
+export * from './annotations';
+export * from './signatures';
+export * from './forms';

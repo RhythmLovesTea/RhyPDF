@@ -98,10 +98,10 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 ## CURRENT TASK POINTER
 
 ```
-CURRENT PHASE : 12
-CURRENT TASK  : 12.1
+CURRENT PHASE : 13
+CURRENT TASK  : 13.1
 LAST UPDATED  : 2026-11-11
-NOTES         : Phase 11 completed with all 14 subtasks (11.1 to 11.14). Built and verified: Shapes tool (rectangle, rounded rectangle, ellipse, line, arrow, triangle, star with fill, stroke, width, dash, opacity, rotation); Free-hand drawing canvas overlay (pen, marker, eraser with Pointer Events, Catmull-Rom smoothing, raw points hit-testing); Whiteout cover tool (clearly labeled as visual cover, not permanent redaction); Hyperlinks system (add/edit/remove, strict URI validation blocking javascript:/data:/file:, clickable link chips); Bullet and numbered lists in text boxes (indent/outdent formatting); Simple tables (N×M table generation, cell editing, dynamic row/col add and remove); Header/Footer generator (tokens [Page], [TotalPages], [Date], page range filtering, first-page-different); Bates numbering generator (prefix, suffix, start index, digit padding); Watermark generator (text/image presets, opacity, rotation angle, 3x3 tiling); Page background color command (zIndex: -100); Format painter (style copy/apply across text blocks); Ruler and SVG grid overlay with snap toggle and object alignment/distribution tools; Special items (date formatting, categorized symbol catalog, client-side vector QR code generator). All 63 test files (448 tests) green, zero TypeScript errors across monorepo packages, production build clean. Ready for Phase 12 (Annotations, signatures, forms).
+NOTES         : Phase 12 completed with all 10 subtasks (12.1 to 12.10). Built and verified: Text markup annotations (Highlight, Underline, StrikeOut, Squiggly sinusoidal wave with 8-point QuadPoints per PDF §12.5.6.10, configurable colors/opacity, vector path conversion); Sticky notes / comments (Text subtype, vector speech bubble icon, StickyNotePopup on canvas, CommentsPanel side drawer with jump-to-page, note editing, delete); Stamps (Approved, Draft, Confidential, Rejected, Final, Expired, Not Approved, Top Secret presets with double borders, custom text stamps with date option, image stamps, StampsPopover UI); Signatures (Draw with Pointer Events, Type with 5 script fonts, Upload image, local storage with WebCrypto PBKDF2/AES-GCM-256 encryption, SignatureDialog UI); Quick-insert Initials and Date stamps; Form field detection & XFA warning (AcroForm widgets detection, reading & tab order sorting, dynamic XFA form detection with XfaWarningBanner); Form filling & autofill (interactive AcroFormOverlay with tab order navigation, local AutofillProfile with semantic regex/substring heuristics, AutofillDialog UI); Form and annotation flattening (flattenAnnotations, flattenFormFields into static vector paths and text runs); Form field creation (CreateFormFieldDialog and CreateFormFieldCommand for text, checkbox, dropdown); Annotation summary export (generateAnnotationSummary in Markdown, PlainText, JSON, AnnotationSummaryDialog UI). All 65 test files (482 tests) green, zero TypeScript errors across monorepo packages, production build clean. Ready for Phase 13 (Page management).
 ```
 
 ---
@@ -592,16 +592,16 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PHASE 12 — ANNOTATIONS, SIGNATURES, FORMS
 
-- [ ] **12.1** Text-markup annotations: highlight, underline, strikethrough, squiggly. Use real PDF annotations (with QuadPoints) so they show in Acrobat; colors; opacity.
-- [ ] **12.2** Sticky notes / comments with a list panel (add, edit, delete, jump to).
-- [ ] **12.3** Stamps: Approved, Draft, Confidential, custom text / image.
-- [ ] **12.4** Signature: draw (Pointer Events), type (several script fonts), upload an image. Save several signatures **locally**, encrypted with WebCrypto (optional passphrase); place, resize, rotate.
-- [ ] **12.5** "Initials" and "Date" quick-insert.
-- [ ] **12.6** Detect AcroForm fields (text, checkbox, radio, dropdown, list, button, signature) through the engine's form-fill support; show "XFA forms are not supported" when it applies.
-- [ ] **12.7** Fill forms: click to type / toggle, tab order, autofill from a saved local profile (name, email, address).
-- [ ] **12.8** Flatten annotations / forms on export (option).
-- [ ] **12.9** Create form fields (text field, checkbox, dropdown). Optional: move to Backlog if time is short.
-- [ ] **12.10** Annotation summary export (optional).
+- [x] **12.1** Text-markup annotations: highlight, underline, strikethrough, squiggly. Use real PDF annotations (with QuadPoints) so they show in Acrobat; colors; opacity.
+- [x] **12.2** Sticky notes / comments with a list panel (add, edit, delete, jump to).
+- [x] **12.3** Stamps: Approved, Draft, Confidential, custom text / image.
+- [x] **12.4** Signature: draw (Pointer Events), type (several script fonts), upload an image. Save several signatures **locally**, encrypted with WebCrypto (optional passphrase); place, resize, rotate.
+- [x] **12.5** "Initials" and "Date" quick-insert.
+- [x] **12.6** Detect AcroForm fields (text, checkbox, radio, dropdown, list, button, signature) through the engine's form-fill support; show "XFA forms are not supported" when it applies.
+- [x] **12.7** Fill forms: click to type / toggle, tab order, autofill from a saved local profile (name, email, address).
+- [x] **12.8** Flatten annotations / forms on export (option).
+- [x] **12.9** Create form fields (text field, checkbox, dropdown). Optional: move to Backlog if time is short.
+- [x] **12.10** Annotation summary export (optional).
 
 **Done when:** a government-style form PDF can be filled, signed, flattened and saved; annotations appear correctly in Acrobat Reader and Chrome.
 
@@ -934,6 +934,16 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-11 | 11.12   | Format painter for copying and applying typography styles             | `P11.12`| extractTextStyle, applyTextStyleToBlock with visual active state toggle in toolbar                               |
 | 2026-11-11 | 11.13   | Ruler, grid overlay & multi-object alignment / distribution           | `P11.13`| RulerGridOverlay, alignObjects (6 axes), distributeObjects (horiz/vert), AlignObjectsCommand                     |
 | 2026-11-11 | 11.14   | Special items: date formatter, symbol picker, vector QR code gen      | `P11.14`| formatCurrentDate, 6 symbol categories, offline ISO 18004 QR code matrix generator, SpecialItemsPopover UI      |
+| 2026-11-11 | 12.1    | Text-markup annotations with 8-point QuadPoints & vector paths        | `P12.1` | Highlight, Underline, StrikeOut, Squiggly sinusoidal wave with configurable color and opacity |
+| 2026-11-11 | 12.2    | Sticky notes / comments with StickyNotePopup & CommentsPanel drawer   | `P12.2` | Vector speech bubble icon, author/timestamp, in-place edit, and jump-to-page side drawer      |
+| 2026-11-11 | 12.3    | Stamps: 8 standard presets, custom text with date, and image stamp    | `P12.3` | STAMP_PRESETS double borders, custom color/text, image stamps, StampsPopover UI               |
+| 2026-11-11 | 12.4    | Signatures: Draw, Type (5 script fonts), Upload & WebCrypto AES-GCM   | `P12.4` | SignatureDialog PointerEvents canvas, 256-bit AES-GCM with PBKDF2 (100k iters), local storage |
+| 2026-11-11 | 12.5    | Initials and Date quick-insert stamps                                 | `P12.5` | createInitialsAnnotation and createDateStampAnnotation with auto-sizing and positioning       |
+| 2026-11-11 | 12.6    | AcroForm widget detection, tab order sorting & dynamic XFA warning    | `P12.6` | detectFormFieldsFromAnnotations, detectXfaForm detecting /XFA, XfaWarningBanner UI            |
+| 2026-11-11 | 12.7    | Form filling, tab navigation & heuristic autofill profile             | `P12.7` | AcroFormOverlay interactive inputs, matchFieldToProfile semantic regex matching, AutofillDialog|
+| 2026-11-11 | 12.8    | Flatten annotations & forms into static vector paths & text runs      | `P12.8` | flattenAnnotations and flattenFormFields rendering vector checkmarks, circles, and text runs  |
+| 2026-11-11 | 12.9    | Form field creator for text fields, checkboxes, and dropdowns         | `P12.9` | CreateFormFieldCommand, CreateFormFieldDialog with customizable options and names            |
+| 2026-11-11 | 12.10   | Annotation summary exporter in Markdown, PlainText, and JSON          | `P12.10`| generateAnnotationSummary with page grouping, copy-to-clipboard, AnnotationSummaryDialog UI  |
 
 ---
 

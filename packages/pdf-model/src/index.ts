@@ -138,10 +138,55 @@ export interface FormObject extends BasePageObject {
   subObjects: PageObject[];
 }
 
+export type AnnotationSubtype =
+  | 'Highlight'
+  | 'Underline'
+  | 'StrikeOut'
+  | 'Squiggly'
+  | 'Text'
+  | 'Stamp'
+  | 'Signature'
+  | 'Widget'
+  | string;
+
+export interface AnnotationComment {
+  id: string;
+  author: string;
+  contents: string;
+  createdAt: string;
+  modifiedAt?: string;
+}
+
 export interface AnnotationObject extends BasePageObject {
   type: 'annotation';
-  subType: string;
+  subType: AnnotationSubtype;
   contents?: string;
+  quadPoints?: number[];
+  color?: ColorRGBA;
+  opacity?: number;
+  author?: string;
+  createdAt?: string;
+  modifiedAt?: string;
+  icon?: string;
+  stampType?: string;
+  customText?: string;
+  customColor?: ColorRGBA;
+  imageUri?: string;
+  rotation?: number;
+  signatureType?: 'draw' | 'type' | 'upload';
+  signatureData?: string;
+  signerName?: string;
+  comments?: AnnotationComment[];
+  isOpen?: boolean;
+  // Widget / Form field properties
+  fieldType?: 'text' | 'checkbox' | 'radio' | 'dropdown' | 'list' | 'button' | 'signature';
+  fieldName?: string;
+  fieldValue?: string | boolean | string[];
+  defaultValue?: string | boolean;
+  readOnly?: boolean;
+  required?: boolean;
+  options?: Array<{ label: string; value: string }>;
+  tabOrder?: number;
 }
 
 export type PageObject = TextRun | ImageObject | PathObject | FormObject | AnnotationObject;

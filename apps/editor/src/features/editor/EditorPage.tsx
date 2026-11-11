@@ -63,10 +63,44 @@ import {
   distributeObjects,
   AlignObjectsCommand,
   type AlignmentMode,
-  createPageBackground
+  createPageBackground,
+  type AcroFormField,
+  type TextMarkupType,
+  createMarkupAnnotation,
+  markupToVectorPaths,
+  createStickyNote,
+  createStampAnnotation,
+  createInitialsAnnotation,
+  createDateStampAnnotation,
+  InsertSignatureCommand,
+  AddAnnotationCommand,
+  UpdateAnnotationCommand,
+  DeleteAnnotationCommand,
+  detectXfaForm,
+  detectFormFieldsFromAnnotations,
+  autofillFormFields,
+  flattenAnnotations,
+  flattenFormFields,
+  SetFormFieldValueCommand,
+  CreateFormFieldCommand,
+  type CreateFormFieldOptions,
+  type AutofillProfile
 } from '@rhypdf/edit-core';
+import {
+  StampsPopover,
+  SignatureDialog,
+  StickyNotePopup,
+  CommentsPanel,
+  AnnotationSummaryDialog
+} from '../annotations';
+import {
+  XfaWarningBanner,
+  AcroFormOverlay,
+  AutofillDialog,
+  CreateFormFieldDialog
+} from '../forms';
 import { FontCatalog } from '@rhypdf/fonts';
-import type { PageObject, ImageObject, Rect, TextRun, PathObject } from '@rhypdf/pdf-model';
+import type { PageObject, ImageObject, Rect, TextRun, PathObject, AnnotationObject } from '@rhypdf/pdf-model';
 import { useDocStore } from '../../stores/docStore';
 import { useUIStore } from '../../stores/uiStore';
 import { PdfViewer, PageMetric } from '../viewer/PdfViewer';
@@ -203,6 +237,19 @@ export default function EditorPage({
   const [annotateColor, setAnnotateColor] = useState('#0f172a');
   const [annotateStrokeWidth, setAnnotateStrokeWidth] = useState(2.5);
 
+  // Phase 12 Annotations, Signatures & Forms state
+  const [annotationsByPage, setAnnotationsByPage] = useState<Map<number, AnnotationObject[]>>(new Map());
+  const [formFieldsByPage, setFormFieldsByPage] = useState<Map<number, AcroFormField[]>>(new Map());
+  const [xfaWarning, setXfaWarning] = useState<string | null>(null);
+  const [isStampsPopoverOpen, setIsStampsPopoverOpen] = useState(false);
+  const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false);
+  const [isAutofillDialogOpen, setIsAutofillDialogOpen] = useState(false);
+  const [isCreateFormFieldDialogOpen, setIsCreateFormFieldDialogOpen] = useState(false);
+  const [isAnnotationSummaryDialogOpen, setIsAnnotationSummaryDialogOpen] = useState(false);
+  const [isCommentsPanelOpen, setIsCommentsPanelOpen] = useState(false);
+  const [activeStickyNote, setActiveStickyNote] = useState<{ annot: AnnotationObject; cssPos: { x: number; y: number } } | null>(null);
+  const [flattenOnExport] = useState(false);
+
   // PDF Engine & Document Handle
   const [engine, setEngine] = useState<PdfEngine | null>(null);
   const [docHandle, setDocHandle] = useState<DocumentHandle | null>(null);
@@ -240,6 +287,10 @@ export default function EditorPage({
         let totalPages = 1;
 
         if (bytes && bytes.byteLength > 0) {
+          const xfaCheck = detectXfaForm(new Uint8Array(bytes));
+          if (xfaCheck.hasXfa) {
+            setXfaWarning(xfaCheck.warning ?? null);
+          }
           handle = await eng.open(bytes);
           totalPages = await eng.pageCount(handle);
         } else {
@@ -299,6 +350,14 @@ export default function EditorPage({
           const initialObjs = await eng.getPageObjects(handle, 0);
           if (!cancelled) {
             setPageObjectsMap((prev) => new Map(prev).set(0, initialObjs));
+            const annots = initialObjs.filter((o) => o.type === 'annotation') as AnnotationObject[];
+            if (annots.length > 0) {
+              setAnnotationsByPage((prev) => new Map(prev).set(0, annots));
+              const fields = detectFormFieldsFromAnnotations(annots, 0);
+              if (fields.length > 0) {
+                setFormFieldsByPage((prev) => new Map(prev).set(0, fields));
+              }
+            }
           }
         } catch {
           // Ignore
@@ -336,6 +395,14 @@ export default function EditorPage({
       .then((objs) => {
         if (!cancelled) {
           setPageObjectsMap((prev) => new Map(prev).set(activePageIdx, objs));
+          const annots = objs.filter((o) => o.type === 'annotation') as AnnotationObject[];
+          if (annots.length > 0) {
+            setAnnotationsByPage((prev) => new Map(prev).set(activePageIdx, annots));
+            const fields = detectFormFieldsFromAnnotations(annots, activePageIdx);
+            if (fields.length > 0) {
+              setFormFieldsByPage((prev) => new Map(prev).set(activePageIdx, fields));
+            }
+          }
         }
       })
       .catch(() => {});
@@ -1874,9 +1941,22 @@ export default function EditorPage({
 
   const handleDownload = useCallback(async () => {
     if (currentDocId) {
+      if (flattenOnExport) {
+        for (const [pIdx, annots] of annotationsByPage.entries()) {
+          const flattenedAnnots = flattenAnnotations(annots);
+          const fields = formFieldsByPage.get(pIdx) || [];
+          const flattenedFields = flattenFormFields(fields);
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            const current = next.get(pIdx) || [];
+            next.set(pIdx, [...current, ...flattenedAnnots, ...flattenedFields]);
+            return next;
+          });
+        }
+      }
       await downloadRecentFile(currentDocId, filename || 'document.pdf');
     }
-  }, [currentDocId, filename]);
+  }, [currentDocId, filename, flattenOnExport, annotationsByPage, formFieldsByPage]);
 
   const ocrEngine = useMemo(() => new TesseractOcrEngine(), []);
 
@@ -2637,6 +2717,211 @@ export default function EditorPage({
     [activePageIdx, editSession, objectLinks, targetLinkId]
   );
 
+  // Phase 12: Annotation, Signature & Form Handlers
+  const handleSelectStamp = useCallback(
+    async (options: {
+      stampType: any;
+      customText?: string;
+      customColor?: any;
+      imageUri?: string;
+      bounds: Rect;
+    }) => {
+      const stamp = createStampAnnotation(options);
+      const list = annotationsByPage.get(activePageIdx) || [];
+      const cmd = new AddAnnotationCommand(activePageIdx, stamp, list, () => {
+        setAnnotationsByPage((prev) => new Map(prev).set(activePageIdx, [...list]));
+        setPageObjectsMap((prev) => {
+          const next = new Map(prev);
+          const objs = next.get(activePageIdx) || [];
+          next.set(activePageIdx, [...objs, stamp]);
+          return next;
+        });
+      });
+      await editSession.execute(cmd);
+    },
+    [activePageIdx, annotationsByPage, editSession]
+  );
+
+  const handleInsertSignature = useCallback(
+    async (options: {
+      mode: any;
+      data: string;
+      fontFamily?: string;
+      bounds: Rect;
+      color?: any;
+    }) => {
+      const list = annotationsByPage.get(activePageIdx) || [];
+      const cmd = new InsertSignatureCommand(activePageIdx, options, list, () => {
+        setAnnotationsByPage((prev) => new Map(prev).set(activePageIdx, [...list]));
+        setPageObjectsMap((prev) => {
+          const next = new Map(prev);
+          const objs = next.get(activePageIdx) || [];
+          next.set(activePageIdx, [...objs, cmd.annotation]);
+          return next;
+        });
+      });
+      await editSession.execute(cmd);
+    },
+    [activePageIdx, annotationsByPage, editSession]
+  );
+
+  const handleInsertInitials = useCallback(async () => {
+    const cx = currentMetric.width / 2;
+    const cy = currentMetric.height / 2;
+    const initials = createInitialsAnnotation('INITIALS', { x: cx - 40, y: cy });
+    const list = annotationsByPage.get(activePageIdx) || [];
+    const cmd = new AddAnnotationCommand(activePageIdx, initials, list, () => {
+      setAnnotationsByPage((prev) => new Map(prev).set(activePageIdx, [...list]));
+      setPageObjectsMap((prev) => {
+        const next = new Map(prev);
+        const objs = next.get(activePageIdx) || [];
+        next.set(activePageIdx, [...objs, initials]);
+        return next;
+      });
+    });
+    await editSession.execute(cmd);
+  }, [activePageIdx, annotationsByPage, currentMetric, editSession]);
+
+  const handleInsertDateStamp = useCallback(async () => {
+    const cx = currentMetric.width / 2;
+    const cy = currentMetric.height / 2;
+    const today = new Date().toISOString().split('T')[0]!;
+    const dateStamp = createDateStampAnnotation(today, { x: cx - 50, y: cy });
+    const list = annotationsByPage.get(activePageIdx) || [];
+    const cmd = new AddAnnotationCommand(activePageIdx, dateStamp, list, () => {
+      setAnnotationsByPage((prev) => new Map(prev).set(activePageIdx, [...list]));
+      setPageObjectsMap((prev) => {
+        const next = new Map(prev);
+        const objs = next.get(activePageIdx) || [];
+        next.set(activePageIdx, [...objs, dateStamp]);
+        return next;
+      });
+    });
+    await editSession.execute(cmd);
+  }, [activePageIdx, annotationsByPage, currentMetric, editSession]);
+
+  const handleAddStickyNote = useCallback(async () => {
+    const cx = currentMetric.width / 2;
+    const cy = currentMetric.height / 2;
+    const note = createStickyNote({
+      position: { x: cx - 12, y: cy - 12 },
+      contents: 'New note'
+    });
+    const list = annotationsByPage.get(activePageIdx) || [];
+    const cmd = new AddAnnotationCommand(activePageIdx, note, list, () => {
+      setAnnotationsByPage((prev) => new Map(prev).set(activePageIdx, [...list]));
+      setPageObjectsMap((prev) => {
+        const next = new Map(prev);
+        const objs = next.get(activePageIdx) || [];
+        next.set(activePageIdx, [...objs, note]);
+        return next;
+      });
+    });
+    await editSession.execute(cmd);
+    setActiveStickyNote({ annot: note, cssPos: { x: cx, y: currentMetric.height - cy } });
+  }, [activePageIdx, annotationsByPage, currentMetric, editSession]);
+
+  const handleTextMarkupSelect = useCallback(
+    async (subType: TextMarkupType, colorHex?: string) => {
+      const targetBounds = activeTextBlock?.bounds || {
+        left: currentMetric.width * 0.2,
+        bottom: currentMetric.height * 0.7,
+        right: currentMetric.width * 0.8,
+        top: currentMetric.height * 0.73
+      };
+      const clean = (colorHex || '#fef08a').replace('#', '');
+      const r = parseInt(clean.substring(0, 2), 16) || 254;
+      const g = parseInt(clean.substring(2, 4), 16) || 240;
+      const b = parseInt(clean.substring(4, 6), 16) || 138;
+      const annot = createMarkupAnnotation({
+        subType,
+        bounds: targetBounds,
+        color: { r, g, b, a: subType === 'Highlight' ? 128 : 255 },
+        text: activeTextBlock ? activeTextBlock.lines.map((l) => l.text).join('\n') : undefined
+      });
+      const list = annotationsByPage.get(activePageIdx) || [];
+      const vectorPaths = markupToVectorPaths(annot);
+      const cmd = new AddAnnotationCommand(activePageIdx, annot, list, () => {
+        setAnnotationsByPage((prev) => new Map(prev).set(activePageIdx, [...list]));
+        setPageObjectsMap((prev) => {
+          const next = new Map(prev);
+          const objs = next.get(activePageIdx) || [];
+          next.set(activePageIdx, [...objs, ...vectorPaths]);
+          return next;
+        });
+      });
+      await editSession.execute(cmd);
+    },
+    [activePageIdx, activeTextBlock, annotationsByPage, currentMetric, editSession]
+  );
+
+  const handleFormFieldValueChange = useCallback(
+    async (fieldId: string, val: string | boolean | string[]) => {
+      const list = formFieldsByPage.get(activePageIdx) || [];
+      const cmd = new SetFormFieldValueCommand(activePageIdx, fieldId, val, list, () => {
+        setFormFieldsByPage((prev) => new Map(prev).set(activePageIdx, [...list]));
+      });
+      await editSession.execute(cmd);
+    },
+    [activePageIdx, editSession, formFieldsByPage]
+  );
+
+  const handleCreateFormField = useCallback(
+    async (options: CreateFormFieldOptions) => {
+      const list = formFieldsByPage.get(activePageIdx) || [];
+      const cmd = new CreateFormFieldCommand(activePageIdx, options, list, () => {
+        setFormFieldsByPage((prev) => new Map(prev).set(activePageIdx, [...list]));
+      });
+      await editSession.execute(cmd);
+    },
+    [activePageIdx, editSession, formFieldsByPage]
+  );
+
+  const handleApplyAutofill = useCallback(
+    async (profile: AutofillProfile) => {
+      const fields = formFieldsByPage.get(activePageIdx) || [];
+      const matched = autofillFormFields(fields, profile);
+      for (const [fId, val] of matched.entries()) {
+        const cmd = new SetFormFieldValueCommand(activePageIdx, fId, val, fields, () => {
+          setFormFieldsByPage((prev) => new Map(prev).set(activePageIdx, [...fields]));
+        });
+        await editSession.execute(cmd);
+      }
+    },
+    [activePageIdx, editSession, formFieldsByPage]
+  );
+
+  const handleUpdateStickyNoteContent = useCallback(
+    async (id: string, newContent: string) => {
+      const list = annotationsByPage.get(activePageIdx) || [];
+      const cmd = new UpdateAnnotationCommand(activePageIdx, id, { contents: newContent }, list, () => {
+        setAnnotationsByPage((prev) => new Map(prev).set(activePageIdx, [...list]));
+      });
+      await editSession.execute(cmd);
+    },
+    [activePageIdx, annotationsByPage, editSession]
+  );
+
+  const handleDeleteAnnotation = useCallback(
+    async (pIdx: number, annotId: string) => {
+      const list = annotationsByPage.get(pIdx) || [];
+      const cmd = new DeleteAnnotationCommand(pIdx, annotId, list, () => {
+        setAnnotationsByPage((prev) => new Map(prev).set(pIdx, [...list]));
+        setPageObjectsMap((prev) => {
+          const next = new Map(prev);
+          const objs = (next.get(pIdx) || []).filter((o) => o.id !== annotId && !o.id.startsWith(annotId));
+          next.set(pIdx, objs);
+          return next;
+        });
+      });
+      await editSession.execute(cmd);
+      if (activeStickyNote?.annot.id === annotId) {
+        setActiveStickyNote(null);
+      }
+    },
+    [activeStickyNote, annotationsByPage, editSession]
+  );
+
   // Commands list for CommandPalette
   const commands: CommandItem[] = useMemo(
     () => [
@@ -2910,6 +3195,17 @@ export default function EditorPage({
         onAnnotateColorChange={setAnnotateColor}
         annotateStrokeWidth={annotateStrokeWidth}
         onAnnotateStrokeWidthChange={setAnnotateStrokeWidth}
+        onOpenStamps={() => setIsStampsPopoverOpen(true)}
+        onOpenSignatures={() => setIsSignatureDialogOpen(true)}
+        onInsertInitials={handleInsertInitials}
+        onInsertDateStamp={handleInsertDateStamp}
+        onAddStickyNote={handleAddStickyNote}
+        onTextMarkupSelect={handleTextMarkupSelect}
+        onOpenAutofill={() => setIsAutofillDialogOpen(true)}
+        onOpenCreateFormField={() => setIsCreateFormFieldDialogOpen(true)}
+        onOpenAnnotationSummary={() => setIsAnnotationSummaryDialogOpen(true)}
+        onToggleCommentsPanel={() => setIsCommentsPanelOpen((p) => !p)}
+        commentCount={(annotationsByPage.get(activePageIdx) || []).filter((a) => a.subType === 'Text' || a.contents).length}
       />
 
       {/* Main Workspace Area: Rail + Canvas + Properties */}
@@ -2922,6 +3218,9 @@ export default function EditorPage({
 
         {/* Central Canvas Viewport */}
         <div style={{ flex: 1, height: '100%', overflow: 'hidden', position: 'relative' }}>
+          {xfaWarning && (
+            <XfaWarningBanner onDismiss={() => setXfaWarning(null)} />
+          )}
           {scannedDetection?.isScanned && !scannedBannerDismissed.has(activePageIdx) && (
             <ScannedPageBanner
               pageIndex={activePageIdx}
@@ -3066,6 +3365,23 @@ export default function EditorPage({
                         onEdit={() => setIsLinkDialogOpen(true)}
                         onRemove={handleRemoveLink}
                         onNavigatePage={(pIdx) => setCurrentPage(pIdx + 1)}
+                      />
+                    )}
+                    <AcroFormOverlay
+                      pageWidthPt={metric.width}
+                      pageHeightPt={metric.height}
+                      rotation={metric.rotation}
+                      scale={scale}
+                      fields={formFieldsByPage.get(activePageIdx) || []}
+                      onFieldValueChange={handleFormFieldValueChange}
+                    />
+                    {activeStickyNote && (
+                      <StickyNotePopup
+                        annotation={activeStickyNote.annot}
+                        position={activeStickyNote.cssPos}
+                        onUpdateContent={handleUpdateStickyNoteContent}
+                        onDelete={(id) => handleDeleteAnnotation(activePageIdx, id)}
+                        onClose={() => setActiveStickyNote(null)}
                       />
                     )}
                   </>
@@ -3339,6 +3655,44 @@ export default function EditorPage({
         onRemoveLink={handleRemoveLink}
         initialLink={targetLinkId ? objectLinks.get(targetLinkId) : undefined}
         totalPages={pageCount || 1}
+      />
+
+      {/* Comments Panel (Task 12.2) */}
+      <CommentsPanel
+        isOpen={isCommentsPanelOpen}
+        onClose={() => setIsCommentsPanelOpen(false)}
+        annotationsByPage={annotationsByPage}
+        onJumpToPage={(pIdx) => setCurrentPage(pIdx + 1)}
+        onDeleteComment={handleDeleteAnnotation}
+      />
+
+      {/* Phase 12 Dialogs */}
+      <StampsPopover
+        isOpen={isStampsPopoverOpen}
+        onClose={() => setIsStampsPopoverOpen(false)}
+        onSelectStamp={handleSelectStamp}
+      />
+      <SignatureDialog
+        isOpen={isSignatureDialogOpen}
+        onClose={() => setIsSignatureDialogOpen(false)}
+        onInsertSignature={handleInsertSignature}
+      />
+      <AutofillDialog
+        isOpen={isAutofillDialogOpen}
+        onClose={() => setIsAutofillDialogOpen(false)}
+        onApplyAutofill={handleApplyAutofill}
+      />
+      <CreateFormFieldDialog
+        isOpen={isCreateFormFieldDialogOpen}
+        onClose={() => setIsCreateFormFieldDialogOpen(false)}
+        pageIndex={activePageIdx}
+        onCreateField={handleCreateFormField}
+      />
+      <AnnotationSummaryDialog
+        isOpen={isAnnotationSummaryDialogOpen}
+        onClose={() => setIsAnnotationSummaryDialogOpen(false)}
+        annotationsByPage={annotationsByPage}
+        documentName={filename || 'document'}
       />
     </div>
   );

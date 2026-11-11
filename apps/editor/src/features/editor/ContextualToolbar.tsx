@@ -37,7 +37,12 @@ import {
   Table as TableIcon,
   Grid as GridIcon,
   Ruler,
-  FileText
+  FileText,
+  MessageSquare,
+  Stamp as StampIcon,
+  PenTool,
+  Sparkles,
+  Calendar
 } from 'lucide-react';
 import { useDocStore } from '../../stores/docStore';
 import type { CropPreset, ShapeObject, DrawingTool } from '@rhypdf/edit-core';
@@ -135,6 +140,17 @@ export interface ContextualToolbarProps {
   onAnnotateColorChange?: (color: string) => void;
   annotateStrokeWidth?: number;
   onAnnotateStrokeWidthChange?: (width: number) => void;
+  onOpenStamps?: () => void;
+  onOpenSignatures?: () => void;
+  onInsertInitials?: () => void;
+  onInsertDateStamp?: () => void;
+  onAddStickyNote?: () => void;
+  onTextMarkupSelect?: (type: 'Highlight' | 'Underline' | 'StrikeOut' | 'Squiggly', colorHex?: string) => void;
+  onOpenAutofill?: () => void;
+  onOpenCreateFormField?: () => void;
+  onOpenAnnotationSummary?: () => void;
+  onToggleCommentsPanel?: () => void;
+  commentCount?: number;
 }
 
 export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
@@ -215,7 +231,18 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
   annotateColor,
   onAnnotateColorChange,
   annotateStrokeWidth,
-  onAnnotateStrokeWidthChange
+  onAnnotateStrokeWidthChange,
+  onOpenStamps,
+  onOpenSignatures,
+  onInsertInitials,
+  onInsertDateStamp,
+  onAddStickyNote,
+  onTextMarkupSelect,
+  onOpenAutofill,
+  onOpenCreateFormField,
+  onOpenAnnotationSummary,
+  onToggleCommentsPanel,
+  commentCount = 0
 }) => {
   const { t } = useTranslation();
   const { activeMode } = useDocStore();
@@ -1138,123 +1165,387 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
       {activeMode === 'annotate' && (
         <div
           data-testid="contextual-annotate-tools"
-          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', overflowX: 'auto' }}
         >
-          <button
-            data-testid="btn-annotate-pen"
-            onClick={() => {
-              setInternalAnnotateTool('pen');
-              onAnnotateToolChange?.('pen');
-            }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '6px 12px',
-              borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              backgroundColor: currentAnnotateTool === 'pen' ? 'var(--bg-primary)' : 'var(--bg-secondary)',
-              color: currentAnnotateTool === 'pen' ? '#ffffff' : 'inherit',
-              cursor: 'pointer',
-              fontSize: 13
-            }}
-          >
-            <Pen size={16} />
-            <span>{t('editor.toolbar.pen')}</span>
-          </button>
+          {/* Free-hand Drawing Tools */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button
+              data-testid="btn-annotate-pen"
+              onClick={() => {
+                setInternalAnnotateTool('pen');
+                onAnnotateToolChange?.('pen');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '5px 10px',
+                borderRadius: 'var(--radius-sm)',
+                border: 'none',
+                backgroundColor: currentAnnotateTool === 'pen' ? 'var(--bg-primary)' : 'var(--bg-secondary)',
+                color: currentAnnotateTool === 'pen' ? '#ffffff' : 'inherit',
+                cursor: 'pointer',
+                fontSize: 12
+              }}
+            >
+              <Pen size={14} />
+              <span>{t('editor.toolbar.pen')}</span>
+            </button>
 
-          <button
-            data-testid="btn-annotate-highlighter"
-            onClick={() => {
-              setInternalAnnotateTool('highlighter');
-              onAnnotateToolChange?.('marker');
-            }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '6px 12px',
-              borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              backgroundColor:
-                (currentAnnotateTool === 'marker' || currentAnnotateTool === 'highlighter') ? 'var(--bg-primary)' : 'var(--bg-secondary)',
-              color: (currentAnnotateTool === 'marker' || currentAnnotateTool === 'highlighter') ? '#ffffff' : 'inherit',
-              cursor: 'pointer',
-              fontSize: 13
-            }}
-          >
-            <Highlighter size={16} />
-            <span>{t('editor.toolbar.highlighter')}</span>
-          </button>
+            <button
+              data-testid="btn-annotate-highlighter"
+              onClick={() => {
+                setInternalAnnotateTool('highlighter');
+                onAnnotateToolChange?.('marker');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '5px 10px',
+                borderRadius: 'var(--radius-sm)',
+                border: 'none',
+                backgroundColor:
+                  (currentAnnotateTool === 'marker' || currentAnnotateTool === 'highlighter') ? 'var(--bg-primary)' : 'var(--bg-secondary)',
+                color: (currentAnnotateTool === 'marker' || currentAnnotateTool === 'highlighter') ? '#ffffff' : 'inherit',
+                cursor: 'pointer',
+                fontSize: 12
+              }}
+            >
+              <Highlighter size={14} />
+              <span>{t('editor.toolbar.highlighter')}</span>
+            </button>
 
-          <button
-            data-testid="btn-annotate-eraser"
-            onClick={() => {
-              setInternalAnnotateTool('eraser');
-              onAnnotateToolChange?.('eraser');
-            }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '6px 12px',
-              borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              backgroundColor:
-                currentAnnotateTool === 'eraser' ? 'var(--bg-primary)' : 'var(--bg-secondary)',
-              color: currentAnnotateTool === 'eraser' ? '#ffffff' : 'inherit',
-              cursor: 'pointer',
-              fontSize: 13
-            }}
-          >
-            <Eraser size={16} />
-            <span>{t('editor.toolbar.eraser')}</span>
-          </button>
+            <button
+              data-testid="btn-annotate-eraser"
+              onClick={() => {
+                setInternalAnnotateTool('eraser');
+                onAnnotateToolChange?.('eraser');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '5px 10px',
+                borderRadius: 'var(--radius-sm)',
+                border: 'none',
+                backgroundColor:
+                  currentAnnotateTool === 'eraser' ? 'var(--bg-primary)' : 'var(--bg-secondary)',
+                color: currentAnnotateTool === 'eraser' ? '#ffffff' : 'inherit',
+                cursor: 'pointer',
+                fontSize: 12
+              }}
+            >
+              <Eraser size={14} />
+              <span>{t('editor.toolbar.eraser')}</span>
+            </button>
 
-          <div
-            style={{ width: 1, height: 20, backgroundColor: 'var(--bg-border)', margin: '0 4px' }}
-          />
+            <input
+              data-testid="input-draw-color"
+              type="color"
+              value={currentDrawColor}
+              onChange={(e) => {
+                setInternalDrawColor(e.target.value);
+                onAnnotateColorChange?.(e.target.value);
+              }}
+              style={{
+                width: 24,
+                height: 24,
+                padding: 0,
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer'
+              }}
+            />
 
-          <input
-            data-testid="input-draw-color"
-            type="color"
-            value={currentDrawColor}
-            onChange={(e) => {
-              setInternalDrawColor(e.target.value);
-              onAnnotateColorChange?.(e.target.value);
-            }}
-            style={{
-              width: 28,
-              height: 28,
-              padding: 0,
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer'
-            }}
-          />
+            <select
+              data-testid="select-stroke-width"
+              value={currentStrokeWidth}
+              onChange={(e) => {
+                const val = parseInt(e.target.value);
+                setInternalStrokeWidth(val);
+                onAnnotateStrokeWidthChange?.(val);
+              }}
+              style={{
+                padding: '3px 6px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-card)',
+                color: 'inherit',
+                fontSize: 12
+              }}
+            >
+              <option value="1">1 px</option>
+              <option value="2">2 px</option>
+              <option value="4">4 px</option>
+              <option value="8">8 px</option>
+            </select>
+          </div>
 
-          <select
-            data-testid="select-stroke-width"
-            value={currentStrokeWidth}
-            onChange={(e) => {
-              const val = parseInt(e.target.value);
-              setInternalStrokeWidth(val);
-              onAnnotateStrokeWidthChange?.(val);
-            }}
-            style={{
-              padding: '4px 8px',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--bg-border)',
-              backgroundColor: 'var(--bg-card)',
-              color: 'inherit',
-              fontSize: 13
-            }}
-          >
-            <option value="1">1 px</option>
-            <option value="2">2 px</option>
-            <option value="4">4 px</option>
-            <option value="8">8 px</option>
-          </select>
+          <div style={{ width: 1, height: 18, backgroundColor: 'var(--bg-border)', margin: '0 2px' }} />
+
+          {/* Text Markup Tools (Task 12.1) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <button
+              data-testid="btn-markup-highlight"
+              onClick={() => onTextMarkupSelect?.('Highlight', '#fef08a')}
+              title="Highlight text (Yellow)"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 3,
+                padding: '5px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid #fde047',
+                backgroundColor: '#fef9c3',
+                color: '#854d0e',
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 500
+              }}
+            >
+              <Highlighter size={13} />
+              <span>Highlight</span>
+            </button>
+
+            <button
+              data-testid="btn-markup-underline"
+              onClick={() => onTextMarkupSelect?.('Underline', '#2563eb')}
+              title="Underline text"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '5px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-secondary)',
+                cursor: 'pointer',
+                fontSize: 12
+              }}
+            >
+              <Underline size={13} />
+            </button>
+
+            <button
+              data-testid="btn-markup-strike"
+              onClick={() => onTextMarkupSelect?.('StrikeOut', '#ef4444')}
+              title="Strikethrough text"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '5px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-secondary)',
+                cursor: 'pointer',
+                fontSize: 12
+              }}
+            >
+              <Strikethrough size={13} />
+            </button>
+          </div>
+
+          <div style={{ width: 1, height: 18, backgroundColor: 'var(--bg-border)', margin: '0 2px' }} />
+
+          {/* Sticky Note, Stamp, Signature (Tasks 12.2, 12.3, 12.4, 12.5) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button
+              data-testid="btn-add-sticky-note"
+              onClick={onAddStickyNote}
+              title="Add Sticky Note / Comment"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '5px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-secondary)',
+                cursor: 'pointer',
+                fontSize: 12
+              }}
+            >
+              <MessageSquare size={14} color="#ca8a04" />
+              <span>Note</span>
+            </button>
+
+            <button
+              data-testid="btn-open-stamps"
+              onClick={onOpenStamps}
+              title="Rubber Stamps (Approved, Draft, Confidential...)"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '5px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-secondary)',
+                cursor: 'pointer',
+                fontSize: 12
+              }}
+            >
+              <StampIcon size={14} color="#16a34a" />
+              <span>Stamp</span>
+            </button>
+
+            <button
+              data-testid="btn-open-signatures"
+              onClick={onOpenSignatures}
+              title="Sign document (Draw, Type, Upload, Encrypted)"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '5px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: 'none',
+                backgroundColor: 'var(--bg-primary)',
+                color: '#ffffff',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontSize: 12
+              }}
+            >
+              <PenTool size={14} />
+              <span>Sign</span>
+            </button>
+
+            <button
+              data-testid="btn-insert-initials"
+              onClick={onInsertInitials}
+              title="Quick Initials"
+              style={{
+                padding: '5px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-secondary)',
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 600
+              }}
+            >
+              Initials
+            </button>
+
+            <button
+              data-testid="btn-insert-date-stamp"
+              onClick={onInsertDateStamp}
+              title="Quick Date"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 3,
+                padding: '5px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-secondary)',
+                cursor: 'pointer',
+                fontSize: 12
+              }}
+            >
+              <Calendar size={13} />
+              <span>Date</span>
+            </button>
+          </div>
+
+          <div style={{ width: 1, height: 18, backgroundColor: 'var(--bg-border)', margin: '0 2px' }} />
+
+          {/* Form & Summary Tools (Tasks 12.7, 12.9, 12.10) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button
+              data-testid="btn-create-form-field"
+              onClick={onOpenCreateFormField}
+              title="Add Form Field (text, checkbox, dropdown)"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '5px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-secondary)',
+                cursor: 'pointer',
+                fontSize: 12
+              }}
+            >
+              <Plus size={13} />
+              <span>Field</span>
+            </button>
+
+            <button
+              data-testid="btn-open-autofill"
+              onClick={onOpenAutofill}
+              title="Autofill Form from Profile"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '5px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-secondary)',
+                cursor: 'pointer',
+                fontSize: 12
+              }}
+            >
+              <Sparkles size={13} color="#6366f1" />
+              <span>Autofill</span>
+            </button>
+
+            <button
+              data-testid="btn-open-annotation-summary"
+              onClick={onOpenAnnotationSummary}
+              title="Export Annotation Summary (Markdown, JSON, Text)"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '5px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-secondary)',
+                cursor: 'pointer',
+                fontSize: 12
+              }}
+            >
+              <FileText size={13} />
+              <span>Summary</span>
+            </button>
+
+            <button
+              data-testid="btn-toggle-comments-panel"
+              onClick={onToggleCommentsPanel}
+              title="View all Comments & Notes"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '5px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-secondary)',
+                cursor: 'pointer',
+                fontSize: 12
+              }}
+            >
+              <MessageSquare size={13} />
+              {commentCount > 0 && (
+                <span
+                  style={{
+                    backgroundColor: 'var(--bg-primary)',
+                    color: '#ffffff',
+                    fontSize: 10,
+                    padding: '1px 5px',
+                    borderRadius: 8,
+                    fontWeight: 600
+                  }}
+                >
+                  {commentCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       )}
 
