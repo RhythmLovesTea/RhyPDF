@@ -98,10 +98,10 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 ## CURRENT TASK POINTER
 
 ```
-CURRENT PHASE : 14
-CURRENT TASK  : 14.1
+CURRENT PHASE : 15
+CURRENT TASK  : 15.1
 LAST UPDATED  : 2026-11-11
-NOTES         : Phase 13 completed with all 13 subtasks (13.1 to 13.13). Built and verified: Page organizer screen with @dnd-kit thumbnail drag-and-drop reordering, batch selection bar, page cards; Delete pages (DeletePagesCommand with 1-page minimum guard); Rotate pages in 90° steps (RotatePagesCommand CW & CCW); Insert blank page (presets A4/Letter/Legal/Tabloid/Custom, portrait/landscape, before/after/start/end via InsertBlankPageCommand & InsertBlankPageDialog); Insert pages from another PDF with page range parser (InsertPagesCommand & InsertPagesFromPdfDialog); Merge multiple PDFs with drag-reorderable list (mergeMultiplePdfs & MergePdfDialog); Split PDF (by ranges, every N pages, selection, bookmarks) into ZIP via fflate (splitPdf, zipFiles & SplitPdfDialog); Extract selected pages to new PDF (extractPagesFromPdf); Duplicate page (DuplicatePageCommand); Visual crop page margins via CropBox (CropPageCommand & CropPageDialog); Resize page with proportional content scaling option (ResizePageCommand & ResizePageDialog); Images to PDF and PDF to PNG/JPEG/WebP with DPI choices (72/150/300) and ZIP archive (ImagesToPdfDialog, PdfToImagesDialog); Bookmarks / outline hierarchical tree with PDF /Outlines load/save, jump-to-page, add, edit, delete, reorder (loadBookmarksFromPdf, saveBookmarksToPdf, BookmarksPanel, UpdateBookmarksCommand). All 67 test files (521 tests) green, zero TypeScript errors, production build clean. Ready for Phase 14 (Save, export, share, print).
+NOTES         : Phase 14 completed with all 10 subtasks (14.1 to 14.10). Built and verified: Atomic saving to original file via File System Access with confirmation dialog (ConfirmSaveOriginalDialog, saveToOriginalFile); Download a copy default with smart file naming (getSmartCopyFilename e.g. name-edited.pdf); Export options dialog (ExportOptionsDialog with image quality, PDF 1.4-2.0 versioning, font embedding, annotation/form flattening, object stream optimization); Web Share API with automatic download fallback (sharePdfFile); Hidden iframe print system with Safari new-tab fallback, page range parser and copies (PrintDialog, printPdfDocument); Cancellable save progress UI for big files (SaveProgressModal, runWithSaveProgress); Pre- and post-save validation verifying PDF magic header, page count, and page 1 renderability to prevent corruption (validateSavedPdf); Unsaved changes guard with beforeunload listener and in-app navigation dialog (UnsavedChangesDialog); Local version history in OPFS/IndexedDB preserving last 10 saves with version restore, download, and delete (VersionHistoryDialog, versionHistory.ts); Live file-size estimation and Compress PDF quick action with Extreme, Recommended, and High Quality presets (CompressPdfDialog, compressPdf, estimateExportSize). All 69 test files (553 tests) green, zero TypeScript errors across all monorepo packages, production build clean. Ready for Phase 15 (Security and utilities).
 ```
 
 ---
@@ -629,16 +629,16 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PHASE 14 — SAVE, EXPORT, SHARE, PRINT
 
-- [ ] **14.1** Save: write to the original file through a File System Access handle after confirmation (where supported); otherwise download.
-- [ ] **14.2** "Download a copy" is the default (protects the original), with a smart file name such as `name-edited.pdf`.
-- [ ] **14.3** Export options dialog: image quality, flatten annotations / forms, embed fonts (subset / full), optimize for size, PDF version.
-- [ ] **14.4** Share with the Web Share API (files) where supported, mostly phones and tablets. Feature-detect; otherwise download.
-- [ ] **14.5** Print: render to a PDF blob in a hidden iframe and call `print()`; fall back to opening in a new tab (Safari quirks); page ranges and copies.
-- [ ] **14.6** Save-progress UI for big files (worker-based, cancellable, no UI freeze).
-- [ ] **14.7** **Post-save validation:** reopen the saved bytes with the engine, check the page count and render page 1. If invalid, keep the previous file and show an error.
-- [ ] **14.8** "Unsaved changes" guard (`beforeunload` + in-app dialog): save / discard / cancel.
-- [ ] **14.9** Local version history in OPFS (last N saves; optional toggle).
-- [ ] **14.10** File-size estimate before export and a "Compress PDF" quick action.
+- [x] **14.1** Save: write to the original file through a File System Access handle after confirmation (where supported); otherwise download.
+- [x] **14.2** "Download a copy" is the default (protects the original), with a smart file name such as `name-edited.pdf`.
+- [x] **14.3** Export options dialog: image quality, flatten annotations / forms, embed fonts (subset / full), optimize for size, PDF version.
+- [x] **14.4** Share with the Web Share API (files) where supported, mostly phones and tablets. Feature-detect; otherwise download.
+- [x] **14.5** Print: render to a PDF blob in a hidden iframe and call `print()`; fall back to opening in a new tab (Safari quirks); page ranges and copies.
+- [x] **14.6** Save-progress UI for big files (worker-based, cancellable, no UI freeze).
+- [x] **14.7** **Post-save validation:** reopen the saved bytes with the engine, check the page count and render page 1. If invalid, keep the previous file and show an error.
+- [x] **14.8** "Unsaved changes" guard (`beforeunload` + in-app dialog): save / discard / cancel.
+- [x] **14.9** Local version history in OPFS (last N saves; optional toggle).
+- [x] **14.10** File-size estimate before export and a "Compress PDF" quick action.
 
 **Done when:** save → reopen in the site and in 3 external viewers is lossless relative to the on-screen view; the original file is never corrupted, even if the tab is killed mid-save (write to a temporary file, then commit).
 
@@ -957,6 +957,16 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-11 | 13.11   | Resize page dimensions with optional proportional content scaling     | `P13.11`| resizePageInPdf with page.scale and page.setSize, ResizePageDialog UI            |
 | 2026-11-11 | 13.12   | Images to PDF & PDF to images (PNG/JPEG/WebP, DPI choices) in ZIP     | `P13.12`| imagesToPdf, ImagesToPdfDialog, PdfToImagesDialog with fflate archive packaging  |
 | 2026-11-11 | 13.13   | Bookmarks / outline hierarchical tree viewer, editor & PDF /Outlines  | `P13.13`| loadBookmarksFromPdf, saveBookmarksToPdf, BookmarksPanel, UpdateBookmarksCommand|
+| 2026-11-11 | 14.1    | Save to original file via File System Access handle with confirmation | `P14.1` | saveToOriginalFile atomic stream write, ConfirmSaveOriginalDialog UI             |
+| 2026-11-11 | 14.2    | Download a copy default with smart filename e.g. name-edited.pdf     | `P14.2` | getSmartCopyFilename with index incrementing, downloadPdfCopy                    |
+| 2026-11-11 | 14.3    | Export options dialog: quality, flatten forms/annots, object streams  | `P14.3` | exportPdfDocument, ExportOptionsDialog with PDF 1.4-2.0 specification headers   |
+| 2026-11-11 | 14.4    | Share document via Web Share API with download fallback               | `P14.4` | sharePdfFile with navigator.canShare and navigator.share detection              |
+| 2026-11-11 | 14.5    | Print document via hidden iframe with Safari fallback & page ranges   | `P14.5` | preparePrintPdf, printPdfDocument, PrintDialog UI with copies counter           |
+| 2026-11-11 | 14.6    | Save progress modal for large files with cancellable AbortController  | `P14.6` | SaveProgressModal with stepped progress bar (0-100%) and runWithSaveProgress     |
+| 2026-11-11 | 14.7    | Post-save validation verifying PDF structure, page count & page 1     | `P14.7` | validateSavedPdf protecting against corrupt writes, preserving original files   |
+| 2026-11-11 | 14.8    | Unsaved changes guard: beforeunload event & in-app dialog             | `P14.8` | UnsavedChangesDialog with Save Changes, Discard, and Stay on Page options       |
+| 2026-11-11 | 14.9    | Local version history in OPFS (last 10 saves) with restore & download | `P14.9` | saveDocumentVersion, getDocumentVersions, restoreDocumentVersion, VersionHistoryUI|
+| 2026-11-11 | 14.10   | File-size estimate & Compress PDF quick action with 3 presets         | `P14.10`| compressPdf re-encoding & purging unreferenced objects, CompressPdfDialog UI    |
 
 ---
 

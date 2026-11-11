@@ -11,13 +11,27 @@ import {
   CircleDot,
   Command,
   HelpCircle,
-  Scan
+  Scan,
+  Printer,
+  Share2,
+  History,
+  Sliders,
+  Minimize2,
+  Save,
+  ChevronDown
 } from 'lucide-react';
 import { useDocStore, EditorMode } from '../../stores/docStore';
 
 export interface EditorTopBarProps {
   onBackToHome: () => void;
   onDownload: () => void;
+  onSave?: () => void;
+  onDownloadCopy?: () => void;
+  onOpenExportOptions?: () => void;
+  onOpenCompress?: () => void;
+  onPrint?: () => void;
+  onShare?: () => void;
+  onOpenVersionHistory?: () => void;
   onToggleSearch: () => void;
   onOpenCommandPalette: () => void;
   onOpenShortcutsHelp: () => void;
@@ -31,6 +45,13 @@ export interface EditorTopBarProps {
 export const EditorTopBar: React.FC<EditorTopBarProps> = ({
   onBackToHome,
   onDownload,
+  onSave,
+  onDownloadCopy,
+  onOpenExportOptions,
+  onOpenCompress,
+  onPrint,
+  onShare,
+  onOpenVersionHistory,
   onToggleSearch,
   onOpenCommandPalette,
   onOpenShortcutsHelp,
@@ -41,11 +62,26 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
   onRedo
 }) => {
   const { t } = useTranslation();
-  const { filename, isDirty, isSaving, renameDoc, activeMode, setActiveMode } = useDocStore();
+  const { filename, isDirty, isSaving, renameDoc, activeMode, setActiveMode, fileHandle } = useDocStore();
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState(filename || 'document.pdf');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return undefined;
+  }, [isMenuOpen]);
 
   useEffect(() => {
     setTitleInput(filename || 'document.pdf');
@@ -292,16 +328,266 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
           </IconButton>
         )}
 
-        <Button
-          data-testid="btn-topbar-download"
-          variant="primary"
-          size="sm"
-          onClick={onDownload}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6 }}
-        >
-          <Download size={15} />
-          <span>{t('editor.btnDownload')}</span>
-        </Button>
+        {onPrint && (
+          <IconButton
+            data-testid="btn-topbar-print"
+            aria-label="Print Document"
+            size="sm"
+            variant="ghost"
+            onClick={onPrint}
+          >
+            <Printer size={16} />
+          </IconButton>
+        )}
+        {onShare && (
+          <IconButton
+            data-testid="btn-topbar-share"
+            aria-label="Share Document"
+            size="sm"
+            variant="ghost"
+            onClick={onShare}
+          >
+            <Share2 size={16} />
+          </IconButton>
+        )}
+
+        {/* Primary Save / Download & Actions Dropdown Menu */}
+        <div ref={menuRef} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <Button
+            data-testid="btn-topbar-download"
+            variant="primary"
+            size="sm"
+            onClick={onSave || onDownload}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              marginLeft: 6,
+              borderTopRightRadius: 0,
+              borderBottomRightRadius: 0
+            }}
+          >
+            {fileHandle ? <Save size={15} /> : <Download size={15} />}
+            <span>{fileHandle ? 'Save' : t('editor.btnDownload')}</span>
+          </Button>
+
+          <Button
+            data-testid="btn-topbar-save-menu"
+            variant="primary"
+            size="sm"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            style={{
+              padding: '0 6px',
+              borderTopLeftRadius: 0,
+              borderBottomLeftRadius: 0,
+              borderLeft: '1px solid rgba(255, 255, 255, 0.3)'
+            }}
+            aria-label="Save and export options"
+          >
+            <ChevronDown size={14} />
+          </Button>
+
+          {isMenuOpen && (
+            <div
+              data-testid="topbar-save-dropdown-menu"
+              style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: 6,
+                width: 220,
+                backgroundColor: 'var(--bg-card, #ffffff)',
+                color: 'var(--bg-foreground, #0f172a)',
+                borderRadius: 8,
+                border: '1px solid var(--bg-border, #cbd5e1)',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                padding: '4px 0',
+                zIndex: 1000
+              }}
+            >
+              {fileHandle && onSave && (
+                <button
+                  data-testid="menu-item-save-original"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onSave();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    color: 'inherit'
+                  }}
+                >
+                  <Save size={15} />
+                  <span>Save to Original (Ctrl+S)</span>
+                </button>
+              )}
+
+              <button
+                data-testid="menu-item-download-copy"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  if (onDownloadCopy) onDownloadCopy();
+                  else onDownload();
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: 'none',
+                  background: 'none',
+                  textAlign: 'left',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  color: 'inherit'
+                }}
+              >
+                <Download size={15} />
+                <span>Download a Copy</span>
+              </button>
+
+              {onOpenExportOptions && (
+                <button
+                  data-testid="menu-item-export-options"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenExportOptions();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    color: 'inherit'
+                  }}
+                >
+                  <Sliders size={15} />
+                  <span>Export Options...</span>
+                </button>
+              )}
+
+              {onOpenCompress && (
+                <button
+                  data-testid="menu-item-compress"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenCompress();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    color: 'inherit'
+                  }}
+                >
+                  <Minimize2 size={15} />
+                  <span>Compress PDF...</span>
+                </button>
+              )}
+
+              {onOpenVersionHistory && (
+                <button
+                  data-testid="menu-item-version-history"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenVersionHistory();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    color: 'inherit'
+                  }}
+                >
+                  <History size={15} />
+                  <span>Version History...</span>
+                </button>
+              )}
+
+              {onPrint && (
+                <button
+                  data-testid="menu-item-print"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onPrint();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    color: 'inherit'
+                  }}
+                >
+                  <Printer size={15} />
+                  <span>Print Document (Ctrl+P)</span>
+                </button>
+              )}
+
+              {onShare && (
+                <button
+                  data-testid="menu-item-share"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onShare();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    color: 'inherit'
+                  }}
+                >
+                  <Share2 size={15} />
+                  <span>Share Document</span>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

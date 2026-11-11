@@ -79,8 +79,6 @@ import {
   detectXfaForm,
   detectFormFieldsFromAnnotations,
   autofillFormFields,
-  flattenAnnotations,
-  flattenFormFields,
   SetFormFieldValueCommand,
   CreateFormFieldCommand,
   type CreateFormFieldOptions,
@@ -94,8 +92,32 @@ import {
   ResizePageCommand,
   UpdateBookmarksCommand,
   extractPagesFromPdf,
-  type BookmarkItem
+  type BookmarkItem,
+  exportPdfDocument,
+  compressPdf,
+  validateSavedPdf,
+  type ExportOptions,
+  type CompressPdfOptions,
+  type PrintOptions,
+  type VersionRecord
 } from '@rhypdf/edit-core';
+import {
+  ConfirmSaveOriginalDialog,
+  ExportOptionsDialog,
+  CompressPdfDialog,
+  PrintDialog,
+  SaveProgressModal,
+  UnsavedChangesDialog,
+  VersionHistoryDialog
+} from '../export';
+import {
+  saveToOriginalFile,
+  downloadPdfCopy,
+  sharePdfFile,
+  printPdfDocument,
+  runWithSaveProgress
+} from '../../lib/fileSave';
+import { saveDocumentVersion } from '../../lib/versionHistory';
 import {
   PageOrganizerPage,
   BookmarksPanel,
@@ -147,8 +169,7 @@ import {
 import { CommandPalette, CommandItem } from '../../components/CommandPalette';
 import { ShortcutsHelpDialog } from '../../components/ShortcutsHelpDialog';
 import { AutosaveManager } from '../../lib/autosave';
-import { downloadRecentFile } from '../../lib/recentFiles';
-import { loadWorkingCopy } from '../../lib/workingCopy';
+import { loadWorkingCopy, saveWorkingCopy } from '../../lib/workingCopy';
 import { FitMode } from '../viewer/fit-mode';
 import {
   detectScannedPage,
@@ -179,6 +200,7 @@ export default function EditorPage({
   const {
     currentDocId,
     filename,
+    fileHandle,
     pageCount,
     setPageCount,
     isDirty,
@@ -266,7 +288,6 @@ export default function EditorPage({
   const [isAnnotationSummaryDialogOpen, setIsAnnotationSummaryDialogOpen] = useState(false);
   const [isCommentsPanelOpen, setIsCommentsPanelOpen] = useState(false);
   const [activeStickyNote, setActiveStickyNote] = useState<{ annot: AnnotationObject; cssPos: { x: number; y: number } } | null>(null);
-  const [flattenOnExport] = useState(false);
 
   // Phase 13 Page Management & Bookmarks state
   const [isPageOrganizerOpen, setIsPageOrganizerOpen] = useState(false);
@@ -277,6 +298,19 @@ export default function EditorPage({
   const [isResizePageOpen, setIsResizePageOpen] = useState(false);
   const [workingBytes, setWorkingBytes] = useState<Uint8Array | null>(null);
   const [, setRenderTick] = useState(0);
+
+  // Phase 14 Save, Export, Share, Print state
+  const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false);
+  const [isExportOptionsOpen, setIsExportOptionsOpen] = useState(false);
+  const [isCompressOpen, setIsCompressOpen] = useState(false);
+  const [isPrintOpen, setIsPrintOpen] = useState(false);
+  const [isSaveProgressOpen, setIsSaveProgressOpen] = useState(false);
+  const [saveProgress, setSaveProgress] = useState(0);
+  const [saveProgressStatus, setSaveProgressStatus] = useState('');
+  const [saveAbortController, setSaveAbortController] = useState<AbortController | null>(null);
+  const [isUnsavedChangesOpen, setIsUnsavedChangesOpen] = useState(false);
+  const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
+  const [currentFileSize, setCurrentFileSize] = useState(0);
 
   // PDF Engine & Document Handle
   const [engine, setEngine] = useState<PdfEngine | null>(null);
@@ -311,7 +345,10 @@ export default function EditorPage({
         }
 
         const bytes = await loadWorkingCopy(currentDocId!);
-        if (bytes) setWorkingBytes(new Uint8Array(bytes));
+        if (bytes) {
+          setWorkingBytes(new Uint8Array(bytes));
+          setCurrentFileSize(bytes.byteLength);
+        }
         let handle: DocumentHandle;
         let totalPages = 1;
 
@@ -1204,7 +1241,24 @@ export default function EditorPage({
     };
   }, [currentDocId, filename, isDirty, currentPage, setLastSavedAt]);
 
-  // Global keyboard shortcuts (Tasks 5.9, 5.10, 5.11, 6.2, 6.3)
+  // Task 14.8: beforeunload guard when unsaved changes exist
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
+
+  const handleSaveRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  useEffect(() => {
+    handleSaveRef.current = handleSave;
+  });
+
+  // Global keyboard shortcuts (Tasks 5.9, 5.10, 5.11, 6.2, 6.3, 14.1, 14.5)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isInput = ['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName);
@@ -1212,6 +1266,14 @@ export default function EditorPage({
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setCommandPaletteOpen((prev) => !prev);
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        // Save (Ctrl+S)
+        e.preventDefault();
+        void handleSaveRef.current();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p' && !isInput) {
+        // Print (Ctrl+P)
+        e.preventDefault();
+        setIsPrintOpen(true);
       } else if (
         (e.ctrlKey || e.metaKey) &&
         !e.shiftKey &&
@@ -1995,24 +2057,249 @@ export default function EditorPage({
     }
   }, [activeTextBlock, fontCatalog, handleFontFamilyChange]);
 
-  const handleDownload = useCallback(async () => {
-    if (currentDocId) {
-      if (flattenOnExport) {
-        for (const [pIdx, annots] of annotationsByPage.entries()) {
-          const flattenedAnnots = flattenAnnotations(annots);
-          const fields = formFieldsByPage.get(pIdx) || [];
-          const flattenedFields = flattenFormFields(fields);
-          setPageObjectsMap((prev) => {
-            const next = new Map(prev);
-            const current = next.get(pIdx) || [];
-            next.set(pIdx, [...current, ...flattenedAnnots, ...flattenedFields]);
-            return next;
-          });
-        }
-      }
-      await downloadRecentFile(currentDocId, filename || 'document.pdf');
+  const getEffectiveBytes = useCallback(async (): Promise<Uint8Array | null> => {
+    if (workingBytes && workingBytes.byteLength > 0) {
+      return workingBytes;
     }
-  }, [currentDocId, filename, flattenOnExport, annotationsByPage, formFieldsByPage]);
+    if (currentDocId) {
+      const bytes = await loadWorkingCopy(currentDocId);
+      if (bytes) {
+        const u8 = new Uint8Array(bytes);
+        setWorkingBytes(u8);
+        setCurrentFileSize(u8.byteLength);
+        return u8;
+      }
+    }
+    return null;
+  }, [workingBytes, currentDocId]);
+
+  const handleDownloadCopy = useCallback(async () => {
+    const bytes = await getEffectiveBytes();
+    if (!bytes) return;
+
+    const controller = new AbortController();
+    setSaveAbortController(controller);
+    setIsSaveProgressOpen(true);
+
+    try {
+      await runWithSaveProgress(
+        async (onProg) => {
+          onProg(50, 'Validating and generating copy...');
+          const validation = await validateSavedPdf(bytes, pageCount);
+          if (!validation.valid) {
+            throw new Error(validation.error || 'Invalid PDF structure');
+          }
+          downloadPdfCopy(bytes, filename || 'document.pdf');
+
+          if (currentDocId) {
+            await saveDocumentVersion(currentDocId, filename || 'document.pdf', bytes, 'Downloaded copy');
+          }
+        },
+        (pct, msg) => {
+          setSaveProgress(pct);
+          setSaveProgressStatus(msg);
+        },
+        controller.signal
+      );
+
+      setDirty(false);
+      setLastSavedAt(Date.now());
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        alert(`Download failed: ${(err as Error).message}`);
+      }
+    } finally {
+      setIsSaveProgressOpen(false);
+      setSaveAbortController(null);
+    }
+  }, [getEffectiveBytes, pageCount, filename, currentDocId, setDirty, setLastSavedAt]);
+
+  const handleSave = useCallback(async () => {
+    if (fileHandle) {
+      setIsConfirmSaveOpen(true);
+    } else {
+      await handleDownloadCopy();
+    }
+  }, [fileHandle, handleDownloadCopy]);
+
+  const handleConfirmSaveOriginal = useCallback(async () => {
+    if (!fileHandle) return;
+    setIsConfirmSaveOpen(false);
+
+    const bytes = await getEffectiveBytes();
+    if (!bytes) return;
+
+    const controller = new AbortController();
+    setSaveAbortController(controller);
+    setIsSaveProgressOpen(true);
+
+    try {
+      await runWithSaveProgress(
+        async (onProg) => {
+          onProg(40, 'Validating document...');
+          const validation = await validateSavedPdf(bytes, pageCount);
+          if (!validation.valid) {
+            throw new Error(validation.error || 'Validation failed');
+          }
+
+          onProg(75, 'Atomically saving to original file...');
+          const result = await saveToOriginalFile(fileHandle, bytes, pageCount);
+          if (!result.success) {
+            throw new Error(result.error || 'Failed to write to file');
+          }
+
+          if (currentDocId) {
+            await saveDocumentVersion(currentDocId, filename || 'document.pdf', bytes, 'Saved to original file');
+          }
+        },
+        (pct, msg) => {
+          setSaveProgress(pct);
+          setSaveProgressStatus(msg);
+        },
+        controller.signal
+      );
+
+      setDirty(false);
+      setLastSavedAt(Date.now());
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        alert(`Save failed: ${(err as Error).message}`);
+      }
+    } finally {
+      setIsSaveProgressOpen(false);
+      setSaveAbortController(null);
+    }
+  }, [fileHandle, getEffectiveBytes, pageCount, currentDocId, filename, setDirty, setLastSavedAt]);
+
+  const handleExportWithOptions = useCallback(
+    async (options: ExportOptions) => {
+      setIsExportOptionsOpen(false);
+      const bytes = await getEffectiveBytes();
+      if (!bytes) return;
+
+      const controller = new AbortController();
+      setSaveAbortController(controller);
+      setIsSaveProgressOpen(true);
+
+      try {
+        await runWithSaveProgress(
+          async (onProg) => {
+            onProg(40, 'Applying export options...');
+            const exportedBytes = await exportPdfDocument(bytes, options);
+            onProg(75, 'Validating exported PDF...');
+            const validation = await validateSavedPdf(exportedBytes);
+            if (!validation.valid) {
+              throw new Error(validation.error || 'Validation failed on export');
+            }
+            downloadPdfCopy(exportedBytes, filename || 'document.pdf', '-exported');
+
+            if (currentDocId) {
+              await saveDocumentVersion(currentDocId, filename || 'document.pdf', exportedBytes, 'Custom Export');
+            }
+          },
+          (pct, msg) => {
+            setSaveProgress(pct);
+            setSaveProgressStatus(msg);
+          },
+          controller.signal
+        );
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          alert(`Export failed: ${(err as Error).message}`);
+        }
+      } finally {
+        setIsSaveProgressOpen(false);
+        setSaveAbortController(null);
+      }
+    },
+    [getEffectiveBytes, filename, currentDocId]
+  );
+
+  const handleCompress = useCallback(
+    async (options: CompressPdfOptions) => {
+      setIsCompressOpen(false);
+      const bytes = await getEffectiveBytes();
+      if (!bytes) return;
+
+      const controller = new AbortController();
+      setSaveAbortController(controller);
+      setIsSaveProgressOpen(true);
+
+      try {
+        await runWithSaveProgress(
+          async (onProg) => {
+            onProg(45, 'Compressing PDF objects...');
+            const result = await compressPdf(bytes, options);
+            onProg(80, 'Validating compressed PDF...');
+            const validation = await validateSavedPdf(result.bytes);
+            if (!validation.valid) {
+              throw new Error(validation.error || 'Compressed PDF validation failed');
+            }
+            downloadPdfCopy(result.bytes, filename || 'document.pdf', '-compressed');
+          },
+          (pct, msg) => {
+            setSaveProgress(pct);
+            setSaveProgressStatus(msg);
+          },
+          controller.signal
+        );
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          alert(`Compression failed: ${(err as Error).message}`);
+        }
+      } finally {
+        setIsSaveProgressOpen(false);
+        setSaveAbortController(null);
+      }
+    },
+    [getEffectiveBytes, filename]
+  );
+
+  const handlePrint = useCallback(
+    async (options: PrintOptions) => {
+      setIsPrintOpen(false);
+      const bytes = await getEffectiveBytes();
+      if (!bytes) return;
+      await printPdfDocument(bytes, filename || 'document.pdf', options);
+    },
+    [getEffectiveBytes, filename]
+  );
+
+  const handleShare = useCallback(async () => {
+    const bytes = await getEffectiveBytes();
+    if (!bytes) return;
+    await sharePdfFile(bytes, filename || 'document.pdf');
+  }, [getEffectiveBytes, filename]);
+
+  const handleRestoreVersion = useCallback(
+    async (restoredBytes: Uint8Array, _version: VersionRecord) => {
+      if (!currentDocId) return;
+      setWorkingBytes(restoredBytes);
+      setCurrentFileSize(restoredBytes.byteLength);
+      await saveWorkingCopy(currentDocId, restoredBytes);
+      if (engine) {
+        const handle = await engine.open(restoredBytes);
+        setDocHandle(handle);
+        const count = await engine.pageCount(handle);
+        setPageCount(count);
+      }
+      setDirty(false);
+      setRenderTick((t) => t + 1);
+    },
+    [currentDocId, engine, setPageCount, setDirty]
+  );
+
+  const handleBackToHome = useCallback(() => {
+    if (isDirty) {
+      setIsUnsavedChangesOpen(true);
+    } else {
+      closeDoc();
+    }
+  }, [isDirty, closeDoc]);
+
+  const handleDownload = useCallback(async () => {
+    await handleDownloadCopy();
+  }, [handleDownloadCopy]);
 
   const ocrEngine = useMemo(() => new TesseractOcrEngine(), []);
 
@@ -3149,6 +3436,50 @@ export default function EditorPage({
   const commands: CommandItem[] = useMemo(
     () => [
       {
+        id: 'save',
+        category: t('commands.categoryApp'),
+        title: 'Save Document',
+        shortcut: 'Ctrl+S',
+        onSelect: () => void handleSave()
+      },
+      {
+        id: 'download-copy',
+        category: t('commands.categoryApp'),
+        title: 'Download a Copy',
+        onSelect: () => void handleDownloadCopy()
+      },
+      {
+        id: 'export-options',
+        category: t('commands.categoryApp'),
+        title: 'Export Options...',
+        onSelect: () => setIsExportOptionsOpen(true)
+      },
+      {
+        id: 'compress-pdf',
+        category: t('commands.categoryApp'),
+        title: 'Compress PDF...',
+        onSelect: () => setIsCompressOpen(true)
+      },
+      {
+        id: 'version-history',
+        category: t('commands.categoryApp'),
+        title: 'Version History...',
+        onSelect: () => setIsVersionHistoryOpen(true)
+      },
+      {
+        id: 'print',
+        category: t('commands.categoryApp'),
+        title: 'Print Document',
+        shortcut: 'Ctrl+P',
+        onSelect: () => setIsPrintOpen(true)
+      },
+      {
+        id: 'share',
+        category: t('commands.categoryApp'),
+        title: 'Share Document',
+        onSelect: () => void handleShare()
+      },
+      {
         id: 'download',
         category: t('commands.categoryApp'),
         title: t('commands.cmdDownload'),
@@ -3278,6 +3609,9 @@ export default function EditorPage({
     ],
     [
       t,
+      handleSave,
+      handleDownloadCopy,
+      handleShare,
       handleDownload,
       handleUndo,
       handleRedo,
@@ -3304,8 +3638,15 @@ export default function EditorPage({
     >
       {/* Top Bar (Section 3B) */}
       <EditorTopBar
-        onBackToHome={() => closeDoc()}
+        onBackToHome={handleBackToHome}
         onDownload={handleDownload}
+        onSave={handleSave}
+        onDownloadCopy={handleDownloadCopy}
+        onOpenExportOptions={() => setIsExportOptionsOpen(true)}
+        onOpenCompress={() => setIsCompressOpen(true)}
+        onPrint={() => setIsPrintOpen(true)}
+        onShare={handleShare}
+        onOpenVersionHistory={() => setIsVersionHistoryOpen(true)}
         onToggleSearch={() => {
           window.dispatchEvent(
             new KeyboardEvent('keydown', { key: 'f', ctrlKey: true, bubbles: true })
@@ -4001,6 +4342,70 @@ export default function EditorPage({
           />
         </div>
       )}
+      {/* Phase 14 Dialogs: Save, Export, Print, Share, Compress, Version History */}
+      <ConfirmSaveOriginalDialog
+        isOpen={isConfirmSaveOpen}
+        filename={filename || 'document.pdf'}
+        onClose={() => setIsConfirmSaveOpen(false)}
+        onSaveOriginal={handleConfirmSaveOriginal}
+        onDownloadCopy={handleDownloadCopy}
+      />
+
+      <ExportOptionsDialog
+        isOpen={isExportOptionsOpen}
+        currentFileSize={currentFileSize}
+        onClose={() => setIsExportOptionsOpen(false)}
+        onExport={handleExportWithOptions}
+      />
+
+      <CompressPdfDialog
+        isOpen={isCompressOpen}
+        currentFileSize={currentFileSize}
+        onClose={() => setIsCompressOpen(false)}
+        onCompress={handleCompress}
+      />
+
+      <PrintDialog
+        isOpen={isPrintOpen}
+        pageCount={pageCount || 1}
+        currentPageIndex={activePageIdx}
+        onClose={() => setIsPrintOpen(false)}
+        onPrint={handlePrint}
+      />
+
+      <SaveProgressModal
+        isOpen={isSaveProgressOpen}
+        progress={saveProgress}
+        statusMessage={saveProgressStatus}
+        onCancel={() => {
+          saveAbortController?.abort();
+          setIsSaveProgressOpen(false);
+          setSaveAbortController(null);
+        }}
+      />
+
+      <UnsavedChangesDialog
+        isOpen={isUnsavedChangesOpen}
+        filename={filename || 'document.pdf'}
+        onSave={async () => {
+          setIsUnsavedChangesOpen(false);
+          await handleSave();
+          closeDoc();
+        }}
+        onDiscard={() => {
+          setIsUnsavedChangesOpen(false);
+          setDirty(false);
+          closeDoc();
+        }}
+        onCancel={() => setIsUnsavedChangesOpen(false)}
+      />
+
+      <VersionHistoryDialog
+        isOpen={isVersionHistoryOpen}
+        docId={currentDocId}
+        onClose={() => setIsVersionHistoryOpen(false)}
+        onRestore={handleRestoreVersion}
+      />
     </div>
   );
 }
