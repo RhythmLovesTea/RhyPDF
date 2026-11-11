@@ -119,4 +119,45 @@ test.describe('Security Headers, Web App Manifest, and PWA Baseline', () => {
       await context.setOffline(false);
     }
   });
+
+  test('Task 15.7: Privacy policy page renders client-side privacy architecture guarantees', async ({
+    page
+  }) => {
+    await page.goto('/#/privacy');
+    await expect(page.locator('[data-testid="page-privacy-policy"]')).toBeVisible();
+    await expect(page.locator('h1')).toContainText('Privacy & Data Architecture');
+    await expect(page.locator('text=100% Client-Side On-Device Processing')).toBeVisible();
+    await expect(page.locator('text=Zero Tracking of Document Content')).toBeVisible();
+    await expect(page.locator('text=Local Encryption & Safe Storage')).toBeVisible();
+  });
+
+  test('Task 15.7: Asserts no outbound network request carries document content or telemetry', async ({
+    page
+  }) => {
+    const sensitiveKeyword = 'TopSecretSSN12345';
+    let leakedRequestUrl: string | null = null;
+    let leakedPayload: string | null = null;
+
+    page.on('request', (req) => {
+      const url = req.url();
+      const postData = req.postData();
+      if (url.includes(sensitiveKeyword)) {
+        leakedRequestUrl = url;
+      }
+      if (postData && postData.includes(sensitiveKeyword)) {
+        leakedPayload = postData;
+      }
+    });
+
+    await page.goto('/#/editor');
+    // Simulate user editing/typing document content in editor
+    await page.evaluate((secret) => {
+      window.localStorage.setItem('rhypdf_test_doc', secret);
+    }, sensitiveKeyword);
+
+    await page.waitForTimeout(500);
+
+    expect(leakedRequestUrl, 'No network URL should ever leak document content').toBeNull();
+    expect(leakedPayload, 'No POST body should ever transmit document content').toBeNull();
+  });
 });

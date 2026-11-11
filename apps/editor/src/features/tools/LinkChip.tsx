@@ -7,6 +7,7 @@ export interface LinkChipProps {
   onEdit: () => void;
   onRemove: () => void;
   onNavigatePage?: (pageIndex: number) => void;
+  onOpenLink?: (url: string) => void;
   position?: { x: number; y: number };
 }
 
@@ -15,6 +16,7 @@ export const LinkChip: React.FC<LinkChipProps> = ({
   onEdit,
   onRemove,
   onNavigatePage,
+  onOpenLink,
   position
 }) => {
 
@@ -33,7 +35,11 @@ export const LinkChip: React.FC<LinkChipProps> = ({
 
   const handleOpen = () => {
     if (link.target.type === 'url') {
-      window.open(link.target.url, '_blank', 'noopener,noreferrer');
+      if (onOpenLink) {
+        onOpenLink(link.target.url);
+      } else {
+        window.open(link.target.url, '_blank', 'noopener,noreferrer');
+      }
     } else if (link.target.type === 'email') {
       window.location.href = `mailto:${link.target.email}`;
     } else if (link.target.type === 'phone') {

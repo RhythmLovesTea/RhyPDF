@@ -99,8 +99,33 @@ import {
   type ExportOptions,
   type CompressPdfOptions,
   type PrintOptions,
-  type VersionRecord
+  type VersionRecord,
+  encryptPdf,
+  decryptPdf,
+  applyTrueRedaction,
+  ApplyRedactionCommand,
+  getPdfMetadata,
+  setPdfMetadata,
+  stripAllMetadata,
+  validateLinkSafety,
+  type RedactionArea,
+  type PdfSecurityOptions,
+  type PdfMetadata
 } from '@rhypdf/edit-core';
+import {
+  PasswordSecurityDialog,
+  RedactionDialog,
+  MetadataEditorDialog,
+  LocalDataLockDialog,
+  ExternalLinkConfirmDialog,
+  ClearDataConfirmDialog
+} from '../security';
+import {
+  wipeDocumentWorkingData,
+  clearAllLocalData,
+  pruneExpiredRecovery
+} from '../../lib/secureStorage';
+import { logger } from '../../lib/logger';
 import {
   ConfirmSaveOriginalDialog,
   ExportOptionsDialog,
@@ -132,14 +157,16 @@ import {
   CommentsPanel,
   AnnotationSummaryDialog
 } from '../annotations';
-import {
-  XfaWarningBanner,
-  AcroFormOverlay,
-  AutofillDialog,
-  CreateFormFieldDialog
-} from '../forms';
+import { XfaWarningBanner, AcroFormOverlay, AutofillDialog, CreateFormFieldDialog } from '../forms';
 import { FontCatalog } from '@rhypdf/fonts';
-import type { PageObject, ImageObject, Rect, TextRun, PathObject, AnnotationObject } from '@rhypdf/pdf-model';
+import type {
+  PageObject,
+  ImageObject,
+  Rect,
+  TextRun,
+  PathObject,
+  AnnotationObject
+} from '@rhypdf/pdf-model';
 import { useDocStore } from '../../stores/docStore';
 import { useUIStore } from '../../stores/uiStore';
 import { PdfViewer, PageMetric } from '../viewer/PdfViewer';
@@ -272,13 +299,17 @@ export default function EditorPage({
   const [formatPainterStyle, setFormatPainterStyle] = useState<TextStyleAttributes | null>(null);
   const [isRulerActive, setIsRulerActive] = useState(false);
   const [isGridActive, setIsGridActive] = useState(false);
-  const [drawingStrokesMap, setDrawingStrokesMap] = useState<Map<number, DrawingStrokeObject[]>>(new Map());
+  const [drawingStrokesMap, setDrawingStrokesMap] = useState<Map<number, DrawingStrokeObject[]>>(
+    new Map()
+  );
   const [annotateTool, setAnnotateTool] = useState<DrawingTool>('pen');
   const [annotateColor, setAnnotateColor] = useState('#0f172a');
   const [annotateStrokeWidth, setAnnotateStrokeWidth] = useState(2.5);
 
   // Phase 12 Annotations, Signatures & Forms state
-  const [annotationsByPage, setAnnotationsByPage] = useState<Map<number, AnnotationObject[]>>(new Map());
+  const [annotationsByPage, setAnnotationsByPage] = useState<Map<number, AnnotationObject[]>>(
+    new Map()
+  );
   const [formFieldsByPage, setFormFieldsByPage] = useState<Map<number, AcroFormField[]>>(new Map());
   const [xfaWarning, setXfaWarning] = useState<string | null>(null);
   const [isStampsPopoverOpen, setIsStampsPopoverOpen] = useState(false);
@@ -287,7 +318,10 @@ export default function EditorPage({
   const [isCreateFormFieldDialogOpen, setIsCreateFormFieldDialogOpen] = useState(false);
   const [isAnnotationSummaryDialogOpen, setIsAnnotationSummaryDialogOpen] = useState(false);
   const [isCommentsPanelOpen, setIsCommentsPanelOpen] = useState(false);
-  const [activeStickyNote, setActiveStickyNote] = useState<{ annot: AnnotationObject; cssPos: { x: number; y: number } } | null>(null);
+  const [activeStickyNote, setActiveStickyNote] = useState<{
+    annot: AnnotationObject;
+    cssPos: { x: number; y: number };
+  } | null>(null);
 
   // Phase 13 Page Management & Bookmarks state
   const [isPageOrganizerOpen, setIsPageOrganizerOpen] = useState(false);
@@ -311,6 +345,16 @@ export default function EditorPage({
   const [isUnsavedChangesOpen, setIsUnsavedChangesOpen] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [currentFileSize, setCurrentFileSize] = useState(0);
+
+  // Security & Utilities states (Phase 15)
+  const [isPasswordSecurityOpen, setIsPasswordSecurityOpen] = useState(false);
+  const [isRedactionOpen, setIsRedactionOpen] = useState(false);
+  const [isMetadataOpen, setIsMetadataOpen] = useState(false);
+  const [isLocalLockOpen, setIsLocalLockOpen] = useState(false);
+  const [isClearDataOpen, setIsClearDataOpen] = useState(false);
+  const [isExternalLinkConfirmOpen, setIsExternalLinkConfirmOpen] = useState(false);
+  const [pendingExternalUrl, setPendingExternalUrl] = useState<string>('');
+  const [currentDocMetadata, setCurrentDocMetadata] = useState<PdfMetadata>({});
 
   // PDF Engine & Document Handle
   const [engine, setEngine] = useState<PdfEngine | null>(null);
@@ -885,7 +929,7 @@ export default function EditorPage({
             const current = next.get(idx);
             if (current) {
               const curRot = current.rotation ?? 0;
-              const nextRot = (((curRot + d) % 360 + 360) % 360) as 0 | 90 | 180 | 270;
+              const nextRot = ((((curRot + d) % 360) + 360) % 360) as 0 | 90 | 180 | 270;
               next.set(idx, { ...current, rotation: nextRot });
             }
           }
@@ -2092,7 +2136,12 @@ export default function EditorPage({
           downloadPdfCopy(bytes, filename || 'document.pdf');
 
           if (currentDocId) {
-            await saveDocumentVersion(currentDocId, filename || 'document.pdf', bytes, 'Downloaded copy');
+            await saveDocumentVersion(
+              currentDocId,
+              filename || 'document.pdf',
+              bytes,
+              'Downloaded copy'
+            );
           }
         },
         (pct, msg) => {
@@ -2149,7 +2198,12 @@ export default function EditorPage({
           }
 
           if (currentDocId) {
-            await saveDocumentVersion(currentDocId, filename || 'document.pdf', bytes, 'Saved to original file');
+            await saveDocumentVersion(
+              currentDocId,
+              filename || 'document.pdf',
+              bytes,
+              'Saved to original file'
+            );
           }
         },
         (pct, msg) => {
@@ -2194,7 +2248,12 @@ export default function EditorPage({
             downloadPdfCopy(exportedBytes, filename || 'document.pdf', '-exported');
 
             if (currentDocId) {
-              await saveDocumentVersion(currentDocId, filename || 'document.pdf', exportedBytes, 'Custom Export');
+              await saveDocumentVersion(
+                currentDocId,
+                filename || 'document.pdf',
+                exportedBytes,
+                'Custom Export'
+              );
             }
           },
           (pct, msg) => {
@@ -2272,7 +2331,7 @@ export default function EditorPage({
   }, [getEffectiveBytes, filename]);
 
   const handleRestoreVersion = useCallback(
-    async (restoredBytes: Uint8Array, _version: VersionRecord) => {
+    async (restoredBytes: Uint8Array, _version?: Partial<VersionRecord>) => {
       if (!currentDocId) return;
       setWorkingBytes(restoredBytes);
       setCurrentFileSize(restoredBytes.byteLength);
@@ -2289,13 +2348,168 @@ export default function EditorPage({
     [currentDocId, engine, setPageCount, setDirty]
   );
 
+  // Auto-prune recovery entries older than 7 days on mount (Task 15.8)
+  useEffect(() => {
+    void pruneExpiredRecovery();
+  }, []);
+
+  const handleApplyPasswordSecurity = useCallback(
+    async (options: PdfSecurityOptions) => {
+      try {
+        setIsPasswordSecurityOpen(false);
+        const bytes = await getEffectiveBytes();
+        if (!bytes || !engine) return;
+        const encrypted = await encryptPdf(bytes, options, engine);
+        await handleRestoreVersion(encrypted, {
+          id: `sec-${Date.now()}`,
+          timestamp: Date.now(),
+          sizeBytes: encrypted.byteLength,
+          description: 'Added password security'
+        });
+      } catch (err) {
+        logger.error('Security', 'Failed to encrypt document', err);
+      }
+    },
+    [getEffectiveBytes, engine, handleRestoreVersion]
+  );
+
+  const handleRemovePasswordSecurity = useCallback(async () => {
+    try {
+      setIsPasswordSecurityOpen(false);
+      const bytes = await getEffectiveBytes();
+      if (!bytes || !engine) return;
+      const decrypted = await decryptPdf(bytes, '', engine);
+      await handleRestoreVersion(decrypted, {
+        id: `sec-${Date.now()}`,
+        timestamp: Date.now(),
+        sizeBytes: decrypted.byteLength,
+        description: 'Removed password security'
+      });
+    } catch (err) {
+      logger.error('Security', 'Failed to remove password', err);
+    }
+  }, [getEffectiveBytes, engine, handleRestoreVersion]);
+
+  const handleApplyRedaction = useCallback(
+    async (redaction: RedactionArea) => {
+      try {
+        setIsRedactionOpen(false);
+        const bytes = await getEffectiveBytes();
+        if (!bytes) return;
+        const { updatedBytes, updatedObjectsMap } = await applyTrueRedaction(
+          bytes,
+          [redaction],
+          pageObjectsMap
+        );
+        const cmd = new ApplyRedactionCommand(
+          activePageIdx,
+          bytes,
+          updatedBytes,
+          pageObjectsMap,
+          updatedObjectsMap,
+          (b, objs) => {
+            setPageObjectsMap(new Map(objs));
+            void handleRestoreVersion(b, {
+              id: `red-${Date.now()}`,
+              timestamp: Date.now(),
+              sizeBytes: b.byteLength,
+              description: 'Applied true redaction'
+            });
+          }
+        );
+        await editSession.execute(cmd);
+      } catch (err) {
+        logger.error('Redaction', 'Failed to apply redactions', err);
+      }
+    },
+    [getEffectiveBytes, pageObjectsMap, activePageIdx, editSession, handleRestoreVersion]
+  );
+
+  const handleOpenMetadata = useCallback(async () => {
+    try {
+      const bytes = await getEffectiveBytes();
+      if (bytes) {
+        const meta = await getPdfMetadata(bytes);
+        setCurrentDocMetadata(meta);
+      } else {
+        setCurrentDocMetadata({});
+      }
+    } catch (err) {
+      logger.warn('Metadata', 'Failed to read metadata', err);
+      setCurrentDocMetadata({});
+    }
+    setIsMetadataOpen(true);
+  }, [getEffectiveBytes]);
+
+  const handleSaveMetadata = useCallback(
+    async (meta: PdfMetadata) => {
+      try {
+        setIsMetadataOpen(false);
+        const bytes = await getEffectiveBytes();
+        if (!bytes) return;
+        const updated = await setPdfMetadata(bytes, meta);
+        await handleRestoreVersion(updated, {
+          id: `meta-${Date.now()}`,
+          timestamp: Date.now(),
+          sizeBytes: updated.byteLength,
+          description: 'Updated document metadata'
+        });
+        setCurrentDocMetadata(meta);
+      } catch (err) {
+        logger.error('Metadata', 'Failed to save metadata', err);
+      }
+    },
+    [getEffectiveBytes, handleRestoreVersion]
+  );
+
+  const handleStripMetadata = useCallback(async () => {
+    try {
+      setIsMetadataOpen(false);
+      const bytes = await getEffectiveBytes();
+      if (!bytes) return;
+      const clean = await stripAllMetadata(bytes);
+      await handleRestoreVersion(clean, {
+        id: `meta-${Date.now()}`,
+        timestamp: Date.now(),
+        sizeBytes: clean.byteLength,
+        description: 'Stripped all metadata'
+      });
+      setCurrentDocMetadata({});
+    } catch (err) {
+      logger.error('Metadata', 'Failed to strip metadata', err);
+    }
+  }, [getEffectiveBytes, handleRestoreVersion]);
+
+  const handleClearAllData = useCallback(async () => {
+    setIsClearDataOpen(false);
+    await clearAllLocalData();
+    closeDoc();
+  }, [closeDoc]);
+
+  const handleSafeNavigateLink = useCallback((url: string) => {
+    const check = validateLinkSafety(url);
+    if (!check.isSafe) {
+      alert(check.reason || 'Blocked unsafe link');
+      return;
+    }
+    if (check.requiresConfirmation) {
+      setPendingExternalUrl(check.sanitizedUrl || url);
+      setIsExternalLinkConfirmOpen(true);
+    } else {
+      window.open(check.sanitizedUrl || url, '_blank', 'noopener,noreferrer');
+    }
+  }, []);
+
   const handleBackToHome = useCallback(() => {
     if (isDirty) {
       setIsUnsavedChangesOpen(true);
     } else {
+      if (currentDocId) {
+        void wipeDocumentWorkingData(currentDocId);
+      }
       closeDoc();
     }
-  }, [isDirty, closeDoc]);
+  }, [isDirty, currentDocId, closeDoc]);
 
   const handleDownload = useCallback(async () => {
     await handleDownloadCopy();
@@ -2555,7 +2769,10 @@ export default function EditorPage({
           setPageObjectsMap((prev) => {
             const next = new Map(prev);
             const list = next.get(pIdx) || [];
-            next.set(pIdx, list.filter((o) => o.id !== sId));
+            next.set(
+              pIdx,
+              list.filter((o) => o.id !== sId)
+            );
             return next;
           });
         }
@@ -2589,7 +2806,10 @@ export default function EditorPage({
           setPageObjectsMap((prev) => {
             const next = new Map(prev);
             const list = next.get(pIdx) || [];
-            next.set(pIdx, list.filter((o) => o.id !== sId));
+            next.set(
+              pIdx,
+              list.filter((o) => o.id !== sId)
+            );
             return next;
           });
         }
@@ -2608,7 +2828,10 @@ export default function EditorPage({
       setDrawingStrokesMap((prev) => {
         const next = new Map(prev);
         const list = next.get(activePageIdx) || [];
-        next.set(activePageIdx, list.filter((s) => s.id !== strokeId));
+        next.set(
+          activePageIdx,
+          list.filter((s) => s.id !== strokeId)
+        );
         return next;
       });
 
@@ -2619,7 +2842,10 @@ export default function EditorPage({
           setPageObjectsMap((prev) => {
             const next = new Map(prev);
             const list = next.get(pIdx) || [];
-            next.set(pIdx, list.filter((o) => o.id !== sId));
+            next.set(
+              pIdx,
+              list.filter((o) => o.id !== sId)
+            );
             return next;
           });
         },
@@ -2710,7 +2936,10 @@ export default function EditorPage({
           setPageObjectsMap((prev) => {
             const next = new Map(prev);
             for (const [pIdx, list] of next.entries()) {
-              next.set(pIdx, list.filter((o) => !idSet.has(o.id)));
+              next.set(
+                pIdx,
+                list.filter((o) => !idSet.has(o.id))
+              );
             }
             return next;
           });
@@ -2758,7 +2987,10 @@ export default function EditorPage({
           setPageObjectsMap((prev) => {
             const next = new Map(prev);
             for (const [pIdx, list] of next.entries()) {
-              next.set(pIdx, list.filter((o) => !idSet.has(o.id)));
+              next.set(
+                pIdx,
+                list.filter((o) => !idSet.has(o.id))
+              );
             }
             return next;
           });
@@ -2775,7 +3007,12 @@ export default function EditorPage({
       const r = parseInt(clean.substring(0, 2), 16) || 0;
       const g = parseInt(clean.substring(2, 4), 16) || 0;
       const b = parseInt(clean.substring(4, 6), 16) || 0;
-      const bgPath = createPageBackground(currentMetric.width, currentMetric.height, { r, g, b, a: 255 });
+      const bgPath = createPageBackground(currentMetric.width, currentMetric.height, {
+        r,
+        g,
+        b,
+        a: 255
+      });
 
       const cmd = new SetPageBackgroundCommand(
         [activePageIdx],
@@ -2796,7 +3033,10 @@ export default function EditorPage({
             const next = new Map(prev);
             for (const pIdx of pIndices) {
               const list = next.get(pIdx) || [];
-              next.set(pIdx, list.filter((o) => !idSet.has(o.id)));
+              next.set(
+                pIdx,
+                list.filter((o) => !idSet.has(o.id))
+              );
             }
             return next;
           });
@@ -2875,7 +3115,10 @@ export default function EditorPage({
         };
         const deltas = alignObjects([pseudoObj], mode, pageTargetRect);
         if (deltas[0]) {
-          void handleCommitTextBlock(activeTextBlock.id, activeTextBlock.lines.map((l) => l.text));
+          void handleCommitTextBlock(
+            activeTextBlock.id,
+            activeTextBlock.lines.map((l) => l.text)
+          );
           handleResizeObjects(deltas[0].newBounds);
         }
         return;
@@ -2915,7 +3158,15 @@ export default function EditorPage({
         await editSession.execute(cmd);
       }
     },
-    [activePageIdx, activeTextBlock, currentMetric, currentObjects, editSession, handleCommitTextBlock, selectedIds]
+    [
+      activePageIdx,
+      activeTextBlock,
+      currentMetric,
+      currentObjects,
+      editSession,
+      handleCommitTextBlock,
+      selectedIds
+    ]
   );
 
   const handleDistribute = useCallback(
@@ -3036,29 +3287,26 @@ export default function EditorPage({
     [activePageIdx, editSession, objectLinks, targetLinkId]
   );
 
-  const handleRemoveLink = useCallback(
-    async () => {
-      if (!targetLinkId) return;
-      const prevLink = objectLinks.get(targetLinkId);
-      if (!prevLink) return;
+  const handleRemoveLink = useCallback(async () => {
+    if (!targetLinkId) return;
+    const prevLink = objectLinks.get(targetLinkId);
+    if (!prevLink) return;
 
-      const cmd = new RemoveObjectLinkCommand(
-        activePageIdx,
-        targetLinkId,
-        prevLink,
-        async (_pIdx, objId, lk) => {
-          setObjectLinks((prev) => {
-            const next = new Map(prev);
-            if (lk) next.set(objId, lk);
-            else next.delete(objId);
-            return next;
-          });
-        }
-      );
-      await editSession.execute(cmd);
-    },
-    [activePageIdx, editSession, objectLinks, targetLinkId]
-  );
+    const cmd = new RemoveObjectLinkCommand(
+      activePageIdx,
+      targetLinkId,
+      prevLink,
+      async (_pIdx, objId, lk) => {
+        setObjectLinks((prev) => {
+          const next = new Map(prev);
+          if (lk) next.set(objId, lk);
+          else next.delete(objId);
+          return next;
+        });
+      }
+    );
+    await editSession.execute(cmd);
+  }, [activePageIdx, editSession, objectLinks, targetLinkId]);
 
   // Phase 12: Annotation, Signature & Form Handlers
   const handleSelectStamp = useCallback(
@@ -3237,9 +3485,15 @@ export default function EditorPage({
   const handleUpdateStickyNoteContent = useCallback(
     async (id: string, newContent: string) => {
       const list = annotationsByPage.get(activePageIdx) || [];
-      const cmd = new UpdateAnnotationCommand(activePageIdx, id, { contents: newContent }, list, () => {
-        setAnnotationsByPage((prev) => new Map(prev).set(activePageIdx, [...list]));
-      });
+      const cmd = new UpdateAnnotationCommand(
+        activePageIdx,
+        id,
+        { contents: newContent },
+        list,
+        () => {
+          setAnnotationsByPage((prev) => new Map(prev).set(activePageIdx, [...list]));
+        }
+      );
       await editSession.execute(cmd);
     },
     [activePageIdx, annotationsByPage, editSession]
@@ -3252,7 +3506,9 @@ export default function EditorPage({
         setAnnotationsByPage((prev) => new Map(prev).set(pIdx, [...list]));
         setPageObjectsMap((prev) => {
           const next = new Map(prev);
-          const objs = (next.get(pIdx) || []).filter((o) => o.id !== annotId && !o.id.startsWith(annotId));
+          const objs = (next.get(pIdx) || []).filter(
+            (o) => o.id !== annotId && !o.id.startsWith(annotId)
+          );
           next.set(pIdx, objs);
           return next;
         });
@@ -3352,26 +3608,21 @@ export default function EditorPage({
   const handleCropPage = useCallback(
     (pageIndex: number, cropBox: Rect) => {
       const prevMetric = pageMetricsMap.get(pageIndex);
-      const cmd = new CropPageCommand(
-        pageIndex,
-        undefined,
-        cropBox,
-        (idx, box) => {
-          setPageMetricsMap((prev) => {
-            const next = new Map(prev);
-            const cur = next.get(idx);
-            if (cur) {
-              next.set(idx, {
-                ...cur,
-                width: box ? box.right - box.left : (prevMetric?.width ?? cur.width),
-                height: box ? box.top - box.bottom : (prevMetric?.height ?? cur.height)
-              });
-            }
-            return next;
-          });
-          setRenderTick((t) => t + 1);
-        }
-      );
+      const cmd = new CropPageCommand(pageIndex, undefined, cropBox, (idx, box) => {
+        setPageMetricsMap((prev) => {
+          const next = new Map(prev);
+          const cur = next.get(idx);
+          if (cur) {
+            next.set(idx, {
+              ...cur,
+              width: box ? box.right - box.left : (prevMetric?.width ?? cur.width),
+              height: box ? box.top - box.bottom : (prevMetric?.height ?? cur.height)
+            });
+          }
+          return next;
+        });
+        setRenderTick((t) => t + 1);
+      });
       void editSession.execute(cmd);
     },
     [editSession, pageMetricsMap]
@@ -3465,6 +3716,36 @@ export default function EditorPage({
         category: t('commands.categoryApp'),
         title: 'Version History...',
         onSelect: () => setIsVersionHistoryOpen(true)
+      },
+      {
+        id: 'password-security',
+        category: 'Security & Privacy',
+        title: 'Document Password & Permissions...',
+        onSelect: () => setIsPasswordSecurityOpen(true)
+      },
+      {
+        id: 'redaction',
+        category: 'Security & Privacy',
+        title: 'Apply True Redaction...',
+        onSelect: () => setIsRedactionOpen(true)
+      },
+      {
+        id: 'document-metadata',
+        category: 'Security & Privacy',
+        title: 'Document Metadata & Properties...',
+        onSelect: () => void handleOpenMetadata()
+      },
+      {
+        id: 'local-data-lock',
+        category: 'Security & Privacy',
+        title: 'Local Data Encryption Lock...',
+        onSelect: () => setIsLocalLockOpen(true)
+      },
+      {
+        id: 'clear-local-data',
+        category: 'Security & Privacy',
+        title: 'Clear All Local Data...',
+        onSelect: () => setIsClearDataOpen(true)
       },
       {
         id: 'print',
@@ -3655,6 +3936,11 @@ export default function EditorPage({
         onOpenCommandPalette={() => setCommandPaletteOpen(true)}
         onOpenShortcutsHelp={() => setShortcutsHelpOpen(true)}
         onOpenBatchOcr={() => setIsBatchOcrOpen(true)}
+        onOpenPasswordSecurity={() => setIsPasswordSecurityOpen(true)}
+        onOpenRedaction={() => setIsRedactionOpen(true)}
+        onOpenMetadata={() => void handleOpenMetadata()}
+        onOpenLocalDataLock={() => setIsLocalLockOpen(true)}
+        onOpenClearData={() => setIsClearDataOpen(true)}
         canUndo={canUndo}
         canRedo={canRedo}
         onUndo={handleUndo}
@@ -3769,7 +4055,11 @@ export default function EditorPage({
         onOpenCreateFormField={() => setIsCreateFormFieldDialogOpen(true)}
         onOpenAnnotationSummary={() => setIsAnnotationSummaryDialogOpen(true)}
         onToggleCommentsPanel={() => setIsCommentsPanelOpen((p) => !p)}
-        commentCount={(annotationsByPage.get(activePageIdx) || []).filter((a) => a.subType === 'Text' || a.contents).length}
+        commentCount={
+          (annotationsByPage.get(activePageIdx) || []).filter(
+            (a) => a.subType === 'Text' || a.contents
+          ).length
+        }
         onOpenPageOrganizer={() => setIsPageOrganizerOpen(true)}
         onToggleBookmarksPanel={() => setIsBookmarksPanelOpen((p) => !p)}
         onOpenInsertBlankPage={() => setIsInsertBlankPageOpen(true)}
@@ -3788,9 +4078,7 @@ export default function EditorPage({
 
         {/* Central Canvas Viewport */}
         <div style={{ flex: 1, height: '100%', overflow: 'hidden', position: 'relative' }}>
-          {xfaWarning && (
-            <XfaWarningBanner onDismiss={() => setXfaWarning(null)} />
-          )}
+          {xfaWarning && <XfaWarningBanner onDismiss={() => setXfaWarning(null)} />}
           {scannedDetection?.isScanned && !scannedBannerDismissed.has(activePageIdx) && (
             <ScannedPageBanner
               pageIndex={activePageIdx}
@@ -3935,6 +4223,7 @@ export default function EditorPage({
                         onEdit={() => setIsLinkDialogOpen(true)}
                         onRemove={handleRemoveLink}
                         onNavigatePage={(pIdx) => setCurrentPage(pIdx + 1)}
+                        onOpenLink={handleSafeNavigateLink}
                       />
                     )}
                     <AcroFormOverlay
@@ -4395,6 +4684,9 @@ export default function EditorPage({
         onDiscard={() => {
           setIsUnsavedChangesOpen(false);
           setDirty(false);
+          if (currentDocId) {
+            void wipeDocumentWorkingData(currentDocId);
+          }
           closeDoc();
         }}
         onCancel={() => setIsUnsavedChangesOpen(false)}
@@ -4405,6 +4697,46 @@ export default function EditorPage({
         docId={currentDocId}
         onClose={() => setIsVersionHistoryOpen(false)}
         onRestore={handleRestoreVersion}
+      />
+
+      <PasswordSecurityDialog
+        isOpen={isPasswordSecurityOpen}
+        onClose={() => setIsPasswordSecurityOpen(false)}
+        onApplyPassword={handleApplyPasswordSecurity}
+        onRemovePassword={handleRemovePasswordSecurity}
+      />
+
+      <RedactionDialog
+        isOpen={isRedactionOpen}
+        pageIndex={activePageIdx}
+        onClose={() => setIsRedactionOpen(false)}
+        onApplyRedaction={handleApplyRedaction}
+      />
+
+      <MetadataEditorDialog
+        isOpen={isMetadataOpen}
+        initialMetadata={currentDocMetadata}
+        onClose={() => setIsMetadataOpen(false)}
+        onSaveMetadata={handleSaveMetadata}
+        onStripMetadata={handleStripMetadata}
+      />
+
+      <LocalDataLockDialog isOpen={isLocalLockOpen} onClose={() => setIsLocalLockOpen(false)} />
+
+      <ClearDataConfirmDialog
+        isOpen={isClearDataOpen}
+        onClose={() => setIsClearDataOpen(false)}
+        onConfirmClear={handleClearAllData}
+      />
+
+      <ExternalLinkConfirmDialog
+        isOpen={isExternalLinkConfirmOpen}
+        targetUrl={pendingExternalUrl}
+        onClose={() => setIsExternalLinkConfirmOpen(false)}
+        onConfirmOpen={() => {
+          setIsExternalLinkConfirmOpen(false);
+          window.open(pendingExternalUrl, '_blank', 'noopener,noreferrer');
+        }}
       />
     </div>
   );

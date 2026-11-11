@@ -458,6 +458,10 @@ export class MockPdfEngine implements PdfEngine {
     const docState = this.getDoc(doc);
     if (opts?.stripSecurity) {
       docState.isEncrypted = false;
+      docState.password = undefined;
+    } else if (opts?.password) {
+      docState.isEncrypted = true;
+      docState.password = opts.password;
     }
 
     const versionStr = opts?.version ? (opts.version / 10).toFixed(1) : '1.7';

@@ -49,6 +49,20 @@ export function clearRecoveryMetadata(): void {
   }
 }
 
+export function clearRecoveryForDoc(docId: string): void {
+  const current = getRecoveryMetadata();
+  if (current && current.documentId === docId) {
+    clearRecoveryMetadata();
+  }
+}
+
+export function listRecoverableDocs(): Array<{ docId: string; timestamp: number }> {
+  const current = getRecoveryMetadata();
+  if (!current || !current.documentId) return [];
+  const ts = new Date(current.timestamp).getTime();
+  return [{ docId: current.documentId, timestamp: isNaN(ts) ? Date.now() : ts }];
+}
+
 let handlersInitialized = false;
 
 export function setupGlobalErrorHandlers(): void {

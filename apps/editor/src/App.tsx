@@ -15,6 +15,9 @@ const HomePage = lazy(() => import('./features/home/HomePage'));
 const EditorPage = lazy(() => import('./features/editor/EditorPage'));
 const PageOrganizerPage = lazy(() => import('./features/pages/PageOrganizerPage'));
 const SettingsPage = lazy(() => import('./features/settings/SettingsPage'));
+const PrivacyPolicyPage = lazy(() =>
+  import('./features/privacy/PrivacyPolicyPage').then((m) => ({ default: m.PrivacyPolicyPage }))
+);
 const StyleGuide = lazy(() =>
   import('./components/StyleGuide').then((m) => ({ default: m.StyleGuide }))
 );
@@ -109,6 +112,7 @@ export function App(): React.JSX.Element {
     { path: '/editor', label: t('nav.editor'), testId: 'nav-editor' },
     { path: '/pages', label: t('nav.pages'), testId: 'nav-pages' },
     { path: '/settings', label: t('nav.settings'), testId: 'nav-settings' },
+    { path: '/privacy', label: 'Privacy', testId: 'nav-privacy' },
     { path: '/styleguide', label: t('nav.styleGuide'), testId: 'nav-styleguide' }
   ];
 
@@ -213,6 +217,7 @@ export function App(): React.JSX.Element {
             )}
             {currentRoute === '/pages' && <PageOrganizerPage />}
             {currentRoute === '/settings' && <SettingsPage />}
+            {currentRoute === '/privacy' && <PrivacyPolicyPage onBack={() => navigate('/')} />}
             {currentRoute === '/styleguide' && <StyleGuide />}
           </Suspense>
         </main>

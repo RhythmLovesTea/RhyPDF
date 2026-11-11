@@ -92,6 +92,8 @@ export interface SaveOptions {
   version?: number;
   stripSecurity?: boolean;
   password?: string;
+  ownerPassword?: string;
+  permissions?: number;
   destination?: WritableStream<Uint8Array>;
 }
 

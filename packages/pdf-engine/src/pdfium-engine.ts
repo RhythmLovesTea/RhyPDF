@@ -1542,6 +1542,11 @@ export class PdfiumEngine implements PdfEngine {
 
     if (opts?.stripSecurity && typeof this.pdfium.EPDF_RemoveEncryption === 'function') {
       this.pdfium.EPDF_RemoveEncryption(doc.docPtr);
+    } else if (opts?.password && typeof this.pdfium.EPDF_SetEncryption === 'function') {
+      const userPassword = opts.password;
+      const ownerPassword = opts.ownerPassword || opts.password;
+      const permissions = opts.permissions !== undefined ? opts.permissions : -1;
+      this.pdfium.EPDF_SetEncryption(doc.docPtr, userPassword, ownerPassword, permissions);
     }
 
     const writer = this.pdfium.PDFiumExt_OpenFileWriter();

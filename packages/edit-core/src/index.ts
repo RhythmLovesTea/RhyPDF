@@ -25,3 +25,4 @@ export * from './signatures';
 export * from './forms';
 export * from './pages';
 export * from './export';
+export * from './security';

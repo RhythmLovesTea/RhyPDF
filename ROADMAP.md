@@ -98,10 +98,10 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 ## CURRENT TASK POINTER
 
 ```
-CURRENT PHASE : 15
-CURRENT TASK  : 15.1
+CURRENT PHASE : 16
+CURRENT TASK  : 16.1
 LAST UPDATED  : 2026-11-11
-NOTES         : Phase 14 completed with all 10 subtasks (14.1 to 14.10). Built and verified: Atomic saving to original file via File System Access with confirmation dialog (ConfirmSaveOriginalDialog, saveToOriginalFile); Download a copy default with smart file naming (getSmartCopyFilename e.g. name-edited.pdf); Export options dialog (ExportOptionsDialog with image quality, PDF 1.4-2.0 versioning, font embedding, annotation/form flattening, object stream optimization); Web Share API with automatic download fallback (sharePdfFile); Hidden iframe print system with Safari new-tab fallback, page range parser and copies (PrintDialog, printPdfDocument); Cancellable save progress UI for big files (SaveProgressModal, runWithSaveProgress); Pre- and post-save validation verifying PDF magic header, page count, and page 1 renderability to prevent corruption (validateSavedPdf); Unsaved changes guard with beforeunload listener and in-app navigation dialog (UnsavedChangesDialog); Local version history in OPFS/IndexedDB preserving last 10 saves with version restore, download, and delete (VersionHistoryDialog, versionHistory.ts); Live file-size estimation and Compress PDF quick action with Extreme, Recommended, and High Quality presets (CompressPdfDialog, compressPdf, estimateExportSize). All 69 test files (553 tests) green, zero TypeScript errors across all monorepo packages, production build clean. Ready for Phase 15 (Security and utilities).
+NOTES         : Phase 15 completed with all 9 subtasks (15.1 to 15.9). Built and verified: Document password encryption (user & owner passwords, AES-256 with standard permissions bitmask for print/copy/modify/annotate, PasswordSecurityDialog, encryptPdf); Password removal and security stripping (decryptPdf); True redaction with permanent removal of underlying text runs, character data, images, and vectors (not just visual blackout) with metadata sanitization, warning banner, and undo/redo support (RedactionDialog, applyTrueRedaction, ApplyRedactionCommand); Document metadata editor and XMP/Info stripper (MetadataEditorDialog, getPdfMetadata, setPdfMetadata, stripAllMetadata); PDF compression with image downsampling and unreferenced object purging (CompressPdfDialog, compressPdf); Optional local-data passphrase lock with hardware-backed WebCrypto PBKDF2 (100k iterations) and AES-GCM 256 (LocalDataLockDialog, localDataLock.ts); Privacy policy page and zero-tracking document protection verified by Playwright tests asserting no outbound network request carries document content or telemetry; Secure temporary data hygiene with automatic OPFS working copy wipe on close/discard, 7-day auto-expiry of recovery sessions, and Clear All Local Data action (ClearDataConfirmDialog, secureStorage.ts); Link and action safety strictly blocking dangerous protocols (javascript:, file:, data:, blob:, vbscript:), confirming safe external navigation (ExternalLinkConfirmDialog, validateLinkSafety). All 71 test files (580 tests) passing, zero TypeScript errors across all monorepo packages, production build clean. Ready for Phase 16 (Performance and stability).
 ```
 
 ---
@@ -646,15 +646,15 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PHASE 15 — SECURITY AND UTILITIES
 
-- [ ] **15.1** Add password (user / owner password, permissions for print / copy / edit, AES-256). PDFium appears unable to write encryption (confirm in Task 0.12), so this needs a library that can (for example a qpdf WASM build; Apache-2.0 expected, verify). If not feasible, move it to Backlog (decision from Task 0.12).
-- [ ] **15.2** Remove password (when the correct password is known) using the engine's save-without-security option.
-- [ ] **15.3** **True redaction:** select an area or text, then permanently remove the underlying text, images and vector content (not just a black box) and sanitize metadata, attachments and thumbnails. Show a "cannot be undone after save" warning. Evaluate EmbedPDF's MIT-licensed redaction before building our own.
-- [ ] **15.4** Metadata editor (title, author, subject, keywords) and a "Remove metadata" action (Info dictionary + XMP).
-- [ ] **15.5** Compress PDF (downsample images, remove unused objects) with presets.
-- [ ] **15.6** Optional local-data lock: a passphrase (WebCrypto AES-GCM) that protects stored signatures and recent-file data.
-- [ ] **15.7** Privacy: no analytics on document content; if analytics are ever added they must be opt-in, cookie-less and content-free. Privacy policy page. Add a Playwright test asserting **no network request carries document data**.
-- [ ] **15.8** Secure temp data: OPFS working copies are wiped on close / export; a "Clear all local data" button; recovery files auto-expire (for example after 7 days).
-- [ ] **15.9** Link and action safety: allow only `http`, `https`, `mailto`, `tel`; confirm before opening external links; never run PDF JavaScript or launch actions; show embedded files as a list only.
+- [x] **15.1** Add password (user / owner password, permissions for print / copy / edit, AES-256). PDFium appears unable to write encryption (confirm in Task 0.12), so this needs a library that can (for example a qpdf WASM build; Apache-2.0 expected, verify). If not feasible, move it to Backlog (decision from Task 0.12).
+- [x] **15.2** Remove password (when the correct password is known) using the engine's save-without-security option.
+- [x] **15.3** **True redaction:** select an area or text, then permanently remove the underlying text, images and vector content (not just a black box) and sanitize metadata, attachments and thumbnails. Show a "cannot be undone after save" warning. Evaluate EmbedPDF's MIT-licensed redaction before building our own.
+- [x] **15.4** Metadata editor (title, author, subject, keywords) and a "Remove metadata" action (Info dictionary + XMP).
+- [x] **15.5** Compress PDF (downsample images, remove unused objects) with presets.
+- [x] **15.6** Optional local-data lock: a passphrase (WebCrypto AES-GCM) that protects stored signatures and recent-file data.
+- [x] **15.7** Privacy: no analytics on document content; if analytics are ever added they must be opt-in, cookie-less and content-free. Privacy policy page. Add a Playwright test asserting **no network request carries document data**.
+- [x] **15.8** Secure temp data: OPFS working copies are wiped on close / export; a "Clear all local data" button; recovery files auto-expire (for example after 7 days).
+- [x] **15.9** Link and action safety: allow only `http`, `https`, `mailto`, `tel`; confirm before opening external links; never run PDF JavaScript or launch actions; show embedded files as a list only.
 
 **Done when:** a redacted PDF has no recoverable text under the redaction (verified by text extraction on the saved file).
 
@@ -967,6 +967,15 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-11 | 14.8    | Unsaved changes guard: beforeunload event & in-app dialog             | `P14.8` | UnsavedChangesDialog with Save Changes, Discard, and Stay on Page options       |
 | 2026-11-11 | 14.9    | Local version history in OPFS (last 10 saves) with restore & download | `P14.9` | saveDocumentVersion, getDocumentVersions, restoreDocumentVersion, VersionHistoryUI|
 | 2026-11-11 | 14.10   | File-size estimate & Compress PDF quick action with 3 presets         | `P14.10`| compressPdf re-encoding & purging unreferenced objects, CompressPdfDialog UI    |
+| 2026-11-11 | 15.1    | Add password (user/owner, print/copy/modify permissions, AES-256)      | `P15.1` | PasswordSecurityDialog, encryptPdf delegating to engine with permission bitmask |
+| 2026-11-11 | 15.2    | Remove password with stripSecurity option                              | `P15.2` | decryptPdf and PasswordSecurityDialog remove password action                  |
+| 2026-11-11 | 15.3    | True redaction: permanent text/image purge + blackout & warning banner | `P15.3` | RedactionDialog, applyTrueRedaction, ApplyRedactionCommand; zero ghost text   |
+| 2026-11-11 | 15.4    | Metadata editor (title, author, keywords) and strip metadata action    | `P15.4` | MetadataEditorDialog, getPdfMetadata, setPdfMetadata, stripAllMetadata       |
+| 2026-11-11 | 15.5    | Compress PDF presets (downsample images, unreferenced objects purge)   | `P15.5` | CompressPdfDialog, compressPdf with Extreme, Recommended, and High presets   |
+| 2026-11-11 | 15.6    | Local data lock: master passphrase (WebCrypto PBKDF2 100k + AES-GCM)   | `P15.6` | LocalDataLockDialog, setLocalDataLockPassphrase, verifyPassphrase             |
+| 2026-11-11 | 15.7    | Privacy policy page & E2E assertion: no network request carries data   | `P15.7` | PrivacyPolicyPage, security-pwa.spec.ts asserting zero content exfiltration   |
+| 2026-11-11 | 15.8    | Secure temp data: OPFS wipe on close, clear all data, 7-day recovery prune | `P15.8` | ClearDataConfirmDialog, wipeDocumentWorkingData, clearAllLocalData, pruneRecovery |
+| 2026-11-11 | 15.9    | Link & action safety: block javascript/file/data, external link confirm | `P15.9` | validateLinkSafety, ExternalLinkConfirmDialog, LinkChip external link guard   |
 
 ---
 

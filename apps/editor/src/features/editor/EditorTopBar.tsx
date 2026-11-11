@@ -18,7 +18,12 @@ import {
   Sliders,
   Minimize2,
   Save,
-  ChevronDown
+  ChevronDown,
+  Shield,
+  ShieldAlert,
+  KeyRound,
+  FileText,
+  Trash2
 } from 'lucide-react';
 import { useDocStore, EditorMode } from '../../stores/docStore';
 
@@ -36,6 +41,11 @@ export interface EditorTopBarProps {
   onOpenCommandPalette: () => void;
   onOpenShortcutsHelp: () => void;
   onOpenBatchOcr?: () => void;
+  onOpenPasswordSecurity?: () => void;
+  onOpenRedaction?: () => void;
+  onOpenMetadata?: () => void;
+  onOpenLocalDataLock?: () => void;
+  onOpenClearData?: () => void;
   canUndo?: boolean;
   canRedo?: boolean;
   onUndo?: () => void;
@@ -56,6 +66,11 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
   onOpenCommandPalette,
   onOpenShortcutsHelp,
   onOpenBatchOcr,
+  onOpenPasswordSecurity,
+  onOpenRedaction,
+  onOpenMetadata,
+  onOpenLocalDataLock,
+  onOpenClearData,
   canUndo = false,
   canRedo = false,
   onUndo,
@@ -350,6 +365,17 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
             <Share2 size={16} />
           </IconButton>
         )}
+        {onOpenPasswordSecurity && (
+          <IconButton
+            data-testid="btn-topbar-security"
+            aria-label="Security & Protection"
+            size="sm"
+            variant="ghost"
+            onClick={onOpenPasswordSecurity}
+          >
+            <Shield size={16} />
+          </IconButton>
+        )}
 
         {/* Primary Save / Download & Actions Dropdown Menu */}
         <div ref={menuRef} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -583,6 +609,136 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
                 >
                   <Share2 size={15} />
                   <span>Share Document</span>
+                </button>
+              )}
+
+              {onOpenPasswordSecurity && (
+                <button
+                  data-testid="menu-item-password-security"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenPasswordSecurity();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    color: 'inherit'
+                  }}
+                >
+                  <Shield size={15} />
+                  <span>Protect with Password...</span>
+                </button>
+              )}
+
+              {onOpenRedaction && (
+                <button
+                  data-testid="menu-item-redaction"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenRedaction();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    color: 'inherit'
+                  }}
+                >
+                  <ShieldAlert size={15} />
+                  <span>True Redaction...</span>
+                </button>
+              )}
+
+              {onOpenMetadata && (
+                <button
+                  data-testid="menu-item-metadata"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenMetadata();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    color: 'inherit'
+                  }}
+                >
+                  <FileText size={15} />
+                  <span>Edit Metadata...</span>
+                </button>
+              )}
+
+              {onOpenLocalDataLock && (
+                <button
+                  data-testid="menu-item-data-lock"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenLocalDataLock();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    color: 'inherit'
+                  }}
+                >
+                  <KeyRound size={15} />
+                  <span>Local Data Lock...</span>
+                </button>
+              )}
+
+              {onOpenClearData && (
+                <button
+                  data-testid="menu-item-clear-data"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenClearData();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    color: 'var(--bg-destructive, #ef4444)'
+                  }}
+                >
+                  <Trash2 size={15} />
+                  <span>Clear All Local Data...</span>
                 </button>
               )}
             </div>
