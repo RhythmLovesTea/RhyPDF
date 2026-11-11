@@ -98,10 +98,10 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 ## CURRENT TASK POINTER
 
 ```
-CURRENT PHASE : 11
-CURRENT TASK  : 11.1
+CURRENT PHASE : 12
+CURRENT TASK  : 12.1
 LAST UPDATED  : 2026-11-11
-NOTES         : Phase 10 completed with all 15 subtasks (10.1 to 10.15). Built and verified: Scanned page detector (full-page image and text character ratio thresholding); Tesseract.js v7 self-hosted adapter with progress, cancellation, and PDF coordinate normalization; PaddleOCR WebGPU/WASM auto-select adapter; Preprocessing pipeline (DPI scaling, median filter denoising, contrast stretching, projection-profile deskewing, Otsu binarization); IndexedDB / memory OCR cache; Typography estimation and block conversion (font size, bold, italic, line baselines); Two output modes (Mode A: invisible text layer with renderMode: 'invisible'; Mode B: fully editable text with local background analysis and inpainting erasure patch); ScannedPageBanner UI component; OcrProgressModal with live percentage and abort; OcrReviewDialog with per-block confidence and handwriting warning notice; Language selector supporting 12 language packs with auto-detection heuristic; Region OCR cropping and bounding box offset mapping; Batch OCR processor across page ranges with quick "OCR & Download" action; Edit Text mode OCR integration; Handwriting detection heuristic flagging low confidence/erratic height variance; Accuracy evaluator computing Levenshtein edit distance, CER, WER, and validating >=90% accuracy quality gate (95.2%). All 61 test files (405 tests) green, zero typecheck/lint errors across monorepo packages, production build verified. Ready for Phase 11 (Word-like content tools).
+NOTES         : Phase 11 completed with all 14 subtasks (11.1 to 11.14). Built and verified: Shapes tool (rectangle, rounded rectangle, ellipse, line, arrow, triangle, star with fill, stroke, width, dash, opacity, rotation); Free-hand drawing canvas overlay (pen, marker, eraser with Pointer Events, Catmull-Rom smoothing, raw points hit-testing); Whiteout cover tool (clearly labeled as visual cover, not permanent redaction); Hyperlinks system (add/edit/remove, strict URI validation blocking javascript:/data:/file:, clickable link chips); Bullet and numbered lists in text boxes (indent/outdent formatting); Simple tables (N×M table generation, cell editing, dynamic row/col add and remove); Header/Footer generator (tokens [Page], [TotalPages], [Date], page range filtering, first-page-different); Bates numbering generator (prefix, suffix, start index, digit padding); Watermark generator (text/image presets, opacity, rotation angle, 3x3 tiling); Page background color command (zIndex: -100); Format painter (style copy/apply across text blocks); Ruler and SVG grid overlay with snap toggle and object alignment/distribution tools; Special items (date formatting, categorized symbol catalog, client-side vector QR code generator). All 63 test files (448 tests) green, zero TypeScript errors across monorepo packages, production build clean. Ready for Phase 12 (Annotations, signatures, forms).
 ```
 
 ---
@@ -571,20 +571,20 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PHASE 11 — WORD-LIKE CONTENT TOOLS
 
-- [ ] **11.1** Shapes: rectangle, rounded rectangle, ellipse, line, arrow, triangle, star; fill, stroke color / width / dash, opacity; all resizable and rotatable.
-- [ ] **11.2** Free-hand drawing (pen, marker, eraser) with Pointer Events (pressure / stylus), smoothing, color and size presets; stored as vector paths.
-- [ ] **11.3** Whiteout / cover tool (filled rectangle), clearly labelled "cover" and not a real delete.
-- [ ] **11.4** Hyperlinks: add / edit / remove on text or shapes (URL, email, phone, go-to-page); validate schemes.
-- [ ] **11.5** Detect and edit existing links; show a link chip on click.
-- [ ] **11.6** Bullet and numbered lists inside text boxes (indent / outdent) as visual formatting.
-- [ ] **11.7** Simple tables: insert an N×M table (vector lines + text cells); edit cells; add / remove rows and columns. (Existing tables are edited as normal text blocks.)
-- [ ] **11.8** Header / footer tool: text, "Page X of Y", date; all or selected pages; first-page-different option.
-- [ ] **11.9** Page numbers and Bates numbering: position, format, start number.
-- [ ] **11.10** Watermark: text or image, opacity, rotation, tile / center, page range.
-- [ ] **11.11** Page background color.
-- [ ] **11.12** Format painter (copy style from one block, apply to another).
-- [ ] **11.13** Ruler / grid toggle and alignment tools (align left / center / right / top / middle / bottom, distribute evenly).
-- [ ] **11.14** Special items: current date, symbol picker, QR code generator (optional).
+- [x] **11.1** Shapes: rectangle, rounded rectangle, ellipse, line, arrow, triangle, star; fill, stroke color / width / dash, opacity; all resizable and rotatable.
+- [x] **11.2** Free-hand drawing (pen, marker, eraser) with Pointer Events (pressure / stylus), smoothing, color and size presets; stored as vector paths.
+- [x] **11.3** Whiteout / cover tool (filled rectangle), clearly labelled "cover" and not a real delete.
+- [x] **11.4** Hyperlinks: add / edit / remove on text or shapes (URL, email, phone, go-to-page); validate schemes.
+- [x] **11.5** Detect and edit existing links; show a link chip on click.
+- [x] **11.6** Bullet and numbered lists inside text boxes (indent / outdent) as visual formatting.
+- [x] **11.7** Simple tables: insert an N×M table (vector lines + text cells); edit cells; add / remove rows and columns. (Existing tables are edited as normal text blocks.)
+- [x] **11.8** Header / footer tool: text, "Page X of Y", date; all or selected pages; first-page-different option.
+- [x] **11.9** Page numbers and Bates numbering: position, format, start number.
+- [x] **11.10** Watermark: text or image, opacity, rotation, tile / center, page range.
+- [x] **11.11** Page background color.
+- [x] **11.12** Format painter (copy style from one block, apply to another).
+- [x] **11.13** Ruler / grid toggle and alignment tools (align left / center / right / top / middle / bottom, distribute evenly).
+- [x] **11.14** Special items: current date, symbol picker, QR code generator (optional).
 
 **Done when:** a user can build a one-page flyer from a blank PDF using text, images, shapes and a table, and it looks identical in external viewers.
 
@@ -920,6 +920,20 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-11 | 10.13   | Hook OCR into Edit Text mode for raster and outlined text             | `P10.13`| onOcrDetectRequested wired to handleStartPageOcr in EditorPage.tsx                                              |
 | 2026-11-11 | 10.14   | Handwriting detection heuristic and clear warning notice              | `P10.14`| checkIsHandwriting detecting low confidence and erratic vertical variance with clear UI warning                 |
 | 2026-11-11 | 10.15   | Accuracy evaluator (CER, WER, Levenshtein) & >=90% regression tests   | `P10.15`| evaluateOcrAccuracy enforcing >=90% accuracy quality gate (95.2% on clean scan), 21 unit tests                  |
+| 2026-11-11 | 11.1    | Vector shapes generator (rect, rounded rect, ellipse, line, arrow...) | `P11.1` | createShapeObject with KAPPA bezier curves, star geometry, InsertShapeCommand, UpdateShapeStyleCommand           |
+| 2026-11-11 | 11.2    | Free-hand drawing with pen, marker, eraser & Catmull-Rom smoothing    | `P11.2` | DrawingCanvasOverlay PointerEvents, Catmull-Rom to cubic Bezier, strokeIntersectsPoint erasing                   |
+| 2026-11-11 | 11.3    | Whiteout cover tool with visual-only non-destructive disclaimer       | `P11.3` | createWhiteoutCover, WHITEOUT_DISCLAIMER notification, non-destructive editing overlay                           |
+| 2026-11-11 | 11.4    | Hyperlinks on text & shapes with security scheme whitelist            | `P11.4` | validateLinkTarget blocking javascript:/data:/file:, SetObjectLinkCommand, RemoveObjectLinkCommand               |
+| 2026-11-11 | 11.5    | Existing link detection and interactive LinkChip UI                   | `P11.5` | findLinksInText regex scanner, LinkChip component with clickable external link launcher                          |
+| 2026-11-11 | 11.6    | Bullet and numbered lists formatting inside text boxes                | `P11.6` | toggleBulletList, toggleNumberedList, indentList, outdentList visual formatting helpers                          |
+| 2026-11-11 | 11.7    | Simple N×M tables: vector grid + editable text cells                  | `P11.7` | createTable, addTableRow, removeTableRow, addTableColumn, removeTableColumn, InsertTableDialog UI                 |
+| 2026-11-11 | 11.8    | Header and footer tool with dynamic tokens & first-page-different     | `P11.8` | generateHeaderFooterBlocks with [Page], [TotalPages], [Date], resolvePageIndices range parser, HeaderFooterDialog|
+| 2026-11-11 | 11.9    | Page numbers and Bates numbering with zero-padding                    | `P11.9` | formatBatesNumber, generateBatesBlock, ApplyBatesNumberingCommand, Bates UI controls                             |
+| 2026-11-11 | 11.10   | Text and image watermark generator with 3x3 tiling & opacity          | `P11.10`| generateWatermarkForPage, 3x3 grid tiling, rotation angle, ApplyWatermarkCommand, WatermarkDialog UI             |
+| 2026-11-11 | 11.11   | Page background color at zIndex -100                                  | `P11.11`| createPageBackground, SetPageBackgroundCommand with hex color picker in ContextualToolbar                       |
+| 2026-11-11 | 11.12   | Format painter for copying and applying typography styles             | `P11.12`| extractTextStyle, applyTextStyleToBlock with visual active state toggle in toolbar                               |
+| 2026-11-11 | 11.13   | Ruler, grid overlay & multi-object alignment / distribution           | `P11.13`| RulerGridOverlay, alignObjects (6 axes), distributeObjects (horiz/vert), AlignObjectsCommand                     |
+| 2026-11-11 | 11.14   | Special items: date formatter, symbol picker, vector QR code gen      | `P11.14`| formatCurrentDate, 6 symbol categories, offline ISO 18004 QR code matrix generator, SpecialItemsPopover UI      |
 
 ---
 

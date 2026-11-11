@@ -27,14 +27,26 @@ import {
   RefreshCw,
   Plus,
   BoxSelect,
-  Search
+  Search,
+  List,
+  ListOrdered,
+  Indent,
+  Outdent,
+  Paintbrush,
+  Link as LinkIcon,
+  Table as TableIcon,
+  Grid as GridIcon,
+  Ruler,
+  FileText
 } from 'lucide-react';
 import { useDocStore } from '../../stores/docStore';
-import type { CropPreset } from '@rhypdf/edit-core';
+import type { CropPreset, ShapeObject, DrawingTool } from '@rhypdf/edit-core';
+import type { PathObject } from '@rhypdf/pdf-model';
 import { FontPicker } from './FontPicker';
 import { FontSizeControl } from './FontSizeControl';
 import { ColorPickerPopover } from './ColorPickerPopover';
 import { SpacingPopover } from './SpacingPopover';
+import { ShapesPopover, SpecialItemsPopover } from '../tools';
 
 export interface ContextualToolbarProps {
   onRotateCw?: () => void;
@@ -95,6 +107,34 @@ export interface ContextualToolbarProps {
   onMatchOriginalFont?: () => void;
   onDeleteText?: () => void;
   hasSelectedTextBlock?: boolean;
+  // Phase 11 Props
+  onToggleBulletList?: () => void;
+  onToggleNumberedList?: () => void;
+  onIndentList?: () => void;
+  onOutdentList?: () => void;
+  isFormatPainterActive?: boolean;
+  onToggleFormatPainter?: () => void;
+  onAlign?: (mode: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => void;
+  onDistribute?: (axis: 'horizontal' | 'vertical') => void;
+  onInsertShape?: (shape: ShapeObject) => void;
+  onOpenInsertTable?: () => void;
+  onOpenHeaderFooter?: () => void;
+  onOpenWatermark?: () => void;
+  onPageBgColorChange?: (colorHex: string) => void;
+  onInsertSpecialText?: (text: string) => void;
+  onInsertSpecialPath?: (path: PathObject) => void;
+  onOpenLinkDialog?: () => void;
+  hasLink?: boolean;
+  isRulerActive?: boolean;
+  onToggleRuler?: () => void;
+  isGridActive?: boolean;
+  onToggleGrid?: () => void;
+  annotateTool?: DrawingTool;
+  onAnnotateToolChange?: (tool: DrawingTool) => void;
+  annotateColor?: string;
+  onAnnotateColorChange?: (color: string) => void;
+  annotateStrokeWidth?: number;
+  onAnnotateStrokeWidthChange?: (width: number) => void;
 }
 
 export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
@@ -148,7 +188,34 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
   selectedIsSubscript,
   onToggleSubscript,
   onDeleteText,
-  hasSelectedTextBlock = false
+  hasSelectedTextBlock = false,
+  onToggleBulletList,
+  onToggleNumberedList,
+  onIndentList,
+  onOutdentList,
+  isFormatPainterActive = false,
+  onToggleFormatPainter,
+  onAlign,
+  onDistribute,
+  onInsertShape,
+  onOpenInsertTable,
+  onOpenHeaderFooter,
+  onOpenWatermark,
+  onPageBgColorChange,
+  onInsertSpecialText,
+  onInsertSpecialPath,
+  onOpenLinkDialog,
+  hasLink = false,
+  isRulerActive = false,
+  onToggleRuler,
+  isGridActive = false,
+  onToggleGrid,
+  annotateTool,
+  onAnnotateToolChange,
+  annotateColor,
+  onAnnotateColorChange,
+  annotateStrokeWidth,
+  onAnnotateStrokeWidthChange
 }) => {
   const { t } = useTranslation();
   const { activeMode } = useDocStore();
@@ -172,10 +239,14 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
   const align = selectedAlignment ?? internalAlign;
   const textColor = selectedTextColor ?? internalTextColor;
 
-  // Annotation state
-  const [annotateTool, setAnnotateTool] = useState<'pen' | 'highlighter' | 'eraser'>('pen');
-  const [strokeWidth, setStrokeWidth] = useState(2);
-  const [drawColor, setDrawColor] = useState('#ef4444');
+  // Annotation internal fallback state
+  const [internalAnnotateTool, setInternalAnnotateTool] = useState<'pen' | 'highlighter' | 'eraser'>('pen');
+  const [internalStrokeWidth, setInternalStrokeWidth] = useState(2);
+  const [internalDrawColor, setInternalDrawColor] = useState('#ef4444');
+
+  const currentAnnotateTool = annotateTool ?? internalAnnotateTool;
+  const currentDrawColor = annotateColor ?? internalDrawColor;
+  const currentStrokeWidth = annotateStrokeWidth ?? internalStrokeWidth;
 
   // Image state
   const [imageOpacity, setImageOpacity] = useState(100);
@@ -659,6 +730,88 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
             <span>Find & Replace</span>
           </button>
 
+          {/* Phase 11 Task 11.12: Format Painter */}
+          <button
+            data-testid="btn-format-painter"
+            onClick={onToggleFormatPainter}
+            title="Format Painter (Copy style from active block, click target to apply)"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '4px 8px',
+              borderRadius: 'var(--radius-sm)',
+              border: isFormatPainterActive ? '1px solid var(--bg-primary)' : '1px solid var(--bg-border)',
+              backgroundColor: isFormatPainterActive ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-secondary)',
+              color: isFormatPainterActive ? 'var(--bg-primary)' : 'inherit',
+              cursor: 'pointer'
+            }}
+          >
+            <Paintbrush size={14} />
+          </button>
+
+          {/* Phase 11 Task 11.6: Lists & Indent/Outdent */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <button
+              data-testid="btn-bullet-list"
+              onClick={onToggleBulletList}
+              title="Bullet List"
+              style={{ padding: '4px 6px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--bg-border)', background: 'var(--bg-secondary)', cursor: 'pointer' }}
+            >
+              <List size={14} />
+            </button>
+            <button
+              data-testid="btn-numbered-list"
+              onClick={onToggleNumberedList}
+              title="Numbered List"
+              style={{ padding: '4px 6px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--bg-border)', background: 'var(--bg-secondary)', cursor: 'pointer' }}
+            >
+              <ListOrdered size={14} />
+            </button>
+            <button
+              data-testid="btn-indent-list"
+              onClick={onIndentList}
+              title="Indent"
+              style={{ padding: '4px 6px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--bg-border)', background: 'var(--bg-secondary)', cursor: 'pointer' }}
+            >
+              <Indent size={14} />
+            </button>
+            <button
+              data-testid="btn-outdent-list"
+              onClick={onOutdentList}
+              title="Outdent"
+              style={{ padding: '4px 6px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--bg-border)', background: 'var(--bg-secondary)', cursor: 'pointer' }}
+            >
+              <Outdent size={14} />
+            </button>
+          </div>
+
+          {/* Phase 11 Tasks 11.4 & 11.5: Hyperlink */}
+          <button
+            data-testid="btn-text-link"
+            onClick={onOpenLinkDialog}
+            title="Add / Edit Hyperlink"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '4px 8px',
+              borderRadius: 'var(--radius-sm)',
+              border: hasLink ? '1px solid var(--bg-primary)' : '1px solid var(--bg-border)',
+              backgroundColor: hasLink ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-secondary)',
+              color: hasLink ? 'var(--bg-primary)' : 'inherit',
+              cursor: 'pointer'
+            }}
+          >
+            <LinkIcon size={14} />
+          </button>
+
+          {/* Phase 11 Task 11.14: Special Items Popover */}
+          {onInsertSpecialText && onInsertSpecialPath && (
+            <SpecialItemsPopover
+              onInsertText={onInsertSpecialText}
+              onInsertPath={onInsertSpecialPath}
+            />
+          )}
+
           {/* Task 7.16: Delete text block */}
           {hasSelectedTextBlock && (
             <button
@@ -989,7 +1142,10 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
         >
           <button
             data-testid="btn-annotate-pen"
-            onClick={() => setAnnotateTool('pen')}
+            onClick={() => {
+              setInternalAnnotateTool('pen');
+              onAnnotateToolChange?.('pen');
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -997,8 +1153,8 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               padding: '6px 12px',
               borderRadius: 'var(--radius-sm)',
               border: 'none',
-              backgroundColor: annotateTool === 'pen' ? 'var(--bg-primary)' : 'var(--bg-secondary)',
-              color: annotateTool === 'pen' ? '#ffffff' : 'inherit',
+              backgroundColor: currentAnnotateTool === 'pen' ? 'var(--bg-primary)' : 'var(--bg-secondary)',
+              color: currentAnnotateTool === 'pen' ? '#ffffff' : 'inherit',
               cursor: 'pointer',
               fontSize: 13
             }}
@@ -1009,7 +1165,10 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
 
           <button
             data-testid="btn-annotate-highlighter"
-            onClick={() => setAnnotateTool('highlighter')}
+            onClick={() => {
+              setInternalAnnotateTool('highlighter');
+              onAnnotateToolChange?.('marker');
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -1018,8 +1177,8 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               borderRadius: 'var(--radius-sm)',
               border: 'none',
               backgroundColor:
-                annotateTool === 'highlighter' ? 'var(--bg-primary)' : 'var(--bg-secondary)',
-              color: annotateTool === 'highlighter' ? '#ffffff' : 'inherit',
+                (currentAnnotateTool === 'marker' || currentAnnotateTool === 'highlighter') ? 'var(--bg-primary)' : 'var(--bg-secondary)',
+              color: (currentAnnotateTool === 'marker' || currentAnnotateTool === 'highlighter') ? '#ffffff' : 'inherit',
               cursor: 'pointer',
               fontSize: 13
             }}
@@ -1030,7 +1189,10 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
 
           <button
             data-testid="btn-annotate-eraser"
-            onClick={() => setAnnotateTool('eraser')}
+            onClick={() => {
+              setInternalAnnotateTool('eraser');
+              onAnnotateToolChange?.('eraser');
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -1039,8 +1201,8 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               borderRadius: 'var(--radius-sm)',
               border: 'none',
               backgroundColor:
-                annotateTool === 'eraser' ? 'var(--bg-primary)' : 'var(--bg-secondary)',
-              color: annotateTool === 'eraser' ? '#ffffff' : 'inherit',
+                currentAnnotateTool === 'eraser' ? 'var(--bg-primary)' : 'var(--bg-secondary)',
+              color: currentAnnotateTool === 'eraser' ? '#ffffff' : 'inherit',
               cursor: 'pointer',
               fontSize: 13
             }}
@@ -1056,8 +1218,11 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
           <input
             data-testid="input-draw-color"
             type="color"
-            value={drawColor}
-            onChange={(e) => setDrawColor(e.target.value)}
+            value={currentDrawColor}
+            onChange={(e) => {
+              setInternalDrawColor(e.target.value);
+              onAnnotateColorChange?.(e.target.value);
+            }}
             style={{
               width: 28,
               height: 28,
@@ -1070,8 +1235,12 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
 
           <select
             data-testid="select-stroke-width"
-            value={strokeWidth}
-            onChange={(e) => setStrokeWidth(parseInt(e.target.value))}
+            value={currentStrokeWidth}
+            onChange={(e) => {
+              const val = parseInt(e.target.value);
+              setInternalStrokeWidth(val);
+              onAnnotateStrokeWidthChange?.(val);
+            }}
             style={{
               padding: '4px 8px',
               borderRadius: 'var(--radius-sm)',
@@ -1089,7 +1258,7 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
         </div>
       )}
 
-      {/* VIEW CONTROLS */}
+      {/* VIEW CONTROLS (Phase 11 Word-like Tools) */}
       {activeMode === 'view' && (
         <div
           data-testid="contextual-view-tools"
@@ -1097,11 +1266,206 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            fontSize: 13,
-            color: 'var(--bg-muted-foreground)'
+            fontSize: 13
           }}
         >
-          <span>{t('editor.viewer.renderSurface')}</span>
+          {/* Shapes & Whiteout (Tasks 11.1 & 11.3) */}
+          {onInsertShape && <ShapesPopover onInsertShape={onInsertShape} />}
+
+          {/* Insert Table (Task 11.7) */}
+          {onOpenInsertTable && (
+            <button
+              data-testid="btn-open-insert-table"
+              onClick={onOpenInsertTable}
+              title="Insert Table"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '6px 10px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-card)',
+                color: 'var(--bg-foreground)',
+                cursor: 'pointer',
+                fontSize: 13
+              }}
+            >
+              <TableIcon size={16} />
+              <span>Table</span>
+            </button>
+          )}
+
+          {/* Header & Footer / Bates (Tasks 11.8 & 11.9) */}
+          {onOpenHeaderFooter && (
+            <button
+              data-testid="btn-open-header-footer"
+              onClick={onOpenHeaderFooter}
+              title="Header, Footer & Bates Numbering"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '6px 10px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-card)',
+                color: 'var(--bg-foreground)',
+                cursor: 'pointer',
+                fontSize: 13
+              }}
+            >
+              <FileText size={16} />
+              <span>Header / Footer</span>
+            </button>
+          )}
+
+          {/* Watermark (Task 11.10) */}
+          {onOpenWatermark && (
+            <button
+              data-testid="btn-open-watermark"
+              onClick={onOpenWatermark}
+              title="Add Watermark"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '6px 10px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-card)',
+                color: 'var(--bg-foreground)',
+                cursor: 'pointer',
+                fontSize: 13
+              }}
+            >
+              <span>Watermark</span>
+            </button>
+          )}
+
+          {/* Page Background Color (Task 11.11) */}
+          {onPageBgColorChange && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 12, color: 'var(--bg-muted-foreground)' }}>Page BG:</span>
+              <input
+                type="color"
+                data-testid="input-page-bg-color"
+                defaultValue="#ffffff"
+                onChange={(e) => onPageBgColorChange(e.target.value)}
+                title="Page Background Color"
+                style={{
+                  width: 24,
+                  height: 24,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: 'transparent'
+                }}
+              />
+            </div>
+          )}
+
+          <div style={{ width: 1, height: 20, backgroundColor: 'var(--bg-border)', margin: '0 4px' }} />
+
+          {/* Ruler & Grid Toggles (Task 11.13) */}
+          {onToggleRuler && (
+            <button
+              data-testid="btn-toggle-ruler"
+              onClick={onToggleRuler}
+              title="Toggle Ruler"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '6px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: isRulerActive ? '1px solid var(--bg-primary)' : '1px solid var(--bg-border)',
+                backgroundColor: isRulerActive ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-card)',
+                color: isRulerActive ? 'var(--bg-primary)' : 'inherit',
+                cursor: 'pointer'
+              }}
+            >
+              <Ruler size={16} />
+            </button>
+          )}
+
+          {onToggleGrid && (
+            <button
+              data-testid="btn-toggle-grid"
+              onClick={onToggleGrid}
+              title="Toggle Grid"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '6px 8px',
+                borderRadius: 'var(--radius-sm)',
+                border: isGridActive ? '1px solid var(--bg-primary)' : '1px solid var(--bg-border)',
+                backgroundColor: isGridActive ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-card)',
+                color: isGridActive ? 'var(--bg-primary)' : 'inherit',
+                cursor: 'pointer'
+              }}
+            >
+              <GridIcon size={16} />
+            </button>
+          )}
+
+          {/* Alignment Tools (Task 11.13) */}
+          {onAlign && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <button
+                data-testid="btn-align-left"
+                onClick={() => onAlign('left')}
+                title="Align Left"
+                style={{ padding: '6px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+              >
+                <AlignLeft size={16} />
+              </button>
+              <button
+                data-testid="btn-align-center"
+                onClick={() => onAlign('center')}
+                title="Align Center"
+                style={{ padding: '6px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+              >
+                <AlignCenter size={16} />
+              </button>
+              <button
+                data-testid="btn-align-right"
+                onClick={() => onAlign('right')}
+                title="Align Right"
+                style={{ padding: '6px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+              >
+                <AlignRight size={16} />
+              </button>
+            </div>
+          )}
+
+          {/* Distribution Tools (Task 11.13) */}
+          {onDistribute && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <button
+                data-testid="btn-distribute-h"
+                onClick={() => onDistribute('horizontal')}
+                title="Distribute Horizontally"
+                style={{ padding: '4px 6px', fontSize: 11, borderRadius: 4, border: '1px solid var(--bg-border)', background: 'transparent', cursor: 'pointer' }}
+              >
+                Dist-H
+              </button>
+              <button
+                data-testid="btn-distribute-v"
+                onClick={() => onDistribute('vertical')}
+                title="Distribute Vertically"
+                style={{ padding: '4px 6px', fontSize: 11, borderRadius: 4, border: '1px solid var(--bg-border)', background: 'transparent', cursor: 'pointer' }}
+              >
+                Dist-V
+              </button>
+            </div>
+          )}
+
+          {/* Special Items Popover (Task 11.14) */}
+          {onInsertSpecialText && onInsertSpecialPath && (
+            <SpecialItemsPopover
+              onInsertText={onInsertSpecialText}
+              onInsertPath={onInsertSpecialPath}
+            />
+          )}
         </div>
       )}
 

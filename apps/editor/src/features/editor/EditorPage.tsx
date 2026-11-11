@@ -36,10 +36,37 @@ import {
   SetTextSpacingCommand,
   type TextBlock,
   type FindReplaceMatch,
-  type CommitTextBlockOptions
+  type CommitTextBlockOptions,
+  type ShapeObject,
+  InsertShapeCommand,
+  type DrawingStrokeObject,
+  type DrawingTool,
+  AddDrawingStrokeCommand,
+  EraseDrawingStrokeCommand,
+  type GeneratedTable,
+  InsertTableCommand,
+  ApplyHeaderFooterCommand,
+  ApplyWatermarkCommand,
+  SetPageBackgroundCommand,
+  type WatermarkObject,
+  type ObjectLink,
+  SetObjectLinkCommand,
+  RemoveObjectLinkCommand,
+  toggleBulletList,
+  toggleNumberedList,
+  indentList,
+  outdentList,
+  extractTextStyle,
+  applyTextStyleToBlock,
+  type TextStyleAttributes,
+  alignObjects,
+  distributeObjects,
+  AlignObjectsCommand,
+  type AlignmentMode,
+  createPageBackground
 } from '@rhypdf/edit-core';
 import { FontCatalog } from '@rhypdf/fonts';
-import type { PageObject, ImageObject, Rect, TextRun } from '@rhypdf/pdf-model';
+import type { PageObject, ImageObject, Rect, TextRun, PathObject } from '@rhypdf/pdf-model';
 import { useDocStore } from '../../stores/docStore';
 import { useUIStore } from '../../stores/uiStore';
 import { PdfViewer, PageMetric } from '../viewer/PdfViewer';
@@ -57,6 +84,15 @@ import { EditorStatusBar } from './EditorStatusBar';
 import { SelectionOverlay } from './SelectionOverlay';
 import { TextEditorOverlay } from './TextEditorOverlay';
 import { FindReplaceBar } from './FindReplaceBar';
+import { DrawingCanvasOverlay } from './DrawingCanvasOverlay';
+import { RulerGridOverlay } from './RulerGridOverlay';
+import {
+  InsertTableDialog,
+  HeaderFooterDialog,
+  WatermarkDialog,
+  LinkDialog,
+  LinkChip
+} from '../tools';
 import { CommandPalette, CommandItem } from '../../components/CommandPalette';
 import { ShortcutsHelpDialog } from '../../components/ShortcutsHelpDialog';
 import { AutosaveManager } from '../../lib/autosave';
@@ -151,6 +187,21 @@ export default function EditorPage({
   const [isOcrReviewOpen, setIsOcrReviewOpen] = useState(false);
   const [isBatchOcrOpen, setIsBatchOcrOpen] = useState(false);
   const [scannedBannerDismissed, setScannedBannerDismissed] = useState<Set<number>>(new Set());
+
+  // Phase 11 Word-like Tools state
+  const [isTableDialogOpen, setIsTableDialogOpen] = useState(false);
+  const [isHeaderFooterDialogOpen, setIsHeaderFooterDialogOpen] = useState(false);
+  const [isWatermarkDialogOpen, setIsWatermarkDialogOpen] = useState(false);
+  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+  const [objectLinks, setObjectLinks] = useState<Map<string, ObjectLink>>(new Map());
+  const [isFormatPainterActive, setIsFormatPainterActive] = useState(false);
+  const [formatPainterStyle, setFormatPainterStyle] = useState<TextStyleAttributes | null>(null);
+  const [isRulerActive, setIsRulerActive] = useState(false);
+  const [isGridActive, setIsGridActive] = useState(false);
+  const [drawingStrokesMap, setDrawingStrokesMap] = useState<Map<number, DrawingStrokeObject[]>>(new Map());
+  const [annotateTool, setAnnotateTool] = useState<DrawingTool>('pen');
+  const [annotateColor, setAnnotateColor] = useState('#0f172a');
+  const [annotateStrokeWidth, setAnnotateStrokeWidth] = useState(2.5);
 
   // PDF Engine & Document Handle
   const [engine, setEngine] = useState<PdfEngine | null>(null);
@@ -2063,6 +2114,529 @@ export default function EditorPage({
     [engine, docHandle, pageTextRunsMap]
   );
 
+  // Phase 11 Handlers
+  const handleInsertShape = useCallback(
+    async (shape: ShapeObject) => {
+      const cmd = new InsertShapeCommand(
+        activePageIdx,
+        shape,
+        async (pIdx, s) => {
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            const list = next.get(pIdx) || [];
+            next.set(pIdx, [...list, s]);
+            return next;
+          });
+        },
+        async (pIdx, sId) => {
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            const list = next.get(pIdx) || [];
+            next.set(pIdx, list.filter((o) => o.id !== sId));
+            return next;
+          });
+        }
+      );
+      await editSession.execute(cmd);
+    },
+    [activePageIdx, editSession]
+  );
+
+  const handleCommitDrawingStroke = useCallback(
+    async (stroke: DrawingStrokeObject) => {
+      setDrawingStrokesMap((prev) => {
+        const next = new Map(prev);
+        const list = next.get(activePageIdx) || [];
+        next.set(activePageIdx, [...list, stroke]);
+        return next;
+      });
+
+      const cmd = new AddDrawingStrokeCommand(
+        activePageIdx,
+        stroke,
+        async (pIdx, s) => {
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            const list = next.get(pIdx) || [];
+            next.set(pIdx, [...list, s]);
+            return next;
+          });
+        },
+        async (pIdx, sId) => {
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            const list = next.get(pIdx) || [];
+            next.set(pIdx, list.filter((o) => o.id !== sId));
+            return next;
+          });
+        }
+      );
+      await editSession.execute(cmd);
+    },
+    [activePageIdx, editSession]
+  );
+
+  const handleEraseDrawingStroke = useCallback(
+    async (strokeId: string) => {
+      const pageStrokes = drawingStrokesMap.get(activePageIdx) || [];
+      const stroke = pageStrokes.find((s) => s.id === strokeId);
+      if (!stroke) return;
+
+      setDrawingStrokesMap((prev) => {
+        const next = new Map(prev);
+        const list = next.get(activePageIdx) || [];
+        next.set(activePageIdx, list.filter((s) => s.id !== strokeId));
+        return next;
+      });
+
+      const cmd = new EraseDrawingStrokeCommand(
+        activePageIdx,
+        stroke,
+        async (pIdx, sId) => {
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            const list = next.get(pIdx) || [];
+            next.set(pIdx, list.filter((o) => o.id !== sId));
+            return next;
+          });
+        },
+        async (pIdx, s) => {
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            const list = next.get(pIdx) || [];
+            next.set(pIdx, [...list, s]);
+            return next;
+          });
+        }
+      );
+      await editSession.execute(cmd);
+    },
+    [activePageIdx, drawingStrokesMap, editSession]
+  );
+
+  const handleInsertTable = useCallback(
+    async (generated: GeneratedTable) => {
+      const cmd = new InsertTableCommand(
+        generated,
+        async (table) => {
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            const list = next.get(table.structure.pageIndex) || [];
+            const textRuns: TextRun[] = table.textBlocks.map((b) => ({
+              id: b.id,
+              type: 'text',
+              text: b.lines[0]?.text || '',
+              fontName: b.primaryFont,
+              fontSize: b.primaryFontSize,
+              fillColor: b.primaryColor,
+              bounds: b.bounds,
+              matrix: [1, 0, 0, 1, 0, 0],
+              zIndex: 30,
+              isEmbeddedSubset: false
+            }));
+            next.set(table.structure.pageIndex, [...list, table.gridPath, ...textRuns]);
+            return next;
+          });
+        },
+        async (table) => {
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            const list = next.get(table.structure.pageIndex) || [];
+            const blockIds = new Set(table.textBlocks.map((b) => b.id));
+            next.set(
+              table.structure.pageIndex,
+              list.filter((o) => o.id !== table.gridPath.id && !blockIds.has(o.id))
+            );
+            return next;
+          });
+        }
+      );
+      await editSession.execute(cmd);
+    },
+    [editSession]
+  );
+
+  const handleApplyHeaderFooterBlocks = useCallback(
+    async (blocks: TextBlock[]) => {
+      const cmd = new ApplyHeaderFooterCommand(
+        blocks,
+        async (blks) => {
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            for (const b of blks) {
+              const list = next.get(b.pageIndex) || [];
+              const run: TextRun = {
+                id: b.id,
+                type: 'text',
+                text: b.lines[0]?.text || '',
+                fontName: b.primaryFont,
+                fontSize: b.primaryFontSize,
+                fillColor: b.primaryColor,
+                bounds: b.bounds,
+                matrix: [1, 0, 0, 1, 0, 0],
+                zIndex: 35,
+                isEmbeddedSubset: false
+              };
+              next.set(b.pageIndex, [...list, run]);
+            }
+            return next;
+          });
+        },
+        async (blockIds) => {
+          const idSet = new Set(blockIds);
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            for (const [pIdx, list] of next.entries()) {
+              next.set(pIdx, list.filter((o) => !idSet.has(o.id)));
+            }
+            return next;
+          });
+        }
+      );
+      await editSession.execute(cmd);
+    },
+    [editSession]
+  );
+
+  const handleApplyWatermark = useCallback(
+    async (objects: WatermarkObject[]) => {
+      const cmd = new ApplyWatermarkCommand(
+        objects,
+        async (objs) => {
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            for (const obj of objs) {
+              const pIdx = 'pageIndex' in obj ? (obj.pageIndex as number) : activePageIdx;
+              const list = next.get(pIdx) || [];
+              if ('type' in obj && (obj as ImageObject).type === 'image') {
+                next.set(pIdx, [...list, obj as ImageObject]);
+              } else {
+                const b = obj as TextBlock;
+                const run: TextRun = {
+                  id: b.id,
+                  type: 'text',
+                  text: b.lines[0]?.text || '',
+                  fontName: b.primaryFont,
+                  fontSize: b.primaryFontSize,
+                  fillColor: b.primaryColor,
+                  bounds: b.bounds,
+                  matrix: [1, 0, 0, 1, 0, 0],
+                  zIndex: 15,
+                  isEmbeddedSubset: false
+                };
+                next.set(pIdx, [...list, run]);
+              }
+            }
+            return next;
+          });
+        },
+        async (objIds) => {
+          const idSet = new Set(objIds);
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            for (const [pIdx, list] of next.entries()) {
+              next.set(pIdx, list.filter((o) => !idSet.has(o.id)));
+            }
+            return next;
+          });
+        }
+      );
+      await editSession.execute(cmd);
+    },
+    [activePageIdx, editSession]
+  );
+
+  const handlePageBgColorChange = useCallback(
+    async (colorHex: string) => {
+      const clean = colorHex.replace('#', '');
+      const r = parseInt(clean.substring(0, 2), 16) || 0;
+      const g = parseInt(clean.substring(2, 4), 16) || 0;
+      const b = parseInt(clean.substring(4, 6), 16) || 0;
+      const bgPath = createPageBackground(currentMetric.width, currentMetric.height, { r, g, b, a: 255 });
+
+      const cmd = new SetPageBackgroundCommand(
+        [activePageIdx],
+        [bgPath],
+        async (pIndices, paths) => {
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            for (const pIdx of pIndices) {
+              const list = next.get(pIdx) || [];
+              next.set(pIdx, [paths[0]!, ...list]);
+            }
+            return next;
+          });
+        },
+        async (pIndices, pathIds) => {
+          const idSet = new Set(pathIds);
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            for (const pIdx of pIndices) {
+              const list = next.get(pIdx) || [];
+              next.set(pIdx, list.filter((o) => !idSet.has(o.id)));
+            }
+            return next;
+          });
+        }
+      );
+      await editSession.execute(cmd);
+    },
+    [activePageIdx, currentMetric, editSession]
+  );
+
+  const handleToggleFormatPainter = useCallback(() => {
+    if (!activeTextBlock) return;
+    if (isFormatPainterActive) {
+      setIsFormatPainterActive(false);
+      setFormatPainterStyle(null);
+    } else {
+      const style = extractTextStyle(activeTextBlock);
+      setFormatPainterStyle(style);
+      setIsFormatPainterActive(true);
+    }
+  }, [activeTextBlock, isFormatPainterActive]);
+
+  const handleToggleBulletList = useCallback(() => {
+    if (!activeTextBlock) return;
+    const lines = activeTextBlock.lines.map((l) => l.text);
+    const fullText = lines.join('\n');
+    const updated = toggleBulletList(fullText);
+    void handleCommitTextBlock(activeTextBlock.id, updated.split('\n'));
+  }, [activeTextBlock, handleCommitTextBlock]);
+
+  const handleToggleNumberedList = useCallback(() => {
+    if (!activeTextBlock) return;
+    const lines = activeTextBlock.lines.map((l) => l.text);
+    const fullText = lines.join('\n');
+    const updated = toggleNumberedList(fullText);
+    void handleCommitTextBlock(activeTextBlock.id, updated.split('\n'));
+  }, [activeTextBlock, handleCommitTextBlock]);
+
+  const handleIndentList = useCallback(() => {
+    if (!activeTextBlock) return;
+    const lines = activeTextBlock.lines.map((l) => l.text);
+    const fullText = lines.join('\n');
+    const updated = indentList(fullText);
+    void handleCommitTextBlock(activeTextBlock.id, updated.split('\n'));
+  }, [activeTextBlock, handleCommitTextBlock]);
+
+  const handleOutdentList = useCallback(() => {
+    if (!activeTextBlock) return;
+    const lines = activeTextBlock.lines.map((l) => l.text);
+    const fullText = lines.join('\n');
+    const updated = outdentList(fullText);
+    void handleCommitTextBlock(activeTextBlock.id, updated.split('\n'));
+  }, [activeTextBlock, handleCommitTextBlock]);
+
+  const handleAlign = useCallback(
+    async (mode: AlignmentMode) => {
+      const objsToAlign = currentObjects.filter((o) => selectedIds.includes(o.id));
+      if (objsToAlign.length < 2 && activeTextBlock) {
+        const pageTargetRect: Rect = {
+          left: 36,
+          bottom: 36,
+          right: currentMetric.width - 36,
+          top: currentMetric.height - 36
+        };
+        const pseudoObj: PageObject = {
+          id: activeTextBlock.id,
+          type: 'text',
+          text: '',
+          fontName: activeTextBlock.primaryFont,
+          fontSize: activeTextBlock.primaryFontSize,
+          fillColor: activeTextBlock.primaryColor,
+          bounds: activeTextBlock.bounds,
+          matrix: [1, 0, 0, 1, 0, 0],
+          zIndex: 10,
+          isEmbeddedSubset: false
+        };
+        const deltas = alignObjects([pseudoObj], mode, pageTargetRect);
+        if (deltas[0]) {
+          void handleCommitTextBlock(activeTextBlock.id, activeTextBlock.lines.map((l) => l.text));
+          handleResizeObjects(deltas[0].newBounds);
+        }
+        return;
+      }
+
+      if (objsToAlign.length >= 2) {
+        const deltas = alignObjects(objsToAlign, mode);
+        const cmd = new AlignObjectsCommand(
+          activePageIdx,
+          deltas,
+          `Align ${mode}`,
+          async (pIdx, dlts) => {
+            const dltMap = new Map(dlts.map((d) => [d.id, d.newBounds]));
+            setPageObjectsMap((prev) => {
+              const next = new Map(prev);
+              const list = next.get(pIdx) || [];
+              next.set(
+                pIdx,
+                list.map((o) => (dltMap.has(o.id) ? { ...o, bounds: dltMap.get(o.id)! } : o))
+              );
+              return next;
+            });
+          },
+          async (pIdx, dlts) => {
+            const dltMap = new Map(dlts.map((d) => [d.id, d.newBounds]));
+            setPageObjectsMap((prev) => {
+              const next = new Map(prev);
+              const list = next.get(pIdx) || [];
+              next.set(
+                pIdx,
+                list.map((o) => (dltMap.has(o.id) ? { ...o, bounds: dltMap.get(o.id)! } : o))
+              );
+              return next;
+            });
+          }
+        );
+        await editSession.execute(cmd);
+      }
+    },
+    [activePageIdx, activeTextBlock, currentMetric, currentObjects, editSession, handleCommitTextBlock, selectedIds]
+  );
+
+  const handleDistribute = useCallback(
+    async (axis: 'horizontal' | 'vertical') => {
+      const objs = currentObjects.filter((o) => selectedIds.includes(o.id));
+      if (objs.length < 3) return;
+
+      const deltas = distributeObjects(objs, axis);
+      const cmd = new AlignObjectsCommand(
+        activePageIdx,
+        deltas,
+        `Distribute ${axis}`,
+        async (pIdx, dlts) => {
+          const dltMap = new Map(dlts.map((d) => [d.id, d.newBounds]));
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            const list = next.get(pIdx) || [];
+            next.set(
+              pIdx,
+              list.map((o) => (dltMap.has(o.id) ? { ...o, bounds: dltMap.get(o.id)! } : o))
+            );
+            return next;
+          });
+        },
+        async (pIdx, dlts) => {
+          const dltMap = new Map(dlts.map((d) => [d.id, d.newBounds]));
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            const list = next.get(pIdx) || [];
+            next.set(
+              pIdx,
+              list.map((o) => (dltMap.has(o.id) ? { ...o, bounds: dltMap.get(o.id)! } : o))
+            );
+            return next;
+          });
+        }
+      );
+      await editSession.execute(cmd);
+    },
+    [activePageIdx, currentObjects, editSession, selectedIds]
+  );
+
+  const handleInsertSpecialText = useCallback(
+    async (text: string) => {
+      const cx = currentMetric.width / 2;
+      const cy = currentMetric.height / 2;
+      const bounds: Rect = {
+        left: cx - 80,
+        bottom: cy - 12,
+        right: cx + 80,
+        top: cy + 12
+      };
+
+      const cmd = new InsertTextBlockCommand(
+        activePageIdx,
+        text,
+        bounds,
+        'Roboto-Regular',
+        14,
+        { r: 15, g: 23, b: 42, a: 255 },
+        async (pIdx, run) => {
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            const list = next.get(pIdx) || [];
+            next.set(pIdx, [...list, run]);
+            return next;
+          });
+        },
+        async (pIdx, runId) => {
+          setPageObjectsMap((prev) => {
+            const next = new Map(prev);
+            const list = (next.get(pIdx) || []).filter((o) => o.id !== runId);
+            next.set(pIdx, list);
+            return next;
+          });
+        }
+      );
+      await editSession.execute(cmd);
+    },
+    [activePageIdx, currentMetric, editSession]
+  );
+
+  const handleInsertSpecialPath = useCallback(
+    async (path: PathObject) => {
+      setPageObjectsMap((prev) => {
+        const next = new Map(prev);
+        const list = next.get(activePageIdx) || [];
+        next.set(activePageIdx, [...list, path]);
+        return next;
+      });
+    },
+    [activePageIdx]
+  );
+
+  const targetLinkId = selectedIds[0] || activeTextBlockId;
+
+  const handleSaveLink = useCallback(
+    async (link: ObjectLink) => {
+      if (!targetLinkId) return;
+      const prevLink = objectLinks.get(targetLinkId);
+
+      const cmd = new SetObjectLinkCommand(
+        activePageIdx,
+        targetLinkId,
+        link,
+        prevLink,
+        async (_pIdx, objId, lk) => {
+          setObjectLinks((prev) => {
+            const next = new Map(prev);
+            if (lk) next.set(objId, lk);
+            else next.delete(objId);
+            return next;
+          });
+        }
+      );
+      await editSession.execute(cmd);
+    },
+    [activePageIdx, editSession, objectLinks, targetLinkId]
+  );
+
+  const handleRemoveLink = useCallback(
+    async () => {
+      if (!targetLinkId) return;
+      const prevLink = objectLinks.get(targetLinkId);
+      if (!prevLink) return;
+
+      const cmd = new RemoveObjectLinkCommand(
+        activePageIdx,
+        targetLinkId,
+        prevLink,
+        async (_pIdx, objId, lk) => {
+          setObjectLinks((prev) => {
+            const next = new Map(prev);
+            if (lk) next.set(objId, lk);
+            else next.delete(objId);
+            return next;
+          });
+        }
+      );
+      await editSession.execute(cmd);
+    },
+    [activePageIdx, editSession, objectLinks, targetLinkId]
+  );
+
   // Commands list for CommandPalette
   const commands: CommandItem[] = useMemo(
     () => [
@@ -2309,6 +2883,33 @@ export default function EditorPage({
         onMatchOriginalFont={handleMatchOriginalFont}
         hasSelectedTextBlock={Boolean(activeTextBlock)}
         onDeleteText={handleDeleteObjects}
+        onToggleBulletList={handleToggleBulletList}
+        onToggleNumberedList={handleToggleNumberedList}
+        onIndentList={handleIndentList}
+        onOutdentList={handleOutdentList}
+        isFormatPainterActive={isFormatPainterActive}
+        onToggleFormatPainter={handleToggleFormatPainter}
+        onAlign={handleAlign}
+        onDistribute={handleDistribute}
+        onInsertShape={handleInsertShape}
+        onOpenInsertTable={() => setIsTableDialogOpen(true)}
+        onOpenHeaderFooter={() => setIsHeaderFooterDialogOpen(true)}
+        onOpenWatermark={() => setIsWatermarkDialogOpen(true)}
+        onPageBgColorChange={handlePageBgColorChange}
+        onInsertSpecialText={handleInsertSpecialText}
+        onInsertSpecialPath={handleInsertSpecialPath}
+        onOpenLinkDialog={() => setIsLinkDialogOpen(true)}
+        hasLink={Boolean(targetLinkId && objectLinks.has(targetLinkId))}
+        isRulerActive={isRulerActive}
+        onToggleRuler={() => setIsRulerActive((r) => !r)}
+        isGridActive={isGridActive}
+        onToggleGrid={() => setIsGridActive((g) => !g)}
+        annotateTool={annotateTool}
+        onAnnotateToolChange={setAnnotateTool}
+        annotateColor={annotateColor}
+        onAnnotateColorChange={setAnnotateColor}
+        annotateStrokeWidth={annotateStrokeWidth}
+        onAnnotateStrokeWidthChange={setAnnotateStrokeWidth}
       />
 
       {/* Main Workspace Area: Rail + Canvas + Properties */}
@@ -2366,6 +2967,28 @@ export default function EditorPage({
 
                 return (
                   <>
+                    <RulerGridOverlay
+                      pageWidthPt={metric.width}
+                      pageHeightPt={metric.height}
+                      rotation={metric.rotation}
+                      scale={scale}
+                      showRuler={isRulerActive}
+                      showGrid={isGridActive}
+                    />
+                    {activeMode === 'annotate' && (
+                      <DrawingCanvasOverlay
+                        pageWidthPt={metric.width}
+                        pageHeightPt={metric.height}
+                        rotation={metric.rotation}
+                        scale={scale}
+                        tool={annotateTool}
+                        color={annotateColor}
+                        strokeWidth={annotateStrokeWidth}
+                        existingStrokes={drawingStrokesMap.get(activePageIdx) || []}
+                        onCommitStroke={handleCommitDrawingStroke}
+                        onEraseStroke={handleEraseDrawingStroke}
+                      />
+                    )}
                     <SelectionOverlay
                       pageWidthPt={metric.width}
                       pageHeightPt={metric.height}
@@ -2380,6 +3003,24 @@ export default function EditorPage({
                       activeBlockId={activeTextBlock?.id || activeTextBlockId}
                       isRegionSelectMode={isRegionSelectMode}
                       onSelectBlock={(blockId) => {
+                        if (isFormatPainterActive && formatPainterStyle) {
+                          const target = currentTextBlocks.find((b) => b.id === blockId);
+                          if (target) {
+                            const updated = applyTextStyleToBlock(target, formatPainterStyle);
+                            void handleCommitTextBlock(
+                              updated.id,
+                              updated.lines.map((l) => l.text),
+                              {
+                                fontName: updated.primaryFont,
+                                fontSize: updated.primaryFontSize,
+                                color: updated.primaryColor
+                              }
+                            );
+                            setIsFormatPainterActive(false);
+                            setFormatPainterStyle(null);
+                          }
+                          return;
+                        }
                         setActiveTextBlockId(blockId);
                         const blk = currentTextBlocks.find((b) => b.id === blockId);
                         if (blk) {
@@ -2417,6 +3058,14 @@ export default function EditorPage({
                         onCancel={() => setEditingTextBlockId(null)}
                         onGrowDownward={handleGrowDownward}
                         onShrinkToFit={handleShrinkToFit}
+                      />
+                    )}
+                    {targetLinkId && objectLinks.has(targetLinkId) && !editingBlock && (
+                      <LinkChip
+                        link={objectLinks.get(targetLinkId)!}
+                        onEdit={() => setIsLinkDialogOpen(true)}
+                        onRemove={handleRemoveLink}
+                        onNavigatePage={(pIdx) => setCurrentPage(pIdx + 1)}
                       />
                     )}
                   </>
@@ -2656,6 +3305,40 @@ export default function EditorPage({
         currentPage={activePageIdx}
         onStartBatch={handleStartBatchOcr}
         onClose={() => setIsBatchOcrOpen(false)}
+      />
+
+      {/* Phase 11 Dialogs */}
+      <InsertTableDialog
+        isOpen={isTableDialogOpen}
+        onClose={() => setIsTableDialogOpen(false)}
+        onInsertTable={handleInsertTable}
+        pageIndex={activePageIdx}
+        pageWidthPt={currentMetric.width}
+        pageHeightPt={currentMetric.height}
+      />
+      <HeaderFooterDialog
+        isOpen={isHeaderFooterDialogOpen}
+        onClose={() => setIsHeaderFooterDialogOpen(false)}
+        onApplyBlocks={handleApplyHeaderFooterBlocks}
+        totalPages={pageCount || 1}
+        pageWidthPt={currentMetric.width}
+        pageHeightPt={currentMetric.height}
+      />
+      <WatermarkDialog
+        isOpen={isWatermarkDialogOpen}
+        onClose={() => setIsWatermarkDialogOpen(false)}
+        onApplyWatermark={handleApplyWatermark}
+        totalPages={pageCount || 1}
+        pageWidthPt={currentMetric.width}
+        pageHeightPt={currentMetric.height}
+      />
+      <LinkDialog
+        isOpen={isLinkDialogOpen}
+        onClose={() => setIsLinkDialogOpen(false)}
+        onSaveLink={handleSaveLink}
+        onRemoveLink={handleRemoveLink}
+        initialLink={targetLinkId ? objectLinks.get(targetLinkId) : undefined}
+        totalPages={pageCount || 1}
       />
     </div>
   );
