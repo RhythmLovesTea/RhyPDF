@@ -23,3 +23,4 @@ export * from './tools';
 export * from './annotations';
 export * from './signatures';
 export * from './forms';
+export * from './pages';

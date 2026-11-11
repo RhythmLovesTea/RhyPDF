@@ -42,7 +42,10 @@ import {
   Stamp as StampIcon,
   PenTool,
   Sparkles,
-  Calendar
+  Calendar,
+  Bookmark as BookmarkIcon,
+  Layers,
+  Maximize2
 } from 'lucide-react';
 import { useDocStore } from '../../stores/docStore';
 import type { CropPreset, ShapeObject, DrawingTool } from '@rhypdf/edit-core';
@@ -151,6 +154,12 @@ export interface ContextualToolbarProps {
   onOpenAnnotationSummary?: () => void;
   onToggleCommentsPanel?: () => void;
   commentCount?: number;
+  onOpenPageOrganizer?: () => void;
+  onToggleBookmarksPanel?: () => void;
+  onOpenInsertBlankPage?: () => void;
+  onOpenCropPage?: () => void;
+  onOpenResizePage?: () => void;
+  bookmarkCount?: number;
 }
 
 export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
@@ -242,7 +251,13 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
   onOpenCreateFormField,
   onOpenAnnotationSummary,
   onToggleCommentsPanel,
-  commentCount = 0
+  commentCount = 0,
+  onOpenPageOrganizer,
+  onToggleBookmarksPanel,
+  onOpenInsertBlankPage,
+  onOpenCropPage,
+  onOpenResizePage,
+  bookmarkCount = 0
 }) => {
   const { t } = useTranslation();
   const { activeMode } = useDocStore();
@@ -1760,14 +1775,64 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
         </div>
       )}
 
-      {/* PAGES CONTROLS */}
+      {/* PAGES CONTROLS (Phase 13) */}
       {activeMode === 'pages' && (
         <div
           data-testid="contextual-pages-tools"
-          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}
         >
+          {onOpenPageOrganizer && (
+            <button
+              data-testid="btn-open-page-organizer"
+              onClick={onOpenPageOrganizer}
+              title="Open Page Organizer Screen"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '6px 12px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--color-primary)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                color: 'var(--color-primary)',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontSize: 13
+              }}
+            >
+              <Layers size={15} />
+              <span>Page Organizer</span>
+            </button>
+          )}
+
+          {onToggleBookmarksPanel && (
+            <button
+              data-testid="btn-toggle-bookmarks-panel"
+              onClick={onToggleBookmarksPanel}
+              title="Toggle Bookmarks Sidebar"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '6px 10px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-card)',
+                cursor: 'pointer',
+                fontSize: 13
+              }}
+            >
+              <BookmarkIcon size={15} />
+              <span>Bookmarks{bookmarkCount > 0 ? ` (${bookmarkCount})` : ''}</span>
+            </button>
+          )}
+
+          <div style={{ width: 1, height: 20, backgroundColor: 'var(--bg-border)', margin: '0 4px' }} />
+
           <button
             data-testid="btn-pages-rotate-cw"
+            onClick={onRotateCw}
+            title="Rotate Page 90° Clockwise"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -1780,11 +1845,13 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               fontSize: 13
             }}
           >
-            <RotateCw size={16} />
+            <RotateCw size={15} />
             <span>{t('pages.rotateCw')}</span>
           </button>
           <button
             data-testid="btn-pages-rotate-ccw"
+            onClick={onRotateCcw}
+            title="Rotate Page 90° Counter-Clockwise"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -1797,9 +1864,75 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
               fontSize: 13
             }}
           >
-            <RotateCcw size={16} />
+            <RotateCcw size={15} />
             <span>{t('pages.rotateCcw')}</span>
           </button>
+
+          {onOpenInsertBlankPage && (
+            <button
+              data-testid="btn-pages-insert-blank"
+              onClick={onOpenInsertBlankPage}
+              title="Insert Blank Page"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '6px 10px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-card)',
+                cursor: 'pointer',
+                fontSize: 13
+              }}
+            >
+              <Plus size={15} />
+              <span>Blank Page</span>
+            </button>
+          )}
+
+          {onOpenCropPage && (
+            <button
+              data-testid="btn-pages-crop-page"
+              onClick={onOpenCropPage}
+              title="Crop Page Margins"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '6px 10px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-card)',
+                cursor: 'pointer',
+                fontSize: 13
+              }}
+            >
+              <Crop size={15} />
+              <span>Crop</span>
+            </button>
+          )}
+
+          {onOpenResizePage && (
+            <button
+              data-testid="btn-pages-resize-page"
+              onClick={onOpenResizePage}
+              title="Change Page Size"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '6px 10px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--bg-border)',
+                backgroundColor: 'var(--bg-card)',
+                cursor: 'pointer',
+                fontSize: 13
+              }}
+            >
+              <Maximize2 size={15} />
+              <span>Resize</span>
+            </button>
+          )}
         </div>
       )}
     </div>

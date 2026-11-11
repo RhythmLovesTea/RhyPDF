@@ -98,10 +98,10 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 ## CURRENT TASK POINTER
 
 ```
-CURRENT PHASE : 13
-CURRENT TASK  : 13.1
+CURRENT PHASE : 14
+CURRENT TASK  : 14.1
 LAST UPDATED  : 2026-11-11
-NOTES         : Phase 12 completed with all 10 subtasks (12.1 to 12.10). Built and verified: Text markup annotations (Highlight, Underline, StrikeOut, Squiggly sinusoidal wave with 8-point QuadPoints per PDF §12.5.6.10, configurable colors/opacity, vector path conversion); Sticky notes / comments (Text subtype, vector speech bubble icon, StickyNotePopup on canvas, CommentsPanel side drawer with jump-to-page, note editing, delete); Stamps (Approved, Draft, Confidential, Rejected, Final, Expired, Not Approved, Top Secret presets with double borders, custom text stamps with date option, image stamps, StampsPopover UI); Signatures (Draw with Pointer Events, Type with 5 script fonts, Upload image, local storage with WebCrypto PBKDF2/AES-GCM-256 encryption, SignatureDialog UI); Quick-insert Initials and Date stamps; Form field detection & XFA warning (AcroForm widgets detection, reading & tab order sorting, dynamic XFA form detection with XfaWarningBanner); Form filling & autofill (interactive AcroFormOverlay with tab order navigation, local AutofillProfile with semantic regex/substring heuristics, AutofillDialog UI); Form and annotation flattening (flattenAnnotations, flattenFormFields into static vector paths and text runs); Form field creation (CreateFormFieldDialog and CreateFormFieldCommand for text, checkbox, dropdown); Annotation summary export (generateAnnotationSummary in Markdown, PlainText, JSON, AnnotationSummaryDialog UI). All 65 test files (482 tests) green, zero TypeScript errors across monorepo packages, production build clean. Ready for Phase 13 (Page management).
+NOTES         : Phase 13 completed with all 13 subtasks (13.1 to 13.13). Built and verified: Page organizer screen with @dnd-kit thumbnail drag-and-drop reordering, batch selection bar, page cards; Delete pages (DeletePagesCommand with 1-page minimum guard); Rotate pages in 90° steps (RotatePagesCommand CW & CCW); Insert blank page (presets A4/Letter/Legal/Tabloid/Custom, portrait/landscape, before/after/start/end via InsertBlankPageCommand & InsertBlankPageDialog); Insert pages from another PDF with page range parser (InsertPagesCommand & InsertPagesFromPdfDialog); Merge multiple PDFs with drag-reorderable list (mergeMultiplePdfs & MergePdfDialog); Split PDF (by ranges, every N pages, selection, bookmarks) into ZIP via fflate (splitPdf, zipFiles & SplitPdfDialog); Extract selected pages to new PDF (extractPagesFromPdf); Duplicate page (DuplicatePageCommand); Visual crop page margins via CropBox (CropPageCommand & CropPageDialog); Resize page with proportional content scaling option (ResizePageCommand & ResizePageDialog); Images to PDF and PDF to PNG/JPEG/WebP with DPI choices (72/150/300) and ZIP archive (ImagesToPdfDialog, PdfToImagesDialog); Bookmarks / outline hierarchical tree with PDF /Outlines load/save, jump-to-page, add, edit, delete, reorder (loadBookmarksFromPdf, saveBookmarksToPdf, BookmarksPanel, UpdateBookmarksCommand). All 67 test files (521 tests) green, zero TypeScript errors, production build clean. Ready for Phase 14 (Save, export, share, print).
 ```
 
 ---
@@ -609,19 +609,19 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PHASE 13 — PAGE MANAGEMENT
 
-- [ ] **13.1** Page organizer screen: thumbnail grid, multi-select, drag-to-reorder (dnd-kit).
-- [ ] **13.2** Delete pages (undoable).
-- [ ] **13.3** Rotate pages in 90° steps (selected or all).
-- [ ] **13.4** Insert a blank page (match size or custom) before / after.
-- [ ] **13.5** Insert pages from another PDF (choose a page range).
-- [ ] **13.6** Merge multiple PDFs (reorder the list, then merge). Fonts and resources must not collide.
-- [ ] **13.7** Split a PDF (by ranges, every N pages, by selection, by bookmarks) into several files, delivered as a ZIP (fflate).
-- [ ] **13.8** Extract selected pages into a new PDF.
-- [ ] **13.9** Duplicate page.
-- [ ] **13.10** Crop page margins (CropBox) with a visual cropper.
-- [ ] **13.11** Resize / change page size (with a scale-content option).
-- [ ] **13.12** Images → PDF (order, page size, margins) and PDF → images (PNG / JPG / WebP, DPI choice, ZIP for many pages).
-- [ ] **13.13** Bookmarks / outline: view, jump, add, edit, delete.
+- [x] **13.1** Page organizer screen: thumbnail grid, multi-select, drag-to-reorder (dnd-kit).
+- [x] **13.2** Delete pages (undoable).
+- [x] **13.3** Rotate pages in 90° steps (selected or all).
+- [x] **13.4** Insert a blank page (match size or custom) before / after.
+- [x] **13.5** Insert pages from another PDF (choose a page range).
+- [x] **13.6** Merge multiple PDFs (reorder the list, then merge). Fonts and resources must not collide.
+- [x] **13.7** Split a PDF (by ranges, every N pages, by selection, by bookmarks) into several files, delivered as a ZIP (fflate).
+- [x] **13.8** Extract selected pages into a new PDF.
+- [x] **13.9** Duplicate page.
+- [x] **13.10** Crop page margins (CropBox) with a visual cropper.
+- [x] **13.11** Resize / change page size (with a scale-content option).
+- [x] **13.12** Images → PDF (order, page size, margins) and PDF → images (PNG / JPG / WebP, DPI choice, ZIP for many pages).
+- [x] **13.13** Bookmarks / outline: view, jump, add, edit, delete.
 
 **Done when:** all page operations are undoable, and merged / split results open correctly in external viewers.
 
@@ -944,6 +944,19 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-11 | 12.8    | Flatten annotations & forms into static vector paths & text runs      | `P12.8` | flattenAnnotations and flattenFormFields rendering vector checkmarks, circles, and text runs  |
 | 2026-11-11 | 12.9    | Form field creator for text fields, checkboxes, and dropdowns         | `P12.9` | CreateFormFieldCommand, CreateFormFieldDialog with customizable options and names            |
 | 2026-11-11 | 12.10   | Annotation summary exporter in Markdown, PlainText, and JSON          | `P12.10`| generateAnnotationSummary with page grouping, copy-to-clipboard, AnnotationSummaryDialog UI  |
+| 2026-11-11 | 13.1    | Page organizer screen with @dnd-kit drag-to-reorder & multi-select   | `P13.1` | PageOrganizerPage thumbnail grid, selection toggle, card actions, batch bar      |
+| 2026-11-11 | 13.2    | Delete pages with minimum 1-page guard and undo/redo support          | `P13.2` | deletePagesFromPdf, DeletePagesCommand with EditSession undoable state           |
+| 2026-11-11 | 13.3    | Rotate pages in 90° steps (CW and CCW) for selected or all pages      | `P13.3` | rotatePagesInPdf, RotatePagesCommand handling 0, 90, 180, 270 deg modulo         |
+| 2026-11-11 | 13.4    | Insert blank page (presets, custom size, orientation, position)       | `P13.4` | insertBlankPageInPdf, InsertBlankPageCommand, InsertBlankPageDialog UI           |
+| 2026-11-11 | 13.5    | Insert pages from another PDF with flexible range parser              | `P13.5` | parsePageRange, insertPagesFromOtherPdf, InsertPagesCommand, InsertPagesDialog   |
+| 2026-11-11 | 13.6    | Merge multiple PDFs in order with reorderable file list               | `P13.6` | mergeMultiplePdfs with pdf-lib context copying, MergePdfDialog UI                |
+| 2026-11-11 | 13.7    | Split PDF by ranges, every N pages, selection or bookmarks into ZIP   | `P13.7` | splitPdf, zipFiles with fflate zipSync, SplitPdfDialog UI                        |
+| 2026-11-11 | 13.8    | Extract selected pages into standalone downloadable PDF               | `P13.8` | extractPagesFromPdf, extract button in batch bar and card dropdown               |
+| 2026-11-11 | 13.9    | Duplicate page and insert at target index                             | `P13.9` | duplicatePageInPdf, DuplicatePageCommand with undo/redo                          |
+| 2026-11-11 | 13.10   | Crop page margins (CropBox) with visual cropper and margin inputs     | `P13.10`| cropPageInPdf, CropPageCommand, CropPageDialog visual preview and guides         |
+| 2026-11-11 | 13.11   | Resize page dimensions with optional proportional content scaling     | `P13.11`| resizePageInPdf with page.scale and page.setSize, ResizePageDialog UI            |
+| 2026-11-11 | 13.12   | Images to PDF & PDF to images (PNG/JPEG/WebP, DPI choices) in ZIP     | `P13.12`| imagesToPdf, ImagesToPdfDialog, PdfToImagesDialog with fflate archive packaging  |
+| 2026-11-11 | 13.13   | Bookmarks / outline hierarchical tree viewer, editor & PDF /Outlines  | `P13.13`| loadBookmarksFromPdf, saveBookmarksToPdf, BookmarksPanel, UpdateBookmarksCommand|
 
 ---
 

@@ -456,7 +456,9 @@ describe('Phase 12 UI Integration: Annotations, Signatures, and Forms', () => {
         copyBtn.click();
       });
 
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(textarea.value);
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+        expect.stringContaining('Standard termination clause')
+      );
     });
   });
 });

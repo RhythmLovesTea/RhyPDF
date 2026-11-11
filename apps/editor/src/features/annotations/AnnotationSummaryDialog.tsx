@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dialog } from '@rhypdf/ui';
 import { Copy, Download, Check } from 'lucide-react';
@@ -23,7 +23,7 @@ export const AnnotationSummaryDialog: React.FC<AnnotationSummaryDialogProps> = (
   const [format, setFormat] = useState<AnnotationSummaryFormat>('markdown');
   const [copied, setCopied] = useState(false);
 
-  const report = generateAnnotationSummary(annotationsByPage, format);
+  const report = useMemo(() => generateAnnotationSummary(annotationsByPage, format), [annotationsByPage, format]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(report.content).then(() => {

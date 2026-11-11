@@ -84,8 +84,25 @@ import {
   SetFormFieldValueCommand,
   CreateFormFieldCommand,
   type CreateFormFieldOptions,
-  type AutofillProfile
+  type AutofillProfile,
+  RotatePagesCommand,
+  DeletePagesCommand,
+  InsertBlankPageCommand,
+  DuplicatePageCommand,
+  ReorderPagesCommand,
+  CropPageCommand,
+  ResizePageCommand,
+  UpdateBookmarksCommand,
+  extractPagesFromPdf,
+  type BookmarkItem
 } from '@rhypdf/edit-core';
+import {
+  PageOrganizerPage,
+  BookmarksPanel,
+  InsertBlankPageDialog,
+  CropPageDialog,
+  ResizePageDialog
+} from '../pages';
 import {
   StampsPopover,
   SignatureDialog,
@@ -163,6 +180,7 @@ export default function EditorPage({
     currentDocId,
     filename,
     pageCount,
+    setPageCount,
     isDirty,
     closeDoc,
     activeMode,
@@ -250,6 +268,16 @@ export default function EditorPage({
   const [activeStickyNote, setActiveStickyNote] = useState<{ annot: AnnotationObject; cssPos: { x: number; y: number } } | null>(null);
   const [flattenOnExport] = useState(false);
 
+  // Phase 13 Page Management & Bookmarks state
+  const [isPageOrganizerOpen, setIsPageOrganizerOpen] = useState(false);
+  const [isBookmarksPanelOpen, setIsBookmarksPanelOpen] = useState(false);
+  const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
+  const [isInsertBlankPageOpen, setIsInsertBlankPageOpen] = useState(false);
+  const [isCropPageOpen, setIsCropPageOpen] = useState(false);
+  const [isResizePageOpen, setIsResizePageOpen] = useState(false);
+  const [workingBytes, setWorkingBytes] = useState<Uint8Array | null>(null);
+  const [, setRenderTick] = useState(0);
+
   // PDF Engine & Document Handle
   const [engine, setEngine] = useState<PdfEngine | null>(null);
   const [docHandle, setDocHandle] = useState<DocumentHandle | null>(null);
@@ -283,6 +311,7 @@ export default function EditorPage({
         }
 
         const bytes = await loadWorkingCopy(currentDocId!);
+        if (bytes) setWorkingBytes(new Uint8Array(bytes));
         let handle: DocumentHandle;
         let totalPages = 1;
 
@@ -809,12 +838,39 @@ export default function EditorPage({
     [selectedImage, activePageIdx, editSession]
   );
 
+  const handleRotatePages = useCallback(
+    (indices: number[], delta: number) => {
+      const targets = indices.length === 0 ? [activePageIdx] : indices;
+      const cmd = new RotatePagesCommand(targets, delta, (pageIdxs, d) => {
+        setPageMetricsMap((prev) => {
+          const next = new Map(prev);
+          for (const idx of pageIdxs) {
+            const current = next.get(idx);
+            if (current) {
+              const curRot = current.rotation ?? 0;
+              const nextRot = (((curRot + d) % 360 + 360) % 360) as 0 | 90 | 180 | 270;
+              next.set(idx, { ...current, rotation: nextRot });
+            }
+          }
+          return next;
+        });
+        setRenderTick((t) => t + 1);
+      });
+      void editSession.execute(cmd);
+    },
+    [activePageIdx, editSession]
+  );
+
   const handleRotate90 = useCallback(
     async (deltaDeg: 90 | -90) => {
+      if (activeMode === 'pages') {
+        handleRotatePages([activePageIdx], deltaDeg);
+        return;
+      }
       if (!selectedImage) return;
       await handleRotateObjects(deltaDeg);
     },
-    [selectedImage, handleRotateObjects]
+    [activeMode, activePageIdx, handleRotatePages, selectedImage, handleRotateObjects]
   );
 
   const handleLayerReorder = useCallback(
@@ -2922,6 +2978,173 @@ export default function EditorPage({
     [activeStickyNote, annotationsByPage, editSession]
   );
 
+  // Phase 13 Page Management Callbacks
+  const handleDeletePages = useCallback(
+    (indices: number[]) => {
+      const total = pageCount || 1;
+      if (indices.length >= total) return;
+      const cmd = new DeletePagesCommand(
+        indices,
+        (deleted) => {
+          setPageCount(total - deleted.length);
+          setCurrentPage((cur) => Math.max(1, Math.min(cur, total - deleted.length)));
+          setRenderTick((t) => t + 1);
+        },
+        () => {
+          setPageCount(total);
+          setRenderTick((t) => t + 1);
+        }
+      );
+      void editSession.execute(cmd);
+    },
+    [editSession, pageCount]
+  );
+
+  const handleInsertBlankPage = useCallback(
+    (params: { targetIndex: number; width: number; height: number; preset: string }) => {
+      const prevCount = pageCount || 1;
+      const cmd = new InsertBlankPageCommand(
+        params.targetIndex,
+        params.width,
+        params.height,
+        (targetIdx, w, h) => {
+          setPageCount(prevCount + 1);
+          setPageMetricsMap((prev) => {
+            const next = new Map(prev);
+            next.set(targetIdx, { width: w, height: h, rotation: 0 });
+            return next;
+          });
+          setCurrentPage(targetIdx + 1);
+          setRenderTick((t) => t + 1);
+        },
+        (targetIdx) => {
+          setPageCount(prevCount);
+          setCurrentPage(Math.max(1, targetIdx));
+          setRenderTick((t) => t + 1);
+        }
+      );
+      void editSession.execute(cmd);
+    },
+    [editSession, pageCount]
+  );
+
+  const handleDuplicatePage = useCallback(
+    (sourceIndex: number) => {
+      const prevCount = pageCount || 1;
+      const targetIndex = sourceIndex + 1;
+      const cmd = new DuplicatePageCommand(
+        sourceIndex,
+        targetIndex,
+        () => {
+          setPageCount(prevCount + 1);
+          setCurrentPage(targetIndex + 1);
+          setRenderTick((t) => t + 1);
+        },
+        () => {
+          setPageCount(prevCount);
+          setCurrentPage(Math.max(1, sourceIndex + 1));
+          setRenderTick((t) => t + 1);
+        }
+      );
+      void editSession.execute(cmd);
+    },
+    [editSession, pageCount]
+  );
+
+  const handleReorderPages = useCallback(
+    (newOrder: number[]) => {
+      const prevOrder = Array.from({ length: newOrder.length }, (_, i) => i);
+      const cmd = new ReorderPagesCommand(prevOrder, newOrder, () => {
+        setRenderTick((t) => t + 1);
+      });
+      void editSession.execute(cmd);
+    },
+    [editSession]
+  );
+
+  const handleCropPage = useCallback(
+    (pageIndex: number, cropBox: Rect) => {
+      const prevMetric = pageMetricsMap.get(pageIndex);
+      const cmd = new CropPageCommand(
+        pageIndex,
+        undefined,
+        cropBox,
+        (idx, box) => {
+          setPageMetricsMap((prev) => {
+            const next = new Map(prev);
+            const cur = next.get(idx);
+            if (cur) {
+              next.set(idx, {
+                ...cur,
+                width: box ? box.right - box.left : (prevMetric?.width ?? cur.width),
+                height: box ? box.top - box.bottom : (prevMetric?.height ?? cur.height)
+              });
+            }
+            return next;
+          });
+          setRenderTick((t) => t + 1);
+        }
+      );
+      void editSession.execute(cmd);
+    },
+    [editSession, pageMetricsMap]
+  );
+
+  const handleResizePage = useCallback(
+    (pageIndex: number, width: number, height: number, scaleContent: boolean) => {
+      const curMetric = pageMetricsMap.get(pageIndex) || { width: 595, height: 842 };
+      const cmd = new ResizePageCommand(
+        pageIndex,
+        { width: curMetric.width, height: curMetric.height },
+        { width, height },
+        scaleContent,
+        (idx, w, h) => {
+          setPageMetricsMap((prev) => {
+            const next = new Map(prev);
+            const cur = next.get(idx);
+            if (cur) {
+              next.set(idx, { ...cur, width: w, height: h });
+            }
+            return next;
+          });
+          setRenderTick((t) => t + 1);
+        }
+      );
+      void editSession.execute(cmd);
+    },
+    [editSession, pageMetricsMap]
+  );
+
+  const handleUpdateBookmarks = useCallback(
+    (newBookmarks: BookmarkItem[]) => {
+      const prevBookmarks = bookmarks;
+      const cmd = new UpdateBookmarksCommand(prevBookmarks, newBookmarks, (bms) => {
+        setBookmarks(bms);
+      });
+      void editSession.execute(cmd);
+    },
+    [bookmarks, editSession]
+  );
+
+  const handleExtractPages = useCallback(
+    async (indices: number[]) => {
+      if (!workingBytes) return;
+      try {
+        const extractedBytes = await extractPagesFromPdf(workingBytes, indices);
+        const blob = new Blob([extractedBytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filename ? filename.replace(/\.pdf$/i, '') : 'document'}_extracted.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error('[EditorPage] Extract pages error:', err);
+      }
+    },
+    [workingBytes, filename]
+  );
+
   // Commands list for CommandPalette
   const commands: CommandItem[] = useMemo(
     () => [
@@ -3206,6 +3429,12 @@ export default function EditorPage({
         onOpenAnnotationSummary={() => setIsAnnotationSummaryDialogOpen(true)}
         onToggleCommentsPanel={() => setIsCommentsPanelOpen((p) => !p)}
         commentCount={(annotationsByPage.get(activePageIdx) || []).filter((a) => a.subType === 'Text' || a.contents).length}
+        onOpenPageOrganizer={() => setIsPageOrganizerOpen(true)}
+        onToggleBookmarksPanel={() => setIsBookmarksPanelOpen((p) => !p)}
+        onOpenInsertBlankPage={() => setIsInsertBlankPageOpen(true)}
+        onOpenCropPage={() => setIsCropPageOpen(true)}
+        onOpenResizePage={() => setIsResizePageOpen(true)}
+        bookmarkCount={bookmarks.length}
       />
 
       {/* Main Workspace Area: Rail + Canvas + Properties */}
@@ -3694,6 +3923,84 @@ export default function EditorPage({
         annotationsByPage={annotationsByPage}
         documentName={filename || 'document'}
       />
+
+      {/* Bookmarks Panel (Task 13.13) */}
+      <BookmarksPanel
+        open={isBookmarksPanelOpen}
+        onClose={() => setIsBookmarksPanelOpen(false)}
+        bookmarks={bookmarks}
+        currentPageIndex={activePageIdx}
+        totalPages={pageCount || 1}
+        onJumpToPage={(pIdx) => setCurrentPage(pIdx + 1)}
+        onUpdateBookmarks={handleUpdateBookmarks}
+      />
+
+      {/* Insert Blank Page Dialog (Task 13.4) */}
+      <InsertBlankPageDialog
+        open={isInsertBlankPageOpen}
+        onClose={() => setIsInsertBlankPageOpen(false)}
+        currentPageIndex={activePageIdx}
+        totalPages={pageCount || 1}
+        onInsert={handleInsertBlankPage}
+      />
+
+      {/* Crop Page Dialog (Task 13.10) */}
+      <CropPageDialog
+        open={isCropPageOpen}
+        onClose={() => setIsCropPageOpen(false)}
+        pageIndex={activePageIdx}
+        pageWidth={currentMetric.width}
+        pageHeight={currentMetric.height}
+        onApplyCrop={handleCropPage}
+      />
+
+      {/* Resize Page Dialog (Task 13.11) */}
+      <ResizePageDialog
+        open={isResizePageOpen}
+        onClose={() => setIsResizePageOpen(false)}
+        pageIndex={activePageIdx}
+        currentWidth={currentMetric.width}
+        currentHeight={currentMetric.height}
+        onApplyResize={handleResizePage}
+      />
+
+      {/* Page Organizer Modal Overlay (Task 13.1) */}
+      {isPageOrganizerOpen && (
+        <div
+          data-testid="page-organizer-overlay"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'var(--bg-card)',
+            zIndex: 100,
+            overflowY: 'auto'
+          }}
+        >
+          <PageOrganizerPage
+            initialPages={Array.from({ length: pageCount || 1 }, (_, i) => {
+              const m = pageMetricsMap.get(i) || { width: 595, height: 842, rotation: 0 };
+              return {
+                id: `page_${i + 1}`,
+                originalIndex: i,
+                rotation: m.rotation ?? 0,
+                width: m.width,
+                height: m.height
+              };
+            })}
+            documentBytes={workingBytes ?? undefined}
+            bookmarks={bookmarks}
+            onClose={() => setIsPageOrganizerOpen(false)}
+            onRotatePages={handleRotatePages}
+            onDeletePages={handleDeletePages}
+            onDuplicatePage={handleDuplicatePage}
+            onReorderPages={handleReorderPages}
+            onExtractPages={handleExtractPages}
+            onInsertBlankPage={handleInsertBlankPage}
+            onCropPage={handleCropPage}
+            onResizePage={handleResizePage}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -21,6 +21,7 @@ export interface DocState {
     storageType?: 'opfs' | 'idb' | 'memory'
   ) => void;
   renameDoc: (newName: string) => void;
+  setPageCount: (count: number) => void;
   setDirty: (isDirty: boolean) => void;
   setSaving: (isSaving: boolean) => void;
   setLastSavedAt: (timestamp: number) => void;
@@ -52,6 +53,7 @@ export const useDocStore = create<DocState>((set) => ({
     }),
 
   renameDoc: (filename) => set({ filename, isDirty: true }),
+  setPageCount: (pageCount) => set({ pageCount, isDirty: true }),
   setDirty: (isDirty) => set({ isDirty }),
   setSaving: (isSaving) => set({ isSaving }),
   setLastSavedAt: (lastSavedAt) => set({ lastSavedAt, isDirty: false }),

@@ -47,6 +47,16 @@ export interface PageInfo {
   mediaBox?: Rect;
 }
 
+export interface BookmarkItem {
+  id: string;
+  title: string;
+  pageIndex: number;
+  color?: string;
+  isBold?: boolean;
+  isItalic?: boolean;
+  children?: BookmarkItem[];
+}
+
 export type PageObjectType = 'text' | 'image' | 'path' | 'form' | 'annotation';
 
 export interface BasePageObject {
