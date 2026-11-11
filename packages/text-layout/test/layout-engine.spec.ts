@@ -27,7 +27,8 @@ describe('TextLayoutEngine', () => {
   });
 
   it('wraps text onto multiple lines when exceeding maxWidth', async () => {
-    const text = 'This is a long sentence that should definitely wrap across multiple lines when given a narrow maximum width constraint.';
+    const text =
+      'This is a long sentence that should definitely wrap across multiple lines when given a narrow maximum width constraint.';
     const result = await engine.layout(text, {
       fontSize: 12,
       maxWidth: 120
@@ -52,11 +53,17 @@ describe('TextLayoutEngine', () => {
   });
 
   it('calculates shrink-to-fit properly to fit within target height', async () => {
-    const text = 'Paragraph line one.\nParagraph line two.\nParagraph line three.\nParagraph line four.';
+    const text =
+      'Paragraph line one.\nParagraph line two.\nParagraph line three.\nParagraph line four.';
     const initialOptions = { fontSize: 20, maxWidth: 300, lineHeight: 1.25 };
     const targetHeight = 40; // Only allows ~1-2 lines at 20pt
 
-    const { fontSize, layout } = await engine.calculateShrinkToFit(text, initialOptions, targetHeight, 8);
+    const { fontSize, layout } = await engine.calculateShrinkToFit(
+      text,
+      initialOptions,
+      targetHeight,
+      8
+    );
     expect(fontSize).toBeLessThan(20);
     expect(layout.height).toBeLessThanOrEqual(targetHeight + 5);
   });

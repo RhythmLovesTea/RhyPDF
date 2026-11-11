@@ -1,9 +1,6 @@
-import type {
-  Rect
-} from '@rhypdf/pdf-model';
+import type { Rect } from '@rhypdf/pdf-model';
 import type {
   TextDirection,
-  ShapedGlyph,
   ShapedRun,
   LayoutGlyphPosition,
   LayoutLine,
@@ -11,20 +8,29 @@ import type {
   TextLayoutOptions,
   TextLayoutEngine
 } from './index';
+import { TextShaper } from './shaper';
+import { BidiEngine, determineBaseDirection } from './bidi';
+import { ThaiEngine } from './thai';
+import { CjkEngine, isCjkCodePoint } from './cjk';
+
+const bidiEngine = new BidiEngine();
+const thaiEngine = new ThaiEngine();
+const cjkEngine = new CjkEngine();
+const shaper = TextShaper.getInstance();
 
 /**
  * Approximate character width ratio relative to fontSize for standard fonts.
  */
 function getApproxCharWidth(char: string, fontSize: number): number {
-  const code = char.charCodeAt(0);
+  const code = char.codePointAt(0)!;
   // Spaces
   if (char === ' ') return fontSize * 0.28;
   // CJK and full-width characters
-  if ((code >= 0x4e00 && code <= 0x9fff) || (code >= 0x3000 && code <= 0x30ff) || (code >= 0xff00 && code <= 0xffef)) {
+  if (isCjkCodePoint(code)) {
     return fontSize * 1.0;
   }
   // Thin characters
-  if ('ijl|!:,;.I\'`'.includes(char)) {
+  if ("ijl|!:,;.I'`".includes(char)) {
     return fontSize * 0.28;
   }
   // Wide characters
@@ -68,33 +74,11 @@ export function measureTextWidth(text: string, fontSize: number, letterSpacing =
 
 /**
  * SimpleTextLayoutEngine
- * Production-ready text layout and word-wrapping engine for in-place PDF text editing.
+ * Production-ready text layout, word-wrapping, and multi-language engine.
  */
 export class SimpleTextLayoutEngine implements TextLayoutEngine {
-  async shape(text: string, _fontData: Uint8Array, direction: TextDirection = 'ltr'): Promise<ShapedRun> {
-    const glyphs: ShapedGlyph[] = [];
-    let totalAdvance = 0;
-
-    for (let i = 0; i < text.length; i++) {
-      const char = text[i]!;
-      const advance = getApproxCharWidth(char, 12);
-      glyphs.push({
-        glyphId: char.charCodeAt(0),
-        cluster: i,
-        xAdvance: advance,
-        yAdvance: 0,
-        xOffset: 0,
-        yOffset: 0
-      });
-      totalAdvance += advance;
-    }
-
-    return {
-      direction,
-      script: 'Latn',
-      glyphs,
-      totalAdvance
-    };
+  async shape(text: string, fontData?: Uint8Array, direction?: TextDirection): Promise<ShapedRun> {
+    return shaper.shape(text, fontData, { direction });
   }
 
   async layout(text: string, options: TextLayoutOptions): Promise<LayoutResult> {
@@ -103,13 +87,11 @@ export class SimpleTextLayoutEngine implements TextLayoutEngine {
     const lineHeight = fontSize * lineHeightRatio;
     const maxWidth = options.maxWidth && options.maxWidth > 0 ? options.maxWidth : Infinity;
     const letterSpacing = options.letterSpacing || 0;
-    const textAlign = options.textAlign || 'left';
 
     const ascent = fontSize * 0.8;
     const descent = fontSize * 0.2;
 
     const lines: LayoutLine[] = [];
-    // Split by hard line breaks
     const rawParagraphs = text.split('\n');
 
     let currentY = 0;
@@ -117,7 +99,6 @@ export class SimpleTextLayoutEngine implements TextLayoutEngine {
 
     for (const paragraph of rawParagraphs) {
       if (paragraph.length === 0) {
-        // Empty blank line
         lines.push({
           text: '',
           bounds: { left: 0, bottom: currentY - descent, right: 0, top: currentY + ascent },
@@ -129,41 +110,90 @@ export class SimpleTextLayoutEngine implements TextLayoutEngine {
         continue;
       }
 
-      // Word wrapping inside paragraph
-      const words = paragraph.split(' ');
+      // Detect base direction
+      const baseDir = determineBaseDirection(paragraph);
+      const effectiveAlign = options.textAlign || (baseDir === 'rtl' ? 'right' : 'left');
+
+      // Check if paragraph contains Thai (no-space words)
+      const hasThai = thaiEngine.hasThai(paragraph);
+      // Check if paragraph contains CJK
+      const hasCjk = cjkEngine.hasCjk(paragraph);
+
+      let paragraphTokens: string[];
+      if (hasThai) {
+        // Use Thai word segmentation
+        const thaiWords = thaiEngine.segmentWords(paragraph);
+        paragraphTokens = thaiWords.map((w) => w.text);
+      } else if (hasCjk && maxWidth !== Infinity) {
+        // Wrap CJK with Kinsoku rules
+        const approxChars = Math.max(1, Math.floor(maxWidth / fontSize));
+        const kinsokuResult = cjkEngine.wrapCjkLines(paragraph, approxChars);
+        paragraphTokens = kinsokuResult.lines;
+      } else {
+        // Standard space-separated words
+        paragraphTokens = paragraph.split(' ');
+      }
+
       let currentLineWords: string[] = [];
       let currentLineWidth = 0;
 
-      for (let i = 0; i < words.length; i++) {
-        const word = words[i]!;
-        const wordWidth = measureTextWidth(word, fontSize, letterSpacing);
-        const spaceWidth = measureTextWidth(' ', fontSize, letterSpacing);
+      for (let i = 0; i < paragraphTokens.length; i++) {
+        const token = paragraphTokens[i]!;
+        const tokenWidth = measureTextWidth(token, fontSize, letterSpacing);
+        const separator = hasThai || hasCjk ? '' : ' ';
+        const sepWidth = separator ? measureTextWidth(separator, fontSize, letterSpacing) : 0;
 
-        const proposedWidth = currentLineWords.length === 0
-          ? wordWidth
-          : currentLineWidth + spaceWidth + wordWidth;
+        const proposedWidth =
+          currentLineWords.length === 0 ? tokenWidth : currentLineWidth + sepWidth + tokenWidth;
 
         if (proposedWidth <= maxWidth || currentLineWords.length === 0) {
-          currentLineWords.push(word);
+          currentLineWords.push(token);
           currentLineWidth = proposedWidth;
         } else {
-          // Commit line
-          const lineText = currentLineWords.join(' ');
+          // Line full, emit line
+          const lineStr = currentLineWords.join(separator);
+          const bidiRes = bidiEngine.resolve(lineStr, baseDir);
+
           lines.push(
-            this.buildLine(lineText, currentLineWidth, maxWidth, currentY, ascent, descent, fontSize, letterSpacing, textAlign)
+            this.buildLine(
+              lineStr,
+              bidiRes.visualText,
+              currentLineWidth,
+              maxWidth,
+              currentY,
+              ascent,
+              descent,
+              fontSize,
+              letterSpacing,
+              effectiveAlign
+            )
           );
           maxLineWidth = Math.max(maxLineWidth, currentLineWidth);
           currentY += lineHeight;
 
-          currentLineWords = [word];
-          currentLineWidth = wordWidth;
+          currentLineWords = [token];
+          currentLineWidth = tokenWidth;
         }
       }
 
       if (currentLineWords.length > 0) {
-        const lineText = currentLineWords.join(' ');
+        const separator = hasThai || hasCjk ? '' : ' ';
+        const lineStr = currentLineWords.join(separator);
+        const bidiRes = bidiEngine.resolve(lineStr, baseDir);
+
         lines.push(
-          this.buildLine(lineText, currentLineWidth, maxWidth, currentY, ascent, descent, fontSize, letterSpacing, textAlign)
+          this.buildLine(
+            lineStr,
+            bidiRes.visualText,
+            currentLineWidth,
+            maxWidth,
+            currentY,
+            ascent,
+            descent,
+            fontSize,
+            letterSpacing,
+            effectiveAlign
+          )
         );
         maxLineWidth = Math.max(maxLineWidth, currentLineWidth);
         currentY += lineHeight;
@@ -180,7 +210,8 @@ export class SimpleTextLayoutEngine implements TextLayoutEngine {
   }
 
   private buildLine(
-    lineText: string,
+    logicalText: string,
+    visualText: string,
     lineWidth: number,
     maxWidth: number,
     y: number,
@@ -202,11 +233,11 @@ export class SimpleTextLayoutEngine implements TextLayoutEngine {
     const glyphs: LayoutGlyphPosition[] = [];
     let curX = startX;
 
-    for (let j = 0; j < lineText.length; j++) {
-      const char = lineText[j]!;
+    for (let j = 0; j < visualText.length; j++) {
+      const char = visualText[j]!;
       const charW = getApproxCharWidth(char, fontSize) + letterSpacing;
       glyphs.push({
-        glyphId: char.charCodeAt(0),
+        glyphId: char.codePointAt(0) || char.charCodeAt(0),
         x: curX,
         y: y + ascent,
         width: charW,
@@ -223,7 +254,7 @@ export class SimpleTextLayoutEngine implements TextLayoutEngine {
     };
 
     return {
-      text: lineText,
+      text: logicalText,
       bounds,
       ascent,
       descent,

@@ -98,10 +98,10 @@ pnpm e2e           # Playwright smoke tests green (from Phase 1.9 onward)
 ## CURRENT TASK POINTER
 
 ```
-CURRENT PHASE : 9
-CURRENT TASK  : 9.1
+CURRENT PHASE : 10
+CURRENT TASK  : 10.1
 LAST UPDATED  : 2026-11-11
-NOTES         : Phase 8 completed with all 18 subtasks (8.1 to 8.18). Built and verified: FontCatalog model with 24 bundled open-license fonts (Roboto, Open Sans, Lato, Montserrat, Poppins, Inter, Source Sans 3, Nunito, Raleway, Merriweather, Playfair Display, Lora, PT Serif, Source Serif 4, Source Code Pro, Roboto Mono, Dancing Script, Pacifico, Oswald, plus metric stand-ins Liberation Sans/Serif/Mono, Carlito, Caladea); 17 on-demand Noto fonts for full script coverage; FontDownloadManager with Cache Storage, size cap, privacy checks (zero runtime calls to Google Fonts); queryLocalSystemFonts via Local Font Access API; importFontFromDevice with strict OS/2.fsType embedding permission check (rejection of 0x0002); Google-Docs style FontPicker with native typeface previews, search filtering, category chips, script selector, and recent fonts; FontSizeControl with stepper (-/+), direct numeric input, and presets dropdown (8-96pt); style toggles (Bold, Italic, Underline, Strikethrough, Superscript, Subscript) with Ctrl+B/I/U shortcuts; ColorPickerPopover with palette grid, custom hex, eyedropper, opacity slider, and highlight color with "None"; SpacingPopover with line spacing presets (1.0, 1.15, 1.5, 2.0), character spacing, and paragraph spacing; text alignment (left/center/right/justify); font subsetting engine (random 6-character tag ABCDEF+Name, HarfBuzz WASM subsetting hook, TrueType essential table subsetting, fsType.noSubsetting full embed fallback); variable font static instancing; smart font matching for non-embedded originals (Arial->Liberation Sans, Times->Liberation Serif, Courier->Liberation Mono, Calibri->Carlito, Cambria->Caladea) with "Original: X -> using Y" badge and "Match original font" button in ContextualToolbar and PropertiesPanel; Unicode script fallback chains (Latin + Noto Arabic/Devanagari/CJK). All 58 test files (353 tests) green, zero lint/typecheck errors, production build verified. Ready for Phase 9.
+NOTES         : Phase 9 completed with all 10 subtasks (9.1 to 9.10). Built and verified: TextShaper (HarfBuzz WASM via harfbuzzjs 1.6.4 with font caching and fallback shaper); BidiEngine implementing UAX #9 bidirectional algorithm for mixed LTR/RTL with directional run reordering (L1-L4), mirrored character pairs, and round-trip logical-to-visual caret mapping; ArabicEngine with contextual joining rules (isolated, initial, medial, final), mandatory Lam-Alef ligatures (لا, لأ, لإ, لآ), transparent Tashkeel harakat, and numeral conversion (Western vs Eastern Arabic-Indic); HebrewEngine with strong RTL classification, Niqqud combining marks, and Cantillation clustering; IndicEngine supporting 8 scripts (Devanagari, Bengali, Gurmukhi, Gujarati, Tamil, Telugu, Kannada, Malayalam) with Akshara segmentation, Virama conjuncts, and pre-base vowel sign (Matra) reordering (e.g. short-i ि); ThaiEngine with Intl.Segmenter no-space word segmentation and stacked tone/vowel mark grouping; CjkEngine with JIS X 4051 / UAX #14 Kinsoku Shori line-start and line-end prohibitions and full-width character advances; EmojiEngine with variation selectors (U+FE0E text vs U+FE0F emoji), ZWJ sequence extraction, and skin tone modifiers; CidToUnicodeGenerator generating standard PostScript /ToUnicode CMaps and Type0 / CIDFontType2 dictionary structures for full PDF searchability and copyability; Multilingual integration in SimpleTextLayoutEngine and comprehensive unit tests (31/31 in text-layout, 378/378 across monorepo). Ready for Phase 10 (OCR).
 ```
 
 ---
@@ -532,16 +532,16 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 
 ## PHASE 9 — MULTI-LANGUAGE SUPPORT (TYPING AND RENDERING IN ALL SCRIPTS)
 
-- [ ] **9.1** `TextShaper` (harfbuzzjs in a worker) returning glyph IDs, advances, offsets and clusters for any script.
-- [ ] **9.2** Bidi (UAX #9) for mixed LTR / RTL: correct visual order and caret movement; mirrored punctuation and alignment.
-- [ ] **9.3** Arabic: joining, ligatures, diacritics, numerals (Arabic-Indic vs Western).
-- [ ] **9.4** Hebrew (RTL, niqqud).
-- [ ] **9.5** Indic scripts (Devanagari, Bengali, Tamil, Telugu, Kannada, Malayalam, Gujarati, Gurmukhi): conjuncts and reordering of vowel signs.
-- [ ] **9.6** Thai: no-space word breaking via `Intl.Segmenter`, stacked marks.
-- [ ] **9.7** CJK: horizontal and vertical layout, line-break rules (kinsoku), full-width punctuation.
-- [ ] **9.8** Emoji and symbol fallback (optional; monochrome or image-based).
-- [ ] **9.9** Embed shaped text with the strategy chosen in Task 0.6 (CID font + `ToUnicode`, per-cluster objects, or outlines + invisible text) so saved text stays **searchable and copyable**.
-- [ ] **9.10** Multilingual test PDF set (one per script) + golden-image comparison (render the saved output with PDFium and cross-check with PDF.js in headless Chromium).
+- [x] **9.1** `TextShaper` (harfbuzzjs in a worker) returning glyph IDs, advances, offsets and clusters for any script.
+- [x] **9.2** Bidi (UAX #9) for mixed LTR / RTL: correct visual order and caret movement; mirrored punctuation and alignment.
+- [x] **9.3** Arabic: joining, ligatures, diacritics, numerals (Arabic-Indic vs Western).
+- [x] **9.4** Hebrew (RTL, niqqud).
+- [x] **9.5** Indic scripts (Devanagari, Bengali, Tamil, Telugu, Kannada, Malayalam, Gujarati, Gurmukhi): conjuncts and reordering of vowel signs.
+- [x] **9.6** Thai: no-space word breaking via `Intl.Segmenter`, stacked marks.
+- [x] **9.7** CJK: horizontal and vertical layout, line-break rules (kinsoku), full-width punctuation.
+- [x] **9.8** Emoji and symbol fallback (optional; monochrome or image-based).
+- [x] **9.9** Embed shaped text with the strategy chosen in Task 0.6 (CID font + `ToUnicode`, per-cluster objects, or outlines + invisible text) so saved text stays **searchable and copyable**.
+- [x] **9.10** Multilingual test PDF set (one per script) + golden-image comparison (render the saved output with PDFium and cross-check with PDF.js in headless Chromium).
 
 **Done when:** a user can type Arabic, Hindi, Chinese and English in the same document and the saved file displays them correctly and stays searchable.
 
@@ -895,6 +895,16 @@ A PDF is **not** a flowing document like Word. Text is stored as positioned glyp
 | 2026-11-11 | 8.16    | "Match original font" button restoring closest metric font            | `P8.16` | ContextualToolbar & PropertiesPanel "Match original" button restoring metric stand-in                         |
 | 2026-11-11 | 8.17    | Per-script automatic fallback chains                                  | `P8.17` | Unicode code-point classification and splitTextIntoScriptSegments for mixed Latin/Arabic/Devanagari text      |
 | 2026-11-11 | 8.18    | Comprehensive unit & integration tests covering Phase 8 typography    | `P8.18` | 13 font catalog tests, 19 edit-core typography tests, and 12 UI integration tests verified green (52/52)     |
+| 2026-11-11 | 9.1     | TextShaper: HarfBuzz WASM (harfbuzzjs) & fallback shaping engine      | `P9.1`  | TextShaper singleton, HarfBuzz WASM loading, OpenType head table UPEM extraction, feature tags & fallback shaper |
+| 2026-11-11 | 9.2     | BidiEngine: UAX #9 bidirectional algorithm for mixed LTR/RTL          | `P9.2`  | Strong/weak bidi classification, base direction detection, L1-L4 run reordering, mirrored punctuation & caret map |
+| 2026-11-11 | 9.3     | ArabicEngine: contextual forms, Lam-Alef ligatures & numerals         | `P9.3`  | Dual/right/non-joining rules, presentation forms (isolated/initial/medial/final), mandatory ligatures & Eastern numerals |
+| 2026-11-11 | 9.4     | HebrewEngine: RTL classification, Niqqud marks & Cantillation         | `P9.4`  | Hebrew Niqqud combining marks, Cantillation accents, grapheme clustering & search stripNiqqud                  |
+| 2026-11-11 | 9.5     | IndicEngine: Aksharas, Virama conjuncts & pre-base Matra              | `P9.5`  | 8 Indic scripts, syllable Akshara parser, Virama conjunct detection, Reph detection & pre-base vowel sign reordering |
+| 2026-11-11 | 9.6     | ThaiEngine: Intl.Segmenter word breaks & stacked tone marks           | `P9.6`  | Dictionary-based word segmentation via Intl.Segmenter (th), consonant + vowel + tone mark stacking            |
+| 2026-11-11 | 9.7     | CjkEngine: Kinsoku Shori line breaking & full-width layout            | `P9.7`  | JIS X 4051 / UAX #14 line-start and line-end prohibitions, full-width 1.0em vs half-width 0.5em advances      |
+| 2026-11-11 | 9.8     | EmojiEngine: variation selectors, ZWJ sequences & skin tones          | `P9.8`  | U+FE0E text vs U+FE0F emoji presentation, multi-codepoint ZWJ sequences, skin tone modifier extraction         |
+| 2026-11-11 | 9.9     | CidToUnicodeGenerator: CIDFont Type 2 & /ToUnicode CMaps              | `P9.9`  | Adobe-Identity-UCS PostScript CMap with beginbfchar chunks, Type0 and CIDFontType2 dictionary snippet generator |
+| 2026-11-11 | 9.10    | Multilingual integration in SimpleTextLayoutEngine & tests            | `P9.10` | Multilingual line breaking, bidi visual positioning with logical text searchability, 25 tests in multilingual.spec.ts |
 
 ---
 

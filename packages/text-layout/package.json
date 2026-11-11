@@ -12,7 +12,9 @@
     }
   },
   "dependencies": {
-    "@rhypdf/pdf-model": "workspace:*"
+    "@rhypdf/fonts": "workspace:*",
+    "@rhypdf/pdf-model": "workspace:*",
+    "harfbuzzjs": "1.6.4"
   },
   "scripts": {
     "build": "tsc",
