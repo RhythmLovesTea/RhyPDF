@@ -2,9 +2,18 @@ import i18n, { i18n as I18nInstance } from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { enTranslations } from './locales/en';
 import { arTranslations } from './locales/ar';
+import { esTranslations } from './locales/es';
+import { frTranslations } from './locales/fr';
+import { deTranslations } from './locales/de';
+import { zhTranslations } from './locales/zh';
+import { jaTranslations } from './locales/ja';
+import { hiTranslations } from './locales/hi';
+import { ptTranslations } from './locales/pt';
+import { ruTranslations } from './locales/ru';
 import { generatePseudoLocale } from './pseudolocale';
 
-export type LocaleCode = 'en' | 'qps-ploc' | 'ar' | 'es' | 'fr' | 'de' | 'hi' | 'ja' | 'zh';
+export type LocaleCode =
+  'en' | 'qps-ploc' | 'ar' | 'es' | 'fr' | 'de' | 'hi' | 'ja' | 'zh' | 'pt' | 'ru';
 
 export interface LocaleMeta {
   code: LocaleCode;
@@ -25,9 +34,11 @@ export const SUPPORTED_LOCALES: Record<LocaleCode, LocaleMeta> = {
   es: { code: 'es', label: 'Español (Spanish)', dir: 'ltr' },
   fr: { code: 'fr', label: 'Français (French)', dir: 'ltr' },
   de: { code: 'de', label: 'Deutsch (German)', dir: 'ltr' },
-  hi: { code: 'hi', label: 'हिन्दी (Hindi)', dir: 'ltr' },
+  zh: { code: 'zh', label: '中文 (Chinese)', dir: 'ltr' },
   ja: { code: 'ja', label: '日本語 (Japanese)', dir: 'ltr' },
-  zh: { code: 'zh', label: '中文 (Chinese)', dir: 'ltr' }
+  hi: { code: 'hi', label: 'हिन्दी (Hindi)', dir: 'ltr' },
+  pt: { code: 'pt', label: 'Português (Portuguese)', dir: 'ltr' },
+  ru: { code: 'ru', label: 'Русский (Russian)', dir: 'ltr' }
 };
 
 export function getScriptDirection(locale: string): 'ltr' | 'rtl' {
@@ -93,7 +104,15 @@ export function initI18n(initialLng?: string): I18nInstance {
       resources: {
         en: { translation: enTranslations },
         'qps-ploc': { translation: generatePseudoLocale(enTranslations) },
-        ar: { translation: arTranslations }
+        ar: { translation: arTranslations },
+        es: { translation: esTranslations },
+        fr: { translation: frTranslations },
+        de: { translation: deTranslations },
+        zh: { translation: zhTranslations },
+        ja: { translation: jaTranslations },
+        hi: { translation: hiTranslations },
+        pt: { translation: ptTranslations },
+        ru: { translation: ruTranslations }
       },
       supportedLngs: Object.keys(SUPPORTED_LOCALES),
       load: 'currentOnly',

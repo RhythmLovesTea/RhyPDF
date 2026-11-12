@@ -23,7 +23,8 @@ import {
   ShieldAlert,
   KeyRound,
   FileText,
-  Trash2
+  Trash2,
+  Sparkles
 } from 'lucide-react';
 import { useDocStore, EditorMode } from '../../stores/docStore';
 
@@ -40,6 +41,8 @@ export interface EditorTopBarProps {
   onToggleSearch: () => void;
   onOpenCommandPalette: () => void;
   onOpenShortcutsHelp: () => void;
+  onOpenHelpGuide?: () => void;
+  onOpenWhatsNew?: () => void;
   onOpenBatchOcr?: () => void;
   onOpenPasswordSecurity?: () => void;
   onOpenRedaction?: () => void;
@@ -65,6 +68,8 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
   onToggleSearch,
   onOpenCommandPalette,
   onOpenShortcutsHelp,
+  onOpenHelpGuide,
+  onOpenWhatsNew,
   onOpenBatchOcr,
   onOpenPasswordSecurity,
   onOpenRedaction,
@@ -714,6 +719,58 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
                 >
                   <KeyRound size={15} />
                   <span>Local Data Lock...</span>
+                </button>
+              )}
+
+              {onOpenHelpGuide && (
+                <button
+                  data-testid="menu-item-help-guide"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenHelpGuide();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    color: 'inherit'
+                  }}
+                >
+                  <HelpCircle size={15} />
+                  <span>Feature Guides &amp; Clips...</span>
+                </button>
+              )}
+
+              {onOpenWhatsNew && (
+                <button
+                  data-testid="menu-item-whats-new"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenWhatsNew();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    color: 'inherit'
+                  }}
+                >
+                  <Sparkles size={15} />
+                  <span>What&apos;s New in RhyPDF...</span>
                 </button>
               )}
 

@@ -143,6 +143,8 @@ import {
   runWithSaveProgress
 } from '../../lib/fileSave';
 import { saveDocumentVersion } from '../../lib/versionHistory';
+import { announceA11y } from '../../lib/a11y';
+import { triggerHaptic } from '../../lib/haptics';
 import {
   PageOrganizerPage,
   BookmarksPanel,
@@ -195,6 +197,8 @@ import {
 } from '../tools';
 import { CommandPalette, CommandItem } from '../../components/CommandPalette';
 import { ShortcutsHelpDialog } from '../../components/ShortcutsHelpDialog';
+import { WhatsNewModal } from '../../components/WhatsNewModal';
+import { HelpDialog } from '../../components/HelpDialog';
 import { AutosaveManager } from '../../lib/autosave';
 import { loadWorkingCopy, saveWorkingCopy } from '../../lib/workingCopy';
 import { FitMode } from '../viewer/fit-mode';
@@ -244,6 +248,8 @@ export default function EditorPage({
   const [propertiesOpen, setPropertiesOpen] = useState(true);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
+  const [isHelpGuideOpen, setIsHelpGuideOpen] = useState(false);
+  const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const activePageIdx = currentPage - 1;
   const [scale, setScale] = useState(1.0);
@@ -1327,6 +1333,8 @@ export default function EditorPage({
         // Undo (Ctrl+Z)
         e.preventDefault();
         void editSession.undo();
+        triggerHaptic('action');
+        announceA11y('Undone last action');
       } else if (
         ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z') ||
         ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y')
@@ -1334,6 +1342,76 @@ export default function EditorPage({
         // Redo (Ctrl+Shift+Z or Ctrl+Y)
         e.preventDefault();
         void editSession.redo();
+        triggerHaptic('action');
+        announceA11y('Redone action');
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b' && !isInput) {
+        // Toggle bold (Ctrl+B)
+        e.preventDefault();
+        void handleToggleBold();
+        triggerHaptic('action');
+        announceA11y('Toggled bold');
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i' && !isInput) {
+        // Toggle italic (Ctrl+I)
+        e.preventDefault();
+        void handleToggleItalic();
+        triggerHaptic('action');
+        announceA11y('Toggled italic');
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u' && !isInput) {
+        // Toggle underline (Ctrl+U)
+        e.preventDefault();
+        void handleToggleUnderline();
+        triggerHaptic('action');
+        announceA11y('Toggled underline');
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && !isInput) {
+        // Find (Ctrl+F)
+        e.preventDefault();
+        setIsFindReplaceOpen((prev) => !prev);
+        announceA11y('Toggled find bar');
+      } else if (e.key === 'Tab' && !isInput) {
+        // Tab / Shift+Tab cycles through canvas objects (WCAG 2.2 AA - Task 18.1)
+        if (currentObjects.length > 0) {
+          e.preventDefault();
+          const selectable =
+            activeMode === 'edit-images'
+              ? currentObjects.filter((o) => o.type === 'image')
+              : currentObjects;
+          if (selectable.length > 0) {
+            const currentIdx = selectable.findIndex((o) => selectedIds.includes(o.id));
+            let nextIdx: number;
+            if (e.shiftKey) {
+              nextIdx = currentIdx <= 0 ? selectable.length - 1 : currentIdx - 1;
+            } else {
+              nextIdx =
+                currentIdx === -1 || currentIdx >= selectable.length - 1 ? 0 : currentIdx + 1;
+            }
+            const targetObj = selectable[nextIdx];
+            if (targetObj) {
+              editSession.selectObject(activePageIdx, targetObj.id);
+              triggerHaptic('selection');
+              announceA11y(
+                `Selected ${targetObj.type} object (${nextIdx + 1} of ${selectable.length})`
+              );
+            }
+          }
+        }
+      } else if (e.key === 'Enter' && !isInput && selectedIds.length === 1) {
+        // Enter begins text editing on selected text block
+        const selectedObj = currentObjects.find((o) => o.id === selectedIds[0]);
+        if (selectedObj && selectedObj.type === 'text') {
+          e.preventDefault();
+          setEditingTextBlockId(selectedObj.id);
+          announceA11y(`Editing text block: ${selectedObj.id}`);
+        }
+      } else if (e.key === 'Escape' && !isInput) {
+        if (editingTextBlockId) {
+          e.preventDefault();
+          setEditingTextBlockId(null);
+          announceA11y('Exited text editing');
+        } else if (selectedIds.length > 0) {
+          e.preventDefault();
+          editSession.clearSelection();
+          announceA11y('Cleared selection');
+        }
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a' && !isInput) {
         // Select all objects on active page (Ctrl+A)
         e.preventDefault();
@@ -1365,12 +1443,15 @@ export default function EditorPage({
         // Delete selected objects
         if (selectedIds.length > 0) {
           e.preventDefault();
+          triggerHaptic('action');
+          announceA11y('Deleted selected objects');
           void handleDeleteObjects();
         }
       } else if (!isInput && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         // Nudge with arrow keys (Task 5.9 & 6.3: 1pt, Shift = 10pt)
         if (selectedIds.length > 0) {
           e.preventDefault();
+          triggerHaptic('selection');
           const step = e.shiftKey ? 10 : 1;
           let dx = 0;
           let dy = 0;
@@ -3886,6 +3967,18 @@ export default function EditorPage({
         title: t('commands.cmdShortcuts'),
         shortcut: 'F1 / ?',
         onSelect: () => setShortcutsHelpOpen(true)
+      },
+      {
+        id: 'help-guide',
+        category: t('commands.categoryApp'),
+        title: 'Feature Guides & Video Clips',
+        onSelect: () => setIsHelpGuideOpen(true)
+      },
+      {
+        id: 'whats-new',
+        category: t('commands.categoryApp'),
+        title: "What's New in RhyPDF",
+        onSelect: () => setIsWhatsNewOpen(true)
       }
     ],
     [
@@ -3935,6 +4028,8 @@ export default function EditorPage({
         }}
         onOpenCommandPalette={() => setCommandPaletteOpen(true)}
         onOpenShortcutsHelp={() => setShortcutsHelpOpen(true)}
+        onOpenHelpGuide={() => setIsHelpGuideOpen(true)}
+        onOpenWhatsNew={() => setIsWhatsNewOpen(true)}
         onOpenBatchOcr={() => setIsBatchOcrOpen(true)}
         onOpenPasswordSecurity={() => setIsPasswordSecurityOpen(true)}
         onOpenRedaction={() => setIsRedactionOpen(true)}
@@ -4738,6 +4833,10 @@ export default function EditorPage({
           window.open(pendingExternalUrl, '_blank', 'noopener,noreferrer');
         }}
       />
+
+      <HelpDialog isOpen={isHelpGuideOpen} onClose={() => setIsHelpGuideOpen(false)} />
+
+      <WhatsNewModal isOpen={isWhatsNewOpen} onClose={() => setIsWhatsNewOpen(false)} />
     </div>
   );
 }

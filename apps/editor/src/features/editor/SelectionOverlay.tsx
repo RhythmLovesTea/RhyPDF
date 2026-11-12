@@ -7,6 +7,7 @@ import {
   SnapGuide,
   type TextBlock
 } from '@rhypdf/edit-core';
+import { triggerHaptic } from '../../lib/haptics';
 
 export type HandleType = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'rotate' | 'body';
 
@@ -168,6 +169,9 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
           );
           if (snap.snappedX) finalDxPt = snap.x - boundsPdf.left;
           if (snap.snappedY) finalDyPt = snap.y - boundsPdf.bottom;
+          if (snap.guides.length > 0 && activeGuides.length === 0) {
+            triggerHaptic('snap');
+          }
           setActiveGuides(snap.guides);
         } else {
           setActiveGuides([]);

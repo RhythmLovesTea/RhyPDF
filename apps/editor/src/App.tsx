@@ -5,6 +5,7 @@ import '@rhypdf/ui/styles.css';
 import { useRouter } from './router';
 import { GlobalDropOverlay } from './components/GlobalDropOverlay';
 import { OnboardingModal } from './components/OnboardingModal';
+import { LiveAnnouncer } from './components/LiveAnnouncer';
 import { setupPwaLaunchQueue } from './lib/fileOpen';
 import { saveWorkingCopy } from './lib/workingCopy';
 import { addRecentFile } from './lib/recentFiles';
@@ -224,6 +225,9 @@ export function App(): React.JSX.Element {
 
         {/* Onboarding tour modal (shown once, Task 4.12) */}
         <OnboardingModal />
+
+        {/* Global Live Region Announcer for screen readers (WCAG 2.2 AA, Task 18.1) */}
+        <LiveAnnouncer />
       </div>
     </GlobalDropOverlay>
   );

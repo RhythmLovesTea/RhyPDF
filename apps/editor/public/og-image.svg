@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="ogbg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="40%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="logobg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e3a8a"/>
+      <stop offset="50%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <linearGradient id="textgrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <filter id="cardglow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#2563eb" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1200" height="630" fill="url(#ogbg)"/>
+
+  <!-- Subtle glowing background shapes -->
+  <circle cx="200" cy="150" r="300" fill="#1e40af" opacity="0.15" filter="blur(60px)"/>
+  <circle cx="1000" cy="500" r="280" fill="#0284c7" opacity="0.12" filter="blur(60px)"/>
+
+  <!-- Left Content Area -->
+  <g transform="translate(100, 120)">
+    <!-- Brand Badge -->
+    <rect x="0" y="0" width="220" height="38" rx="19" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+    <circle cx="22" cy="19" r="6" fill="#10b981"/>
+    <text x="36" y="24" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600" letter-spacing="0.5">100% CLIENT-SIDE &amp; PRIVATE</text>
+
+    <!-- Main Title -->
+    <text x="0" y="110" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="800" letter-spacing="-1.5">
+      Rhy<tspan fill="url(#textgrad)">PDF</tspan>
+    </text>
+
+    <!-- Subtitle / Tagline -->
+    <text x="0" y="170" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="600">
+      Private, High-Performance PDF Editor in Your Browser
+    </text>
+
+    <!-- Detailed description points -->
+    <text x="0" y="235" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="400">
+      ⚡ Powered by WebAssembly &amp; Direct PDFium Rendering
+    </text>
+    <text x="0" y="275" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="400">
+      🔒 Zero server uploads — documents never leave your device
+    </text>
+    <text x="0" y="315" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="400">
+      ✏️ In-place text editing, image manipulation, OCR, forms &amp; signatures
+    </text>
+
+    <!-- Bottom Feature Pills -->
+    <g transform="translate(0, 360)">
+      <rect x="0" y="0" width="130" height="32" rx="16" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+      <text x="65" y="21" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="500" text-anchor="middle">Text Editing</text>
+
+      <rect x="142" y="0" width="120" height="32" rx="16" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+      <text x="202" y="21" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="500" text-anchor="middle">OCR Engine</text>
+
+      <rect x="274" y="0" width="140" height="32" rx="16" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+      <text x="344" y="21" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="500" text-anchor="middle">Page Organizer</text>
+
+      <rect x="426" y="0" width="110" height="32" rx="16" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+      <text x="481" y="21" fill="#e2e8f0" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="500" text-anchor="middle">Offline PWA</text>
+    </g>
+  </g>
+
+  <!-- Right App Icon Graphic -->
+  <g transform="translate(820, 165)" filter="url(#cardglow)">
+    <rect x="0" y="0" width="280" height="280" rx="60" fill="url(#logobg)"/>
+    <!-- Folded paper mark -->
+    <path d="M70 50 H170 L210 90 V230 H70 Z" fill="#ffffff" rx="10"/>
+    <path d="M170 50 V90 H210 Z" fill="#cbd5e1"/>
+    <!-- Dynamic signature wave -->
+    <path d="M90 125 C110 115, 140 140, 170 128 C185 120, 195 125, 200 130" stroke="#0284c7" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <rect x="90" y="155" width="100" height="8" rx="4" fill="#64748b"/>
+    <rect x="90" y="175" width="80" height="8" rx="4" fill="#94a3b8"/>
+    <rect x="90" y="195" width="90" height="8" rx="4" fill="#cbd5e1"/>
+    <circle cx="190" cy="210" r="6" fill="#10b981"/>
+  </g>
+</svg>
