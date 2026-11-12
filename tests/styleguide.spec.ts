@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('rhypdf_onboarding_completed', 'true');
+  });
+});
+
 test('Style guide displays all 11 design-system components in light and dark mode', async ({
   page
 }) => {

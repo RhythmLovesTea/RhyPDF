@@ -4262,8 +4262,8 @@ export default function EditorPage({
             >
               <div style={{ fontSize: 40 }}>📄</div>
               <p style={{ fontSize: 16 }}>{t('home.openDocumentDesc')}</p>
-              <span style={{ fontSize: 12 }}>
-                PDFium WASM: {wasmStatus} ({wasmPhase})
+              <span data-testid="pdfium-status" style={{ fontSize: 12 }}>
+                PDFium Engine: {wasmStatus} ({wasmPhase})
               </span>
             </div>
           )}

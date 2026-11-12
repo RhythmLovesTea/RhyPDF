@@ -8,12 +8,14 @@ export default defineConfig({
     '**/routing.spec.ts',
     '**/error-handling.spec.ts',
     '**/i18n.spec.ts',
-    '**/security-pwa.spec.ts'
+    '**/security-pwa.spec.ts',
+    '**/main-flows.spec.ts',
+    '**/accessibility.spec.ts'
   ],
   timeout: 60000,
   workers: 1,
   webServer: {
-    command: 'pnpm --filter @rhypdf/editor preview --port 4173',
+    command: 'node scripts/serve_preview.mjs',
     port: 4173,
     reuseExistingServer: !process.env.CI
   },
@@ -45,6 +47,19 @@ export default defineConfig({
       name: 'webkit',
       use: {
         ...devices['Desktop Safari']
+      }
+    },
+    {
+      name: 'mobile-chrome',
+      use: {
+        ...devices['Pixel 5'],
+        channel: 'msedge'
+      }
+    },
+    {
+      name: 'mobile-safari',
+      use: {
+        ...devices['iPhone 12']
       }
     }
   ]

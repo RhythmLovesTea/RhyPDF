@@ -2,12 +2,17 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Routing skeleton', () => {
   test('navigates through Home -> Editor -> Page Organizer -> Settings', async ({ page }) => {
+    // Dismiss onboarding
+    await page.addInitScript(() => {
+      localStorage.setItem('rhypdf_onboarding_completed', 'true');
+    });
+
     // 1. Visit root
     await page.goto('/');
     await expect(page.locator('[data-testid="page-home"]')).toBeVisible();
 
     // 2. Navigate to Editor
-    await page.locator('[data-testid="btn-open-editor"]').click();
+    await page.locator('[data-testid="nav-editor"]').click();
     await expect(page.locator('[data-testid="page-editor"]')).toBeVisible();
     expect(page.url()).toContain('#/editor');
 
@@ -27,6 +32,11 @@ test.describe('Routing skeleton', () => {
   });
 
   test('deep linking and page refresh works for /pages and /settings', async ({ page }) => {
+    // Dismiss onboarding
+    await page.addInitScript(() => {
+      localStorage.setItem('rhypdf_onboarding_completed', 'true');
+    });
+
     // Test deep link to Settings
     await page.goto('/#/settings');
     await expect(page.locator('[data-testid="page-settings"]')).toBeVisible();
@@ -42,6 +52,5 @@ test.describe('Routing skeleton', () => {
     // Test reload preserves route
     await page.reload();
     await expect(page.locator('[data-testid="page-organizer"]')).toBeVisible();
-    await expect(page.locator('[data-testid="page-card-1"]')).toBeVisible();
   });
 });

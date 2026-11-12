@@ -1,6 +1,12 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Task 1.8: i18n scaffolding and RTL pseudo-locale rendering', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('rhypdf_onboarding_completed', 'true');
+    });
+  });
+
   test('initializes in English LTR by default and switches to RTL pseudo-locale without layout breakage', async ({
     page
   }) => {
@@ -54,7 +60,7 @@ test.describe('Task 1.8: i18n scaffolding and RTL pseudo-locale rendering', () =
     await page.locator('[data-testid="nav-pages"]').click();
     await expect(page.locator('[data-testid="page-organizer"]')).toBeVisible();
 
-    const pageCard1 = page.locator('[data-testid="page-card-1"]');
+    const pageCard1 = page.locator('[data-testid^="page-card-"]').first();
     await expect(pageCard1).toBeVisible();
 
     // Verify buttons inside cards are clickable and properly styled

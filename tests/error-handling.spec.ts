@@ -4,6 +4,11 @@ test.describe('Error Boundary and Crash Recovery', () => {
   test('displays friendly screen and preserves recovery metadata when an error is thrown', async ({
     page
   }) => {
+    // Dismiss onboarding
+    await page.addInitScript(() => {
+      localStorage.setItem('rhypdf_onboarding_completed', 'true');
+    });
+
     // Navigate to settings
     await page.goto('/#/settings');
     await expect(page.locator('[data-testid="page-settings"]')).toBeVisible();

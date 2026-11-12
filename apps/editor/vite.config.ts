@@ -51,6 +51,11 @@ export default defineConfig({
   worker: {
     format: 'es'
   },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'esnext'
+    }
+  },
   esbuild: {
     target: 'esnext'
   },

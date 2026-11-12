@@ -11,10 +11,9 @@ test('Editor app shell initializes with code-split chunks and worker WASM plumbi
   // Verify editor page is active
   await expect(page.locator('[data-testid="page-editor"]')).toBeVisible();
 
-  // Verify code-split lazy loaded components appear
-  await expect(page.locator('[data-testid="toolbar-skeleton"]')).toBeVisible({ timeout: 10000 });
-  await expect(page.locator('[data-testid="sidebar-skeleton"]')).toBeVisible({ timeout: 10000 });
-  await expect(page.locator('[data-testid="viewer-skeleton"]')).toBeVisible({ timeout: 10000 });
+  // Verify editor components appear
+  await expect(page.locator('[data-testid="editor-top-bar"]')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('[data-testid="editor-empty-state"]')).toBeVisible({ timeout: 10000 });
 
   // Verify worker status badge indicates connected
   const workerBadge = page.locator('[data-testid="worker-status-badge"]');

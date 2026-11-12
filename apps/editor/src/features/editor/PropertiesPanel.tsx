@@ -187,6 +187,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
         <button
           data-testid="btn-toggle-properties-close"
           onClick={onToggle}
+          aria-label={t('editor.properties.title')}
           style={{
             background: 'none',
             border: 'none',
@@ -215,6 +216,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             {/* Unit selector (pt / px / mm / in) */}
             <select
               data-testid="select-prop-unit"
+              aria-label={t('editor.properties.geometry')}
               value={unit}
               onChange={(e) => setUnit(e.target.value as UnitType)}
               style={{
@@ -240,6 +242,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               </label>
               <input
                 data-testid="input-prop-x"
+                aria-label="X position"
                 type="number"
                 value={x}
                 onChange={(e) => {
@@ -264,6 +267,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               </label>
               <input
                 data-testid="input-prop-y"
+                aria-label="Y position"
                 type="number"
                 value={y}
                 onChange={(e) => {
@@ -288,6 +292,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               </label>
               <input
                 data-testid="input-prop-w"
+                aria-label="Width"
                 type="number"
                 value={w}
                 onChange={(e) => {
@@ -312,6 +317,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               </label>
               <input
                 data-testid="input-prop-h"
+                aria-label="Height"
                 type="number"
                 value={h}
                 onChange={(e) => {
@@ -490,6 +496,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             </div>
             <input
               data-testid="input-prop-opacity"
+              aria-label={t('editor.properties.opacity')}
               type="range"
               min="0"
               max="100"
@@ -541,6 +548,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               </div>
               <input
                 data-testid="input-prop-brightness"
+                aria-label="Brightness"
                 type="range"
                 min="-100"
                 max="100"
@@ -569,6 +577,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               </div>
               <input
                 data-testid="input-prop-contrast"
+                aria-label="Contrast"
                 type="range"
                 min="-100"
                 max="100"
@@ -594,6 +603,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               <span>Grayscale (B&amp;W)</span>
               <input
                 data-testid="checkbox-prop-grayscale"
+                aria-label="Grayscale"
                 type="checkbox"
                 checked={grayscale}
                 onChange={(e) => {
