@@ -31,6 +31,10 @@ export interface PageMetric {
 }
 
 export interface PdfViewerProps {
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
+  scale?: number;
+  onScaleChange?: (scale: number) => void;
   engine?: PdfEngine;
   docHandle?: DocumentHandle | null;
   docId: string;
@@ -73,6 +77,7 @@ interface ViewerPageCanvasProps {
     signal?: AbortSignal
   ) => Promise<ImageBitmap>;
   children?: React.ReactNode;
+  onClick?: () => void;
 }
 
 const ViewerPageCanvas: React.FC<ViewerPageCanvasProps> = ({
@@ -85,7 +90,8 @@ const ViewerPageCanvas: React.FC<ViewerPageCanvasProps> = ({
   docId,
   scheduler,
   renderPageBitmap,
-  children
+  children,
+  onClick
 }) => {
   const [bitmap, setBitmap] = useState<ImageBitmap | null>(null);
 
@@ -127,6 +133,7 @@ const ViewerPageCanvas: React.FC<ViewerPageCanvasProps> = ({
         dpr={dpr}
         baseBitmap={bitmap}
         theme={theme}
+        onClick={onClick}
       >
         {children}
       </TiledPageCanvas>
@@ -144,6 +151,7 @@ const ViewerPageCanvas: React.FC<ViewerPageCanvasProps> = ({
       bitmap={bitmap}
       theme={theme}
       isLoading={!isVisible || !bitmap}
+      onClick={onClick}
     >
       {children}
     </PageCanvas>
@@ -151,6 +159,10 @@ const ViewerPageCanvas: React.FC<ViewerPageCanvasProps> = ({
 };
 
 export const PdfViewer: React.FC<PdfViewerProps> = ({
+  currentPage: propCurrentPage,
+  onPageChange,
+  scale: propScale,
+  onScaleChange,
   docId,
   pageCount,
   getPageMetric = () => ({ width: 595.28, height: 841.89, rotation: 0 }),
@@ -237,6 +249,49 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     enableKeyboard: true
   });
 
+  // Synchronize external currentPage prop
+  useEffect(() => {
+    if (
+      propCurrentPage !== undefined &&
+      propCurrentPage !== currentPage &&
+      propCurrentPage >= 1 &&
+      propCurrentPage <= pageCount
+    ) {
+      setCurrentPage(propCurrentPage);
+      virtualListRef.current?.scrollToPage(propCurrentPage - 1, 'start');
+    }
+  }, [propCurrentPage, currentPage, pageCount, setCurrentPage]);
+
+  // Synchronize external scale prop
+  useEffect(() => {
+    if (propScale !== undefined && Math.abs(propScale - scale) > 0.001) {
+      setScale(propScale);
+    }
+  }, [propScale, scale, setScale]);
+
+  // Notify parent on currentPage change
+  useEffect(() => {
+    onPageChange?.(currentPage);
+  }, [currentPage, onPageChange]);
+
+  // Notify parent on scale change
+  useEffect(() => {
+    onScaleChange?.(scale);
+  }, [scale, onScaleChange]);
+
+  // Preload text runs for active page
+  useEffect(() => {
+    if (!getPageTextRuns) return;
+    const targetIdx = currentPage - 1;
+    if (targetIdx >= 0 && targetIdx < pageCount && !cachedRuns.has(targetIdx)) {
+      void Promise.resolve(getPageTextRuns(targetIdx)).then((runs) => {
+        if (runs) {
+          setCachedRuns((prev) => new Map(prev).set(targetIdx, runs));
+        }
+      });
+    }
+  }, [currentPage, pageCount, getPageTextRuns, cachedRuns]);
+
   // Handle keyboard shortcut for search (Ctrl+F / Cmd+F)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -255,16 +310,32 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       const targetPage = Math.max(1, Math.min(pageCount, pageIdx + 1));
       setCurrentPage(targetPage);
       virtualListRef.current?.scrollToPage(targetPage - 1, 'start');
+      onPageChange?.(targetPage);
     },
-    [pageCount, setCurrentPage]
+    [pageCount, setCurrentPage, onPageChange]
   );
 
   // Visible range change callback from VirtualPageList
   const handleVisibleRangeChange = useCallback(
-    (_start: number, _end: number, primary: number) => {
-      setCurrentPage(primary + 1);
+    (start: number, end: number, primary: number) => {
+      const targetPage = primary + 1;
+      setCurrentPage(targetPage);
+      onPageChange?.(targetPage);
+
+      // Preload text runs for visible pages so TextSelectionLayer works
+      if (getPageTextRuns) {
+        for (let i = start; i <= end; i++) {
+          if (!cachedRuns.has(i)) {
+            void Promise.resolve(getPageTextRuns(i)).then((runs) => {
+              if (runs) {
+                setCachedRuns((prev) => new Map(prev).set(i, runs));
+              }
+            });
+          }
+        }
+      }
     },
-    [setCurrentPage]
+    [setCurrentPage, onPageChange, getPageTextRuns, cachedRuns]
   );
 
   // Search execution
@@ -353,6 +424,11 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         docId={docId}
         scheduler={scheduler}
         renderPageBitmap={renderPageBitmap}
+        onClick={() => {
+          if (currentPage !== pageIdx + 1) {
+            handlePageJump(pageIdx);
+          }
+        }}
       >
         <SearchHighlightLayer
           pageIndex={pageIdx}

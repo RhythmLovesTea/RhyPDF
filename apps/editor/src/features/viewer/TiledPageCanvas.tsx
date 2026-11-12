@@ -22,6 +22,7 @@ export interface TiledPageCanvasProps {
   theme?: 'light' | 'dark';
   children?: React.ReactNode;
   onTileNeeded?: (tile: PageTile, clipRect: Rect, scale: number) => void;
+  onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }
 
 export const TiledPageCanvas: React.FC<TiledPageCanvasProps> = ({
@@ -37,7 +38,8 @@ export const TiledPageCanvas: React.FC<TiledPageCanvasProps> = ({
   isLoadingTiles = false,
   theme = 'light',
   children,
-  onTileNeeded
+  onTileNeeded,
+  onClick
 }) => {
   const { tiles, isHighZoom } = useMemo(() => {
     return computePageTiles({
@@ -92,6 +94,7 @@ export const TiledPageCanvas: React.FC<TiledPageCanvasProps> = ({
       data-testid={`tiled-page-container-${pageNumber}`}
       data-is-high-zoom="true"
       data-visible-tiles-count={tiles.length}
+      onClick={onClick}
       style={{
         position: 'relative',
         width: cssWidth,

@@ -738,6 +738,27 @@ export const ContextualToolbar: React.FC<ContextualToolbarProps> = ({
             <span>Add Text</span>
           </button>
 
+          {/* Add Image */}
+          <button
+            data-testid="btn-add-image"
+            onClick={onInsertImage}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '4px 8px',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--bg-border)',
+              backgroundColor: 'var(--bg-secondary)',
+              cursor: 'pointer',
+              fontSize: 12
+            }}
+            title="Add Image"
+          >
+            <ImageIcon size={14} />
+            <span>Add Image</span>
+          </button>
+
           {/* Task 7.6: Select Region Tool */}
           <button
             data-testid="btn-select-region"

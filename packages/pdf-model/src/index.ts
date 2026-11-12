@@ -122,6 +122,8 @@ export interface ImageObject extends BasePageObject {
   hasMask?: boolean;
   hasSoftMask?: boolean;
   previewBitmap?: ImageBitmap;
+  dataUrl?: string;
+  opacity?: number;
 }
 
 export interface PathSegment {

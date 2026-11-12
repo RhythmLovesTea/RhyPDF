@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { CoordinateMapper, PageObject, Rect, RotationAngle, BoundingBox } from '@rhypdf/pdf-model';
+import { CoordinateMapper, PageObject, Rect, RotationAngle, BoundingBox, ImageObject } from '@rhypdf/pdf-model';
 import {
   computeSelectionBounds,
   calculateSnap,
@@ -337,7 +337,7 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
         left: 0,
         width: cssSize.width,
         height: cssSize.height,
-        pointerEvents: 'auto',
+        pointerEvents: activeMode === 'view' && selectedIds.length === 0 ? 'none' : 'auto',
         overflow: 'visible',
         zIndex: 20
       }}
@@ -452,6 +452,64 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
                 onPointerDown={(e) => {
                   e.stopPropagation();
                   setShowOcrHint(true);
+                }}
+              />
+            );
+          })}
+
+      {/* Inserted Images Preview (Render on all modes if dataUrl exists) */}
+      {pageObjects
+        .filter((o): o is ImageObject => o.type === 'image' && Boolean((o as ImageObject).dataUrl))
+        .map((img) => {
+          const b = mapper.pdfRectToCss(img.bounds);
+          return (
+            <image
+              key={`inserted-img-render-${img.id}`}
+              href={img.dataUrl}
+              x={b.x}
+              y={b.y}
+              width={b.width}
+              height={b.height}
+              preserveAspectRatio="none"
+              opacity={(img.opacity ?? 100) / 100}
+              style={{ pointerEvents: 'none' }}
+            />
+          );
+        })}
+
+      {/* Task 6: Edit Images Mode: Hover Outlines and Click Selection */}
+      {activeMode === 'edit-images' &&
+        pageObjects
+          .filter((o): o is ImageObject => o.type === 'image')
+          .map((img) => {
+            const imgBox = mapper.pdfRectToCss(img.bounds);
+            const isSelected = selectedIds.includes(img.id);
+            const isHovered = hoveredBlockId === img.id;
+
+            return (
+              <rect
+                key={`image-hit-${img.id}`}
+                data-testid={`image-object-${img.id}`}
+                x={imgBox.x}
+                y={imgBox.y}
+                width={imgBox.width}
+                height={imgBox.height}
+                fill={
+                  isSelected
+                    ? 'rgba(37, 99, 235, 0.08)'
+                    : isHovered
+                      ? 'rgba(59, 130, 246, 0.05)'
+                      : 'transparent'
+                }
+                stroke={isSelected ? '#2563eb' : isHovered ? '#60a5fa' : 'transparent'}
+                strokeWidth={1.5}
+                strokeDasharray={isSelected ? 'none' : '3 3'}
+                style={{ cursor: 'pointer' }}
+                onPointerEnter={() => setHoveredBlockId(img.id)}
+                onPointerLeave={() => setHoveredBlockId(null)}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  onSelectIds?.([img.id]);
                 }}
               />
             );

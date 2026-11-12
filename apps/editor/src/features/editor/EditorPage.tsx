@@ -500,33 +500,42 @@ export default function EditorPage({
     };
   }, [currentDocId]);
 
-  // Preload page objects when active page index changes
+  // Preload page objects and text runs when active page index changes
   useEffect(() => {
     if (!engine || !docHandle) return;
-    if (pageObjectsMap.has(activePageIdx)) return;
+    const toLoad = [activePageIdx];
+    if (activePageIdx > 0) toLoad.push(activePageIdx - 1);
+    if (activePageIdx + 1 < (pageCount || 1)) toLoad.push(activePageIdx + 1);
 
-    let cancelled = false;
-    void engine
-      .getPageObjects(docHandle, activePageIdx)
-      .then((objs) => {
-        if (!cancelled) {
-          setPageObjectsMap((prev) => new Map(prev).set(activePageIdx, objs));
-          const annots = objs.filter((o) => o.type === 'annotation') as AnnotationObject[];
-          if (annots.length > 0) {
-            setAnnotationsByPage((prev) => new Map(prev).set(activePageIdx, annots));
-            const fields = detectFormFieldsFromAnnotations(annots, activePageIdx);
-            if (fields.length > 0) {
-              setFormFieldsByPage((prev) => new Map(prev).set(activePageIdx, fields));
+    for (const p of toLoad) {
+      if (!pageObjectsMap.has(p)) {
+        void engine
+          .getPageObjects(docHandle, p)
+          .then((objs) => {
+            setPageObjectsMap((prev) => new Map(prev).set(p, objs));
+            const annots = objs.filter((o) => o.type === 'annotation') as AnnotationObject[];
+            if (annots.length > 0) {
+              setAnnotationsByPage((prev) => new Map(prev).set(p, annots));
+              const fields = detectFormFieldsFromAnnotations(annots, p);
+              if (fields.length > 0) {
+                setFormFieldsByPage((prev) => new Map(prev).set(p, fields));
+              }
             }
-          }
-        }
-      })
-      .catch(() => {});
-
-    return () => {
-      cancelled = true;
-    };
-  }, [engine, docHandle, activePageIdx, pageObjectsMap]);
+          })
+          .catch(() => {});
+      }
+      if (!pageTextRunsMap.has(p)) {
+        void engine
+          .extractText(docHandle, p)
+          .then((runs) => {
+            if (runs) {
+              setPageTextRunsMap((prev) => new Map(prev).set(p, runs));
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  }, [engine, docHandle, activePageIdx, pageCount, pageObjectsMap, pageTextRunsMap]);
 
   // Current page objects
   const currentObjects = useMemo(
@@ -1023,20 +1032,25 @@ export default function EditorPage({
 
   const handleInsertImageFile = useCallback(
     async (file: File) => {
-      const url = URL.createObjectURL(file);
+      const dataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+
       const img = new Image();
-      img.src = url;
+      img.src = dataUrl;
       await new Promise((res) => {
         img.onload = res;
       });
 
       const pixelWidth = img.naturalWidth || 400;
       const pixelHeight = img.naturalHeight || 300;
-      URL.revokeObjectURL(url);
 
       // Auto-scale to fit page width at center (Task 6.9)
-      const maxW = 350;
-      const maxH = 400;
+      const metric = pageMetricsMap.get(activePageIdx) || { width: 595.28, height: 841.89 };
+      const maxW = Math.min(350, metric.width * 0.8);
+      const maxH = Math.min(400, metric.height * 0.8);
       const ratio = pixelWidth / pixelHeight;
       let targetW = maxW;
       let targetH = maxW / ratio;
@@ -1045,8 +1059,8 @@ export default function EditorPage({
         targetW = maxH * ratio;
       }
 
-      const centerX = 595.28 / 2;
-      const centerY = 841.89 / 2;
+      const centerX = metric.width / 2;
+      const centerY = metric.height / 2;
       const bounds: Rect = {
         left: Math.round(centerX - targetW / 2),
         right: Math.round(centerX + targetW / 2),
@@ -1064,7 +1078,9 @@ export default function EditorPage({
         format: file.type.includes('png') ? 'png' : 'jpeg',
         bounds,
         matrix: [1, 0, 0, 1, bounds.left, bounds.bottom],
-        zIndex: currentObjects.length + 1
+        zIndex: (pageObjectsMap.get(activePageIdx)?.length ?? 0) + 1,
+        dataUrl,
+        opacity: 100
       };
 
       const insertFn = (_p: number, obj: PageObject) => {
@@ -1092,24 +1108,29 @@ export default function EditorPage({
       const cmd = new InsertObjectCommand(activePageIdx, newImage, insertFn, deleteFn);
       await editSession.execute(cmd);
       editSession.selectObject(activePageIdx, newImage.id);
+      setActiveMode('edit-images');
     },
-    [activePageIdx, currentObjects, editSession]
+    [activePageIdx, pageMetricsMap, pageObjectsMap, editSession, setActiveMode]
   );
 
   const handleReplaceImageFile = useCallback(
     async (file: File) => {
       if (!selectedImage?.bounds) return;
 
-      const url = URL.createObjectURL(file);
+      const dataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+
       const img = new Image();
-      img.src = url;
+      img.src = dataUrl;
       await new Promise((res) => {
         img.onload = res;
       });
 
       const pixelWidth = img.naturalWidth || 400;
       const pixelHeight = img.naturalHeight || 300;
-      URL.revokeObjectURL(url);
 
       const newBounds = calculateReplacedBounds(
         selectedImage.bounds,
@@ -1125,7 +1146,8 @@ export default function EditorPage({
         pixelHeight,
         format: file.type.includes('png') ? 'png' : 'jpeg',
         effectiveDpi: { x: repDpi.dpiX, y: repDpi.dpiY },
-        bounds: newBounds
+        bounds: newBounds,
+        dataUrl
       };
 
       const updateFn = (_p: number, id: string, updated: ImageObject) => {
@@ -1614,11 +1636,12 @@ export default function EditorPage({
 
   // Task 7.15: Add Text Box
   const handleAddTextBox = useCallback(async () => {
+    const metric = pageMetricsMap.get(activePageIdx) || { width: 595.28, height: 841.89 };
     const defaultBounds: Rect = {
-      left: 100,
-      bottom: 500,
-      right: 280,
-      top: 524
+      left: Math.round(metric.width / 4),
+      bottom: Math.round(metric.height / 2),
+      right: Math.round(metric.width / 4 + 180),
+      top: Math.round(metric.height / 2 + 24)
     };
 
     const cmd = new InsertTextBlockCommand(
@@ -1651,6 +1674,14 @@ export default function EditorPage({
           next.set(activePageIdx, list);
           return next;
         });
+        setPageTextRunsMap((prev) => {
+          const next = new Map(prev);
+          const list = [...(next.get(activePageIdx) || []), run];
+          next.set(activePageIdx, list);
+          return next;
+        });
+        setActiveTextBlockId(run.id);
+        setEditingTextBlockId(run.id);
         editSession.selectAll(activePageIdx, [run.id]);
       },
       (_page, runId) => {
@@ -1660,11 +1691,17 @@ export default function EditorPage({
           next.set(activePageIdx, list);
           return next;
         });
+        setPageTextRunsMap((prev) => {
+          const next = new Map(prev);
+          const list = (next.get(activePageIdx) || []).filter((o) => o.id !== runId);
+          next.set(activePageIdx, list);
+          return next;
+        });
       }
     );
 
     await editSession.execute(cmd);
-  }, [activePageIdx, editSession, engine, docHandle]);
+  }, [activePageIdx, pageMetricsMap, editSession, engine, docHandle]);
 
   // Task 7.6: Region Select
   const handleRegionSelected = useCallback(
@@ -4048,7 +4085,10 @@ export default function EditorPage({
         isCropping={isCropping}
         effectiveDpi={imageDpiResult?.minDpi}
         isLowRes={imageDpiResult?.isLowRes}
-        onInsertImage={() => imageFileInputRef.current?.click()}
+        onInsertImage={() => {
+          setActiveMode('edit-images');
+          imageFileInputRef.current?.click();
+        }}
         onReplaceImage={() => replaceFileInputRef.current?.click()}
         onDeleteImage={handleDeleteObjects}
         onCrop={handleCropPreset}
@@ -4200,6 +4240,10 @@ export default function EditorPage({
           />
           {currentDocId ? (
             <PdfViewer
+              currentPage={currentPage}
+              onPageChange={(p) => setCurrentPage(p)}
+              scale={scale}
+              onScaleChange={(s) => setScale(s)}
               docId={currentDocId}
               docHandle={docHandle}
               engine={engine ?? undefined}
@@ -4212,22 +4256,34 @@ export default function EditorPage({
               error={docError}
               onBackToHome={() => closeDoc()}
               renderOverlay={(pageIdx, metric) => {
-                if (pageIdx !== activePageIdx) return null;
-                const editingBlock = editingTextBlockId
-                  ? currentTextBlocks.find((b) => b.id === editingTextBlockId)
+                const isActive = pageIdx === activePageIdx;
+                const objects = pageObjectsMap.get(pageIdx) || [];
+                const runs = pageTextRunsMap.get(pageIdx) || [];
+                const textBlocks = groupTextRunsToBlocks(runs, pageIdx, {
+                  pageHeight: metric.height
+                }).map((b) => {
+                  const override = blockOverrides.get(b.id);
+                  if (!override) return b;
+                  return { ...b, ...override };
+                });
+
+                const editingBlock = isActive && editingTextBlockId
+                  ? textBlocks.find((b) => b.id === editingTextBlockId)
                   : null;
 
                 return (
                   <>
-                    <RulerGridOverlay
-                      pageWidthPt={metric.width}
-                      pageHeightPt={metric.height}
-                      rotation={metric.rotation}
-                      scale={scale}
-                      showRuler={isRulerActive}
-                      showGrid={isGridActive}
-                    />
-                    {activeMode === 'annotate' && (
+                    {isActive && (
+                      <RulerGridOverlay
+                        pageWidthPt={metric.width}
+                        pageHeightPt={metric.height}
+                        rotation={metric.rotation}
+                        scale={scale}
+                        showRuler={isRulerActive}
+                        showGrid={isGridActive}
+                      />
+                    )}
+                    {isActive && activeMode === 'annotate' && (
                       <DrawingCanvasOverlay
                         pageWidthPt={metric.width}
                         pageHeightPt={metric.height}
@@ -4236,7 +4292,7 @@ export default function EditorPage({
                         tool={annotateTool}
                         color={annotateColor}
                         strokeWidth={annotateStrokeWidth}
-                        existingStrokes={drawingStrokesMap.get(activePageIdx) || []}
+                        existingStrokes={drawingStrokesMap.get(pageIdx) || []}
                         onCommitStroke={handleCommitDrawingStroke}
                         onEraseStroke={handleEraseDrawingStroke}
                       />
@@ -4247,16 +4303,19 @@ export default function EditorPage({
                       rotation={metric.rotation}
                       scale={scale}
                       activeMode={activeMode}
-                      isCropping={isCropping}
-                      cropBoxPdf={cropBoxPdf}
-                      pageObjects={currentObjects}
-                      selectedIds={selectedIds}
-                      textBlocks={currentTextBlocks}
-                      activeBlockId={activeTextBlock?.id || activeTextBlockId}
-                      isRegionSelectMode={isRegionSelectMode}
+                      isCropping={isActive && isCropping}
+                      cropBoxPdf={isActive ? cropBoxPdf : null}
+                      pageObjects={objects}
+                      selectedIds={isActive ? selectedIds : []}
+                      textBlocks={textBlocks}
+                      activeBlockId={isActive ? (activeTextBlock?.id || activeTextBlockId) : null}
+                      isRegionSelectMode={isActive && isRegionSelectMode}
                       onSelectBlock={(blockId) => {
+                        if (!isActive) {
+                          setCurrentPage(pageIdx + 1);
+                        }
                         if (isFormatPainterActive && formatPainterStyle) {
-                          const target = currentTextBlocks.find((b) => b.id === blockId);
+                          const target = textBlocks.find((b) => b.id === blockId);
                           if (target) {
                             const updated = applyTextStyleToBlock(target, formatPainterStyle);
                             void handleCommitTextBlock(
@@ -4274,20 +4333,28 @@ export default function EditorPage({
                           return;
                         }
                         setActiveTextBlockId(blockId);
-                        const blk = currentTextBlocks.find((b) => b.id === blockId);
+                        const blk = textBlocks.find((b) => b.id === blockId);
                         if (blk) {
                           editSession.selectAll(
-                            activePageIdx,
+                            pageIdx,
                             blk.runs.map((r) => r.id)
                           );
                         }
                       }}
                       onDoubleClickBlock={(blockId) => {
+                        if (!isActive) {
+                          setCurrentPage(pageIdx + 1);
+                        }
                         setActiveTextBlockId(blockId);
                         setEditingTextBlockId(blockId);
                       }}
                       onRegionSelected={handleRegionSelected}
-                      onSelectIds={(ids) => editSession.selectAll(activePageIdx, ids)}
+                      onSelectIds={(ids) => {
+                        if (!isActive) {
+                          setCurrentPage(pageIdx + 1);
+                        }
+                        editSession.selectAll(pageIdx, ids);
+                      }}
                       onMove={handleMoveObjects}
                       onResize={handleResizeObjects}
                       onRotate={handleRotateObjects}
@@ -4296,6 +4363,9 @@ export default function EditorPage({
                         editSession.clearSelection();
                       }}
                       onOcrDetectRequested={() => {
+                        if (!isActive) {
+                          setCurrentPage(pageIdx + 1);
+                        }
                         void handleStartPageOcr('editable');
                       }}
                     />
@@ -4312,7 +4382,7 @@ export default function EditorPage({
                         onShrinkToFit={handleShrinkToFit}
                       />
                     )}
-                    {targetLinkId && objectLinks.has(targetLinkId) && !editingBlock && (
+                    {isActive && targetLinkId && objectLinks.has(targetLinkId) && !editingBlock && (
                       <LinkChip
                         link={objectLinks.get(targetLinkId)!}
                         onEdit={() => setIsLinkDialogOpen(true)}
@@ -4321,20 +4391,22 @@ export default function EditorPage({
                         onOpenLink={handleSafeNavigateLink}
                       />
                     )}
-                    <AcroFormOverlay
-                      pageWidthPt={metric.width}
-                      pageHeightPt={metric.height}
-                      rotation={metric.rotation}
-                      scale={scale}
-                      fields={formFieldsByPage.get(activePageIdx) || []}
-                      onFieldValueChange={handleFormFieldValueChange}
-                    />
-                    {activeStickyNote && (
+                    {isActive && (
+                      <AcroFormOverlay
+                        pageWidthPt={metric.width}
+                        pageHeightPt={metric.height}
+                        rotation={metric.rotation}
+                        scale={scale}
+                        fields={formFieldsByPage.get(pageIdx) || []}
+                        onFieldValueChange={handleFormFieldValueChange}
+                      />
+                    )}
+                    {isActive && activeStickyNote && (
                       <StickyNotePopup
                         annotation={activeStickyNote.annot}
                         position={activeStickyNote.cssPos}
                         onUpdateContent={handleUpdateStickyNoteContent}
-                        onDelete={(id) => handleDeleteAnnotation(activePageIdx, id)}
+                        onDelete={(id) => handleDeleteAnnotation(pageIdx, id)}
                         onClose={() => setActiveStickyNote(null)}
                       />
                     )}
