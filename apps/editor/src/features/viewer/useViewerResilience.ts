@@ -128,6 +128,7 @@ export function useViewerResilience({
 
   // Save debounce timer
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevFitModeRef = useRef<FitMode>(initialFitMode);
 
   // Restore saved state on mount or docId change
   const restoreState = useCallback((): ViewerDocumentState | null => {
@@ -221,15 +222,26 @@ export function useViewerResilience({
     if (!container) return;
 
     const updateDimensions = () => {
-      const rect = container.getBoundingClientRect();
-      setViewportWidth(rect.width);
-      setViewportHeight(rect.height);
+      // Use client dimensions if available to reflect the actual content-bearing viewport excluding scrollbars
+      const w = container.clientWidth || container.getBoundingClientRect().width;
+      const h = container.clientHeight || container.getBoundingClientRect().height;
+      setViewportWidth((prev) => (Math.abs(prev - w) > 0.5 ? w : prev));
+      setViewportHeight((prev) => (Math.abs(prev - h) > 0.5 ? h : prev));
     };
 
     updateDimensions();
 
+    let lastW = 0;
+    let lastH = 0;
     const resizeObserver = new ResizeObserver(() => {
-      updateDimensions();
+      const w = container.clientWidth || container.getBoundingClientRect().width;
+      const h = container.clientHeight || container.getBoundingClientRect().height;
+      if (Math.abs(w - lastW) > 1 || Math.abs(h - lastH) > 1) {
+        lastW = w;
+        lastH = h;
+        setViewportWidth(w);
+        setViewportHeight(h);
+      }
     });
 
     resizeObserver.observe(container);
@@ -248,6 +260,7 @@ export function useViewerResilience({
     if (fitMode === 'actualSize') {
       setScaleState(1.0);
       onScaleRecalculate?.(1.0);
+      prevFitModeRef.current = 'actualSize';
       return;
     }
 
@@ -265,8 +278,22 @@ export function useViewerResilience({
         rotation: activePageDimension.rotation ?? 0
       });
 
-      setScaleState(newScale);
-      onScaleRecalculate?.(newScale);
+      const fitModeChanged = prevFitModeRef.current !== fitMode;
+      prevFitModeRef.current = fitMode;
+
+      setScaleState((currentScale) => {
+        // If mode changed or initial scale, always apply new scale
+        if (fitModeChanged || currentScale <= 0) {
+          onScaleRecalculate?.(newScale);
+          return newScale;
+        }
+        // Suppress micro-oscillations caused by scrollbar toggling (scrollbar width ~17px is ~0.028 scale delta)
+        if (Math.abs(newScale - currentScale) < 0.04) {
+          return currentScale;
+        }
+        onScaleRecalculate?.(newScale);
+        return newScale;
+      });
     }
   }, [
     fitMode,

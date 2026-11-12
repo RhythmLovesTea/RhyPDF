@@ -254,6 +254,14 @@ export default function EditorPage({
   const activePageIdx = currentPage - 1;
   const [scale, setScale] = useState(1.0);
   const [fitMode, setFitMode] = useState<FitMode>('fitWidth');
+
+  const handlePageChange = useCallback((p: number) => {
+    setCurrentPage(p);
+  }, []);
+
+  const handleScaleChange = useCallback((s: number) => {
+    setScale(s);
+  }, []);
   const [selectedObject, setSelectedObject] = useState<SelectedObjectProps | null>(null);
 
   // EditSession, undo/redo, and selection state (Tasks 5.1, 5.2, 5.11)
@@ -4204,7 +4212,7 @@ export default function EditorPage({
       />
 
       {/* Main Workspace Area: Rail + Canvas + Properties */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
+      <div style={{ display: 'flex', flex: 1, minWidth: 0, overflow: 'hidden', position: 'relative' }}>
         {/* Tool Rail (Left) */}
         <EditorToolRail
           sidebarOpen={sidebarOpen}
@@ -4212,7 +4220,7 @@ export default function EditorPage({
         />
 
         {/* Central Canvas Viewport */}
-        <div style={{ flex: 1, height: '100%', overflow: 'hidden', position: 'relative' }}>
+        <div style={{ flex: 1, height: '100%', minWidth: 0, overflow: 'hidden', position: 'relative' }}>
           {xfaWarning && <XfaWarningBanner onDismiss={() => setXfaWarning(null)} />}
           {scannedDetection?.isScanned && !scannedBannerDismissed.has(activePageIdx) && (
             <ScannedPageBanner
@@ -4241,9 +4249,11 @@ export default function EditorPage({
           {currentDocId ? (
             <PdfViewer
               currentPage={currentPage}
-              onPageChange={(p) => setCurrentPage(p)}
+              onPageChange={handlePageChange}
               scale={scale}
-              onScaleChange={(s) => setScale(s)}
+              onScaleChange={handleScaleChange}
+              fitMode={fitMode}
+              onFitModeChange={setFitMode}
               docId={currentDocId}
               docHandle={docHandle}
               engine={engine ?? undefined}
@@ -4255,7 +4265,8 @@ export default function EditorPage({
               getPageTextRuns={getPageTextRuns}
               error={docError}
               onBackToHome={() => closeDoc()}
-              renderOverlay={(pageIdx, metric) => {
+              renderOverlay={(pageIdx, metric, pageScale) => {
+                const effectiveScale = pageScale ?? scale;
                 const isActive = pageIdx === activePageIdx;
                 const objects = pageObjectsMap.get(pageIdx) || [];
                 const runs = pageTextRunsMap.get(pageIdx) || [];
@@ -4278,7 +4289,7 @@ export default function EditorPage({
                         pageWidthPt={metric.width}
                         pageHeightPt={metric.height}
                         rotation={metric.rotation}
-                        scale={scale}
+                        scale={effectiveScale}
                         showRuler={isRulerActive}
                         showGrid={isGridActive}
                       />
@@ -4288,7 +4299,7 @@ export default function EditorPage({
                         pageWidthPt={metric.width}
                         pageHeightPt={metric.height}
                         rotation={metric.rotation}
-                        scale={scale}
+                        scale={effectiveScale}
                         tool={annotateTool}
                         color={annotateColor}
                         strokeWidth={annotateStrokeWidth}
@@ -4301,7 +4312,7 @@ export default function EditorPage({
                       pageWidthPt={metric.width}
                       pageHeightPt={metric.height}
                       rotation={metric.rotation}
-                      scale={scale}
+                      scale={effectiveScale}
                       activeMode={activeMode}
                       isCropping={isActive && isCropping}
                       cropBoxPdf={isActive ? cropBoxPdf : null}
@@ -4375,7 +4386,7 @@ export default function EditorPage({
                         pageWidthPt={metric.width}
                         pageHeightPt={metric.height}
                         rotation={metric.rotation}
-                        scale={scale}
+                        scale={effectiveScale}
                         onCommit={handleCommitTextBlock}
                         onCancel={() => setEditingTextBlockId(null)}
                         onGrowDownward={handleGrowDownward}
@@ -4396,7 +4407,7 @@ export default function EditorPage({
                         pageWidthPt={metric.width}
                         pageHeightPt={metric.height}
                         rotation={metric.rotation}
-                        scale={scale}
+                        scale={effectiveScale}
                         fields={formFieldsByPage.get(pageIdx) || []}
                         onFieldValueChange={handleFormFieldValueChange}
                       />

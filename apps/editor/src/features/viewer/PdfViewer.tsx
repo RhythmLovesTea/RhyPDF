@@ -13,6 +13,7 @@ import { PageNavigation } from './PageNavigation';
 import { FindBar } from './FindBar';
 import { SearchHighlightLayer } from './SearchHighlightLayer';
 import { TextSelectionLayer } from './TextSelectionLayer';
+import type { FitMode } from './fit-mode';
 import { FitModeSelector } from './FitModeSelector';
 import { LayoutModeSelector } from './LayoutModeSelector';
 import { PasswordDialog } from './PasswordDialog';
@@ -35,6 +36,8 @@ export interface PdfViewerProps {
   onPageChange?: (page: number) => void;
   scale?: number;
   onScaleChange?: (scale: number) => void;
+  fitMode?: FitMode;
+  onFitModeChange?: (mode: FitMode) => void;
   engine?: PdfEngine;
   docHandle?: DocumentHandle | null;
   docId: string;
@@ -56,7 +59,7 @@ export interface PdfViewerProps {
   error?: { code: string; message?: string } | null;
   onBackToHome?: () => void;
   onRetry?: () => void;
-  renderOverlay?: (pageIndex: number, metric: PageMetric) => React.ReactNode;
+  renderOverlay?: (pageIndex: number, metric: PageMetric, scale: number) => React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -163,6 +166,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   onPageChange,
   scale: propScale,
   onScaleChange,
+  fitMode: propFitMode,
+  onFitModeChange,
   docId,
   pageCount,
   getPageMetric = () => ({ width: 595.28, height: 841.89, rotation: 0 }),
@@ -200,6 +205,11 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const virtualListRef = useRef<VirtualPageListHandle | null>(null);
 
+  // Echo-prevention refs for controlled props
+  const lastEmittedScaleRef = useRef<number>(1.0);
+  const lastEmittedPageRef = useRef<number>(1);
+  const lastEmittedFitModeRef = useRef<FitMode>('fitWidth');
+
   // LRU cache and scheduler
   const bitmapCache = useMemo(() => new BitmapLruCache(), []);
   const scheduler = useMemo(() => new RenderScheduler({ cache: bitmapCache }), [bitmapCache]);
@@ -234,9 +244,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     docId,
     containerRef,
     activePageDimension: activeMetric,
-    initialFitMode: 'fitWidth',
+    initialFitMode: propFitMode ?? 'fitWidth',
     initialLayoutMode: 'continuous',
-    defaultScale: 1.0
+    defaultScale: propScale ?? 1.0
   });
 
   // Zoom & Pan hook
@@ -254,30 +264,63 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     if (
       propCurrentPage !== undefined &&
       propCurrentPage !== currentPage &&
+      propCurrentPage !== lastEmittedPageRef.current &&
       propCurrentPage >= 1 &&
       propCurrentPage <= pageCount
     ) {
+      lastEmittedPageRef.current = propCurrentPage;
       setCurrentPage(propCurrentPage);
       virtualListRef.current?.scrollToPage(propCurrentPage - 1, 'start');
     }
   }, [propCurrentPage, currentPage, pageCount, setCurrentPage]);
 
-  // Synchronize external scale prop
+  // Synchronize external scale prop (only if significantly different from both internal scale and last emitted)
   useEffect(() => {
-    if (propScale !== undefined && Math.abs(propScale - scale) > 0.001) {
+    if (
+      propScale !== undefined &&
+      Math.abs(propScale - scale) > 0.005 &&
+      Math.abs(propScale - lastEmittedScaleRef.current) > 0.005
+    ) {
+      lastEmittedScaleRef.current = propScale;
       setScale(propScale);
     }
   }, [propScale, scale, setScale]);
 
+  // Synchronize external fitMode prop
+  useEffect(() => {
+    if (
+      propFitMode !== undefined &&
+      propFitMode !== fitMode &&
+      propFitMode !== lastEmittedFitModeRef.current
+    ) {
+      lastEmittedFitModeRef.current = propFitMode;
+      setFitMode(propFitMode);
+    }
+  }, [propFitMode, fitMode, setFitMode]);
+
   // Notify parent on currentPage change
   useEffect(() => {
-    onPageChange?.(currentPage);
+    if (currentPage !== lastEmittedPageRef.current) {
+      lastEmittedPageRef.current = currentPage;
+      onPageChange?.(currentPage);
+    }
   }, [currentPage, onPageChange]);
 
   // Notify parent on scale change
   useEffect(() => {
-    onScaleChange?.(scale);
+    if (Math.abs(scale - lastEmittedScaleRef.current) > 0.001) {
+      lastEmittedScaleRef.current = scale;
+      onScaleChange?.(scale);
+    }
   }, [scale, onScaleChange]);
+
+  // Notify parent on fitMode change
+  useEffect(() => {
+    if (fitMode !== lastEmittedFitModeRef.current) {
+      lastEmittedFitModeRef.current = fitMode;
+      onFitModeChange?.(fitMode);
+    }
+  }, [fitMode, onFitModeChange]);
 
   // Preload text runs for active page
   useEffect(() => {
@@ -449,7 +492,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             scale={scale}
           />
         )}
-        {renderOverlay?.(pageIdx, dim)}
+        {renderOverlay?.(pageIdx, dim, scale)}
       </ViewerPageCanvas>
     );
   };
@@ -478,6 +521,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         flexDirection: 'column',
         height: '100%',
         width: '100%',
+        minWidth: 0,
         backgroundColor: isDark ? 'var(--bg-canvas)' : '#f1f5f9',
         overflow: 'hidden',
         position: 'relative',
@@ -556,7 +600,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       </header>
 
       {/* Main Content Area */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
+      <div style={{ display: 'flex', flex: 1, minWidth: 0, overflow: 'hidden', position: 'relative' }}>
         {/* Thumbnail Sidebar */}
         <ThumbnailSidebar
           pageCount={pageCount}
@@ -576,7 +620,10 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           style={{
             flex: 1,
             height: '100%',
-            overflow: 'auto',
+            minWidth: 0,
+            overflowY: 'auto',
+            overflowX: 'auto',
+            scrollbarGutter: 'stable',
             position: 'relative',
             display: 'flex',
             flexDirection: 'column',
