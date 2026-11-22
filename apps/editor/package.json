@@ -26,13 +26,13 @@
     "fflate": "^0.8.3",
     "i18next": "27.0.1",
     "pdf-lib": "^1.17.1",
-    "react": "18.3.1",
+    "react": "19.3.1",
     "react-dom": "18.3.1",
     "react-i18next": "18.0.1",
     "zustand": "5.0.1"
   },
   "devDependencies": {
-    "@types/react": "18.3.12",
+    "@types/react": "19.3.0",
     "@types/react-dom": "18.3.1",
     "@vitejs/plugin-react": "4.3.4",
     "typescript": "5.6.3",
