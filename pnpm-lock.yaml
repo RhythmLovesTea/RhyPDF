@@ -10,13 +10,13 @@ importers:
     dependencies:
       '@dnd-kit/core':
         specifier: ^6.3.1
-        version: 6.3.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 6.3.1(react-dom@18.3.1(react@19.3.1))(react@19.3.1)
       '@dnd-kit/sortable':
         specifier: ^10.0.0
-        version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
+        version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@18.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
       '@dnd-kit/utilities':
         specifier: ^3.2.2
-        version: 3.2.2(react@18.3.1)
+        version: 3.2.2(react@19.3.1)
       fflate:
         specifier: ^0.8.3
         version: 0.8.3
@@ -53,7 +53,7 @@ importers:
         version: 1.6.4
       lucide-react:
         specifier: 1.70.0
-        version: 1.70.0(@types/react@18.3.12)(react@18.3.1)
+        version: 1.70.0(@types/react@19.3.0)(react@19.3.1)
       prettier:
         specifier: 3.9.10
         version: 3.9.10
@@ -74,13 +74,13 @@ importers:
     dependencies:
       '@dnd-kit/core':
         specifier: ^6.3.1
-        version: 6.3.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 6.3.1(react-dom@18.3.1(react@19.3.1))(react@19.3.1)
       '@dnd-kit/sortable':
         specifier: ^10.0.0
-        version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
+        version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@18.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
       '@dnd-kit/utilities':
         specifier: ^3.2.2
-        version: 3.2.2(react@18.3.1)
+        version: 3.2.2(react@19.3.1)
       '@embedpdf/pdfium':
         specifier: 2.15.1
         version: 2.15.1
@@ -121,33 +121,33 @@ importers:
         specifier: ^1.17.1
         version: 1.17.1
       react:
-        specifier: 18.3.1
-        version: 18.3.1
+        specifier: 19.3.1
+        version: 19.3.1
       react-dom:
         specifier: 18.3.1
-        version: 18.3.1(react@18.3.1)
+        version: 18.3.1(react@19.3.1)
       react-i18next:
         specifier: 18.0.1
-        version: 18.0.1(@types/react@18.3.12)(i18next@27.0.1(typescript@5.6.3))(react@18.3.1)(typescript@5.6.3)
+        version: 18.0.1(@types/react@19.3.0)(i18next@27.0.1(typescript@5.6.3))(react@19.3.1)(typescript@5.6.3)
       zustand:
         specifier: 5.0.1
-        version: 5.0.1(@types/react@18.3.12)(react@18.3.1)
+        version: 5.0.1(@types/react@19.3.0)(react@19.3.1)
     devDependencies:
       '@types/react':
-        specifier: 18.3.12
-        version: 18.3.12
+        specifier: 19.3.0
+        version: 19.3.0
       '@types/react-dom':
         specifier: 18.3.1
         version: 18.3.1
       '@vitejs/plugin-react':
         specifier: 4.3.4
-        version: 4.3.4(vite@5.4.11(@types/node@22.20.5)(lightningcss@1.33.0))
+        version: 4.3.4(vite@5.4.11(@types/node@22.10.0)(lightningcss@1.33.0))
       typescript:
         specifier: 5.6.3
         version: 5.6.3
       vite:
         specifier: 5.4.11
-        version: 5.4.11(@types/node@22.20.5)(lightningcss@1.33.0)
+        version: 5.4.11(@types/node@22.10.0)(lightningcss@1.33.0)
 
   packages/edit-core:
     dependencies:
@@ -170,14 +170,14 @@ importers:
         version: 27.0.1(typescript@5.6.3)
     devDependencies:
       '@types/react':
-        specifier: 18.3.1
-        version: 18.3.1
+        specifier: 19.3.0
+        version: 19.3.0
       react:
-        specifier: 18.3.1
-        version: 18.3.1
+        specifier: 19.3.1
+        version: 19.3.1
       react-i18next:
         specifier: 18.0.1
-        version: 18.0.1(@types/react@18.3.1)(i18next@27.0.1(typescript@5.6.3))(react@18.3.1)(typescript@5.6.3)
+        version: 18.0.1(@types/react@19.3.0)(i18next@27.0.1(typescript@5.6.3))(react@19.3.1)(typescript@5.6.3)
 
   packages/ocr:
     dependencies:
@@ -235,20 +235,20 @@ importers:
     dependencies:
       lucide-react:
         specifier: 1.70.0
-        version: 1.70.0(@types/react@18.3.12)(react@18.3.1)
+        version: 1.70.0(@types/react@19.3.0)(react@19.3.1)
     devDependencies:
       '@types/react':
-        specifier: 18.3.12
-        version: 18.3.12
+        specifier: 19.3.0
+        version: 19.3.0
       '@types/react-dom':
         specifier: 18.3.1
         version: 18.3.1
       react:
-        specifier: 18.3.1
-        version: 18.3.1
+        specifier: 19.3.1
+        version: 19.3.1
       react-dom:
         specifier: 18.3.1
-        version: 18.3.1(react@18.3.1)
+        version: 18.3.1(react@19.3.1)
 
 packages:
 
@@ -770,23 +770,14 @@ packages:
   '@types/node@22.10.0':
     resolution: {integrity: sha512-XC70cRZVElFHfIUB40FgZOBbgJYFKKMa5nb9lxcwYstFG/Mi+/Y0bGS+rs6Dmhmkpq4pnNiLiuZAbc02YCOnmA==}
 
-  '@types/node@22.20.5':
-    resolution: {integrity: sha512-U2+DNr+wSjpsTS/wZGYHq7GcwfuSmKiKvoPvK22zwTlRhU91yOniN4qRR5KhIjvif7ysw/dz/hKmfDH0Ris4aA==}
-
   '@types/pngjs@6.0.5':
     resolution: {integrity: sha512-0k5eKfrA83JOZPppLtS2C7OUtyNAl2wKNxfyYl9Q5g9lPkgBl/9hNyAu6HuEH2J4XmIv2znEpkDd0SaZVxW6iQ==}
-
-  '@types/prop-types@15.7.15':
-    resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
 
   '@types/react-dom@18.3.1':
     resolution: {integrity: sha512-qW1Mfv8taImTthu4KoXgDfLuk4bydU6Q/TkADnDWWHwi4NX4BR+LWfTp2sVmTqRrsHvyDDTelgelxJ+SsejKKQ==}
 
-  '@types/react@18.3.1':
-    resolution: {integrity: sha512-V0kuGBX3+prX+DQ/7r2qsv1NsdfnCLnTgnRJ1pYnxykBhGMz+qj+box5lq7XsO5mtZsBqpjwwTu/7wszPfMBcw==}
-
-  '@types/react@18.3.12':
-    resolution: {integrity: sha512-D2wOSq/d6Agt28q7rSI3jhU7G6aiuzljDGZ2hTZHIkrTLUI+AF3WMeKkEZ9nN2fkBAlcktT6vcZjDFiIhMYEQw==}
+  '@types/react@19.3.0':
+    resolution: {integrity: sha512-N0rFCuH9YoxG9/m61l9MfpJKfmLOVU0em7ipIz6TRgSSkvReLB9vL85GB+yr8Bs5leqpvg96JSwF4ZS1s4viQg==}
 
   '@typescript-eslint/eslint-plugin@8.72.1':
     resolution: {integrity: sha512-5CokTWXpmbylfFabsbvHC0CAw3XLaGnoa+nFJX5FR592h/LoZsENUE6p/rg5xvkKrFEXz6pYmgI29AgXc2N3BQ==}
@@ -1222,24 +1213,28 @@ packages:
     engines: {node: '>= 12.0.0'}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   lightningcss-linux-arm64-musl@1.33.0:
     resolution: {integrity: sha512-yiO5ROMuYQgXbC60yjZU5CYSFZGKXL0HFATXt9mHJn1+zW55oCtMI9NfcVhYLMFDL7gV7oBPon/EmMMGg2OvtQ==}
     engines: {node: '>= 12.0.0'}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   lightningcss-linux-x64-gnu@1.33.0:
     resolution: {integrity: sha512-ar+Ju7LmcN0Jo4FpL4hpFybwNG9/3A/Br5KW2n2jyODg3MEZXaDYADdemoNS+BDNfMgKvylJLj4S5tyRActuAg==}
     engines: {node: '>= 12.0.0'}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   lightningcss-linux-x64-musl@1.33.0:
     resolution: {integrity: sha512-RYiYbkokw0trfKqqzfF55lginwEPrD3OJDfTuJzFs1MK6iFnDenaz1fqLLtX4ITG3OktJQXOeTaw1awrBAlZPw==}
     engines: {node: '>= 12.0.0'}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   lightningcss-win32-arm64-msvc@1.33.0:
     resolution: {integrity: sha512-1K+MPfLSFVpphzpdbfkhlWk6wBrTObBzS2T6db10PNOZgR9GoVsAWzwNyuhUYYbTp23j+4RrncfujZ4uAzXvwA==}
@@ -1417,8 +1412,8 @@ packages:
     resolution: {integrity: sha512-jCvmsr+1IUSMUyzOkRcvnVbX3ZYC6g9TDrDbFuFmRDq7PD4yaGbLKNQL6k2jnArV8hjYxh7hVhAZB6s9HDGpZA==}
     engines: {node: '>=0.10.0'}
 
-  react@18.3.1:
-    resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
+  react@19.3.1:
+    resolution: {integrity: sha512-QNhWdt7nrgVWWQG58QuGsAR3jv3Hbe4mb4vz7w2csnHavciZJgda1CPNaldF6eVxv90ud3jUXpKlHL69gO38yw==}
     engines: {node: '>=0.10.0'}
 
   regenerator-runtime@0.13.11:
@@ -1523,9 +1518,6 @@ packages:
 
   undici-types@6.20.0:
     resolution: {integrity: sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg==}
-
-  undici-types@6.21.0:
-    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
   update-browserslist-db@1.3.4:
     resolution: {integrity: sha512-t8wonIOdQyOjtPd2VktlBu6QjTVTks6v8bSi7kd0r2Vll8TK1JYDZtRRdbmCHOAMphkZgrzK+L+vXK4pyZ8t4A==}
@@ -1787,29 +1779,29 @@ snapshots:
       hashery: 1.5.1
       keyv: 5.6.0
 
-  '@dnd-kit/accessibility@3.1.1(react@18.3.1)':
+  '@dnd-kit/accessibility@3.1.1(react@19.3.1)':
     dependencies:
-      react: 18.3.1
+      react: 19.3.1
       tslib: 2.9.1
 
-  '@dnd-kit/core@6.3.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@dnd-kit/core@6.3.1(react-dom@18.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
-      '@dnd-kit/accessibility': 3.1.1(react@18.3.1)
-      '@dnd-kit/utilities': 3.2.2(react@18.3.1)
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
+      '@dnd-kit/accessibility': 3.1.1(react@19.3.1)
+      '@dnd-kit/utilities': 3.2.2(react@19.3.1)
+      react: 19.3.1
+      react-dom: 18.3.1(react@19.3.1)
       tslib: 2.9.1
 
-  '@dnd-kit/sortable@10.0.0(@dnd-kit/core@6.3.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)':
+  '@dnd-kit/sortable@10.0.0(@dnd-kit/core@6.3.1(react-dom@18.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)':
     dependencies:
-      '@dnd-kit/core': 6.3.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@dnd-kit/utilities': 3.2.2(react@18.3.1)
-      react: 18.3.1
+      '@dnd-kit/core': 6.3.1(react-dom@18.3.1(react@19.3.1))(react@19.3.1)
+      '@dnd-kit/utilities': 3.2.2(react@19.3.1)
+      react: 19.3.1
       tslib: 2.9.1
 
-  '@dnd-kit/utilities@3.2.2(react@18.3.1)':
+  '@dnd-kit/utilities@3.2.2(react@19.3.1)':
     dependencies:
-      react: 18.3.1
+      react: 19.3.1
       tslib: 2.9.1
 
   '@embedpdf/pdfium@2.15.1': {}
@@ -2091,29 +2083,16 @@ snapshots:
     dependencies:
       undici-types: 6.20.0
 
-  '@types/node@22.20.5':
-    dependencies:
-      undici-types: 6.21.0
-    optional: true
-
   '@types/pngjs@6.0.5':
     dependencies:
       '@types/node': 22.10.0
 
-  '@types/prop-types@15.7.15': {}
-
   '@types/react-dom@18.3.1':
     dependencies:
-      '@types/react': 18.3.12
+      '@types/react': 19.3.0
 
-  '@types/react@18.3.1':
+  '@types/react@19.3.0':
     dependencies:
-      '@types/prop-types': 15.7.15
-      csstype: 3.2.3
-
-  '@types/react@18.3.12':
-    dependencies:
-      '@types/prop-types': 15.7.15
       csstype: 3.2.3
 
   '@typescript-eslint/eslint-plugin@8.72.1(@typescript-eslint/parser@8.72.1(eslint@10.14.0)(typescript@5.6.3))(eslint@10.14.0)(typescript@5.6.3)':
@@ -2207,14 +2186,14 @@ snapshots:
       '@typescript-eslint/types': 8.72.1
       eslint-visitor-keys: 5.0.1
 
-  '@vitejs/plugin-react@4.3.4(vite@5.4.11(@types/node@22.20.5)(lightningcss@1.33.0))':
+  '@vitejs/plugin-react@4.3.4(vite@5.4.11(@types/node@22.10.0)(lightningcss@1.33.0))':
     dependencies:
       '@babel/core': 7.29.13
       '@babel/plugin-transform-react-jsx-self': 7.29.7(@babel/core@7.29.13)
       '@babel/plugin-transform-react-jsx-source': 7.29.7(@babel/core@7.29.13)
       '@types/babel__core': 7.20.5
       react-refresh: 0.14.2
-      vite: 5.4.11(@types/node@22.20.5)(lightningcss@1.33.0)
+      vite: 5.4.11(@types/node@22.10.0)(lightningcss@1.33.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -2613,11 +2592,11 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-react@1.70.0(@types/react@18.3.12)(react@18.3.1):
+  lucide-react@1.70.0(@types/react@19.3.0)(react@19.3.1):
     dependencies:
-      react: 18.3.1
+      react: 19.3.1
     optionalDependencies:
-      '@types/react': 18.3.12
+      '@types/react': 19.3.0
 
   magic-string@0.30.21:
     dependencies:
@@ -2707,35 +2686,24 @@ snapshots:
     dependencies:
       hookified: 2.2.0
 
-  react-dom@18.3.1(react@18.3.1):
+  react-dom@18.3.1(react@19.3.1):
     dependencies:
       loose-envify: 1.4.0
-      react: 18.3.1
+      react: 19.3.1
       scheduler: 0.23.2
 
-  react-i18next@18.0.1(@types/react@18.3.1)(i18next@27.0.1(typescript@5.6.3))(react@18.3.1)(typescript@5.6.3):
+  react-i18next@18.0.1(@types/react@19.3.0)(i18next@27.0.1(typescript@5.6.3))(react@19.3.1)(typescript@5.6.3):
     dependencies:
       html-parse-stringify: 4.0.1
       i18next: 27.0.1(typescript@5.6.3)
-      react: 18.3.1
+      react: 19.3.1
     optionalDependencies:
-      '@types/react': 18.3.1
-      typescript: 5.6.3
-
-  react-i18next@18.0.1(@types/react@18.3.12)(i18next@27.0.1(typescript@5.6.3))(react@18.3.1)(typescript@5.6.3):
-    dependencies:
-      html-parse-stringify: 4.0.1
-      i18next: 27.0.1(typescript@5.6.3)
-      react: 18.3.1
-    optionalDependencies:
-      '@types/react': 18.3.12
+      '@types/react': 19.3.0
       typescript: 5.6.3
 
   react-refresh@0.14.2: {}
 
-  react@18.3.1:
-    dependencies:
-      loose-envify: 1.4.0
+  react@19.3.1: {}
 
   regenerator-runtime@0.13.11: {}
 
@@ -2853,9 +2821,6 @@ snapshots:
 
   undici-types@6.20.0: {}
 
-  undici-types@6.21.0:
-    optional: true
-
   update-browserslist-db@1.3.4(browserslist@4.29.5):
     dependencies:
       browserslist: 4.29.5
@@ -2891,16 +2856,6 @@ snapshots:
       rollup: 4.68.2
     optionalDependencies:
       '@types/node': 22.10.0
-      fsevents: 2.3.3
-      lightningcss: 1.33.0
-
-  vite@5.4.11(@types/node@22.20.5)(lightningcss@1.33.0):
-    dependencies:
-      esbuild: 0.21.5
-      postcss: 8.5.32
-      rollup: 4.68.2
-    optionalDependencies:
-      '@types/node': 22.20.5
       fsevents: 2.3.3
       lightningcss: 1.33.0
 
@@ -2970,7 +2925,7 @@ snapshots:
 
   zlibjs@0.3.1: {}
 
-  zustand@5.0.1(@types/react@18.3.12)(react@18.3.1):
+  zustand@5.0.1(@types/react@19.3.0)(react@19.3.1):
     optionalDependencies:
-      '@types/react': 18.3.12
-      react: 18.3.1
+      '@types/react': 19.3.0
+      react: 19.3.1
