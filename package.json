@@ -21,7 +21,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
     "@eslint/js": "10.0.1",
-    "@playwright/test": "1.65.0",
+    "@playwright/test": "1.65.1",
     "@rollup/wasm-node": "^4.68.2",
     "@types/node": "22.10.0",
     "eslint": "10.14.0",
